@@ -3,7 +3,7 @@
 
 struct packet* create_packet(unsigned int id, unsigned int len, char* data) {
     struct packet* p = malloc(sizeof(struct packet));
-    if (!p) {
+    if (p == NULL) {
         return NULL;
     }
     p->id = id;

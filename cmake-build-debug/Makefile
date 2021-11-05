@@ -129,29 +129,29 @@ semestralka/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/build
 .PHONY : semestralka/fast
 
-src/connection.o: src/connection.c.o
-.PHONY : src/connection.o
+src/game_mngr.o: src/game_mngr.c.o
+.PHONY : src/game_mngr.o
 
 # target to build an object file
-src/connection.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/connection.c.o
-.PHONY : src/connection.c.o
+src/game_mngr.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/game_mngr.c.o
+.PHONY : src/game_mngr.c.o
 
-src/connection.i: src/connection.c.i
-.PHONY : src/connection.i
+src/game_mngr.i: src/game_mngr.c.i
+.PHONY : src/game_mngr.i
 
 # target to preprocess a source file
-src/connection.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/connection.c.i
-.PHONY : src/connection.c.i
+src/game_mngr.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/game_mngr.c.i
+.PHONY : src/game_mngr.c.i
 
-src/connection.s: src/connection.c.s
-.PHONY : src/connection.s
+src/game_mngr.s: src/game_mngr.c.s
+.PHONY : src/game_mngr.s
 
 # target to generate assembly for a file
-src/connection.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/connection.c.s
-.PHONY : src/connection.c.s
+src/game_mngr.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/game_mngr.c.s
+.PHONY : src/game_mngr.c.s
 
 src/main.o: src/main.c.o
 .PHONY : src/main.o
@@ -249,6 +249,30 @@ src/packet_validator.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/packet_validator.c.s
 .PHONY : src/packet_validator.c.s
 
+src/server.o: src/server.c.o
+.PHONY : src/server.o
+
+# target to build an object file
+src/server.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/server.c.o
+.PHONY : src/server.c.o
+
+src/server.i: src/server.c.i
+.PHONY : src/server.i
+
+# target to preprocess a source file
+src/server.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/server.c.i
+.PHONY : src/server.c.i
+
+src/server.s: src/server.c.s
+.PHONY : src/server.s
+
+# target to generate assembly for a file
+src/server.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/server.c.s
+.PHONY : src/server.c.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -258,9 +282,9 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... semestralka"
-	@echo "... src/connection.o"
-	@echo "... src/connection.i"
-	@echo "... src/connection.s"
+	@echo "... src/game_mngr.o"
+	@echo "... src/game_mngr.i"
+	@echo "... src/game_mngr.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
@@ -273,6 +297,9 @@ help:
 	@echo "... src/packet_validator.o"
 	@echo "... src/packet_validator.i"
 	@echo "... src/packet_validator.s"
+	@echo "... src/server.o"
+	@echo "... src/server.i"
+	@echo "... src/server.s"
 .PHONY : help
 
 

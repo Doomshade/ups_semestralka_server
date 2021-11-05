@@ -3,4 +3,4 @@ project(semestralka C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(semestralka src/main.c src/packet_handler.c include/packet_handler.h src/packet_validator.c include/packet_validator.h src/connection.c include/connection.h src/packet.c include/packet.h)
+add_executable(semestralka src/main.c src/packet_handler.c include/packet_handler.h src/packet_validator.c include/packet_validator.h src/server.c include/server.h src/packet.c include/packet.h src/game_mngr.c include/game_mngr.h)

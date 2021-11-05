@@ -8,11 +8,12 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
-  "/home/doomshade/CLionProjects/semestralka/src/connection.c" "/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles/semestralka.dir/src/connection.c.o"
+  "/home/doomshade/CLionProjects/semestralka/src/game_mngr.c" "/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles/semestralka.dir/src/game_mngr.c.o"
   "/home/doomshade/CLionProjects/semestralka/src/main.c" "/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles/semestralka.dir/src/main.c.o"
   "/home/doomshade/CLionProjects/semestralka/src/packet.c" "/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles/semestralka.dir/src/packet.c.o"
   "/home/doomshade/CLionProjects/semestralka/src/packet_handler.c" "/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles/semestralka.dir/src/packet_handler.c.o"
   "/home/doomshade/CLionProjects/semestralka/src/packet_validator.c" "/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles/semestralka.dir/src/packet_validator.c.o"
+  "/home/doomshade/CLionProjects/semestralka/src/server.c" "/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles/semestralka.dir/src/server.c.o"
   )
 set(CMAKE_C_COMPILER_ID "GNU")
 

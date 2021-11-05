@@ -76,7 +76,7 @@
 				</MakeCommands>
 			</Target>
 		</Build>
-		<Unit filename="/home/doomshade/CLionProjects/semestralka/include/connection.h">
+		<Unit filename="/home/doomshade/CLionProjects/semestralka/include/game_mngr.h">
 			<Option target="semestralka"/>
 		</Unit>
 		<Unit filename="/home/doomshade/CLionProjects/semestralka/include/packet.h">
@@ -88,7 +88,10 @@
 		<Unit filename="/home/doomshade/CLionProjects/semestralka/include/packet_validator.h">
 			<Option target="semestralka"/>
 		</Unit>
-		<Unit filename="/home/doomshade/CLionProjects/semestralka/src/connection.c">
+		<Unit filename="/home/doomshade/CLionProjects/semestralka/include/server.h">
+			<Option target="semestralka"/>
+		</Unit>
+		<Unit filename="/home/doomshade/CLionProjects/semestralka/src/game_mngr.c">
 			<Option target="semestralka"/>
 		</Unit>
 		<Unit filename="/home/doomshade/CLionProjects/semestralka/src/main.c">
@@ -101,6 +104,9 @@
 			<Option target="semestralka"/>
 		</Unit>
 		<Unit filename="/home/doomshade/CLionProjects/semestralka/src/packet_validator.c">
+			<Option target="semestralka"/>
+		</Unit>
+		<Unit filename="/home/doomshade/CLionProjects/semestralka/src/server.c">
 			<Option target="semestralka"/>
 		</Unit>
 		<Unit filename="/home/doomshade/CLionProjects/semestralka/CMakeLists.txt">

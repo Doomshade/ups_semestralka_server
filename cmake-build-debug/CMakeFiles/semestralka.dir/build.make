@@ -105,18 +105,18 @@ CMakeFiles/semestralka.dir/src/packet_validator.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/semestralka.dir/src/packet_validator.c.s"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/doomshade/CLionProjects/semestralka/src/packet_validator.c -o CMakeFiles/semestralka.dir/src/packet_validator.c.s
 
-CMakeFiles/semestralka.dir/src/connection.c.o: CMakeFiles/semestralka.dir/flags.make
-CMakeFiles/semestralka.dir/src/connection.c.o: ../src/connection.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/semestralka.dir/src/connection.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/semestralka.dir/src/connection.c.o -c /home/doomshade/CLionProjects/semestralka/src/connection.c
+CMakeFiles/semestralka.dir/src/server.c.o: CMakeFiles/semestralka.dir/flags.make
+CMakeFiles/semestralka.dir/src/server.c.o: ../src/server.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/semestralka.dir/src/server.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/semestralka.dir/src/server.c.o -c /home/doomshade/CLionProjects/semestralka/src/server.c
 
-CMakeFiles/semestralka.dir/src/connection.c.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/semestralka.dir/src/connection.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/doomshade/CLionProjects/semestralka/src/connection.c > CMakeFiles/semestralka.dir/src/connection.c.i
+CMakeFiles/semestralka.dir/src/server.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/semestralka.dir/src/server.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/doomshade/CLionProjects/semestralka/src/server.c > CMakeFiles/semestralka.dir/src/server.c.i
 
-CMakeFiles/semestralka.dir/src/connection.c.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/semestralka.dir/src/connection.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/doomshade/CLionProjects/semestralka/src/connection.c -o CMakeFiles/semestralka.dir/src/connection.c.s
+CMakeFiles/semestralka.dir/src/server.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/semestralka.dir/src/server.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/doomshade/CLionProjects/semestralka/src/server.c -o CMakeFiles/semestralka.dir/src/server.c.s
 
 CMakeFiles/semestralka.dir/src/packet.c.o: CMakeFiles/semestralka.dir/flags.make
 CMakeFiles/semestralka.dir/src/packet.c.o: ../src/packet.c
@@ -131,13 +131,27 @@ CMakeFiles/semestralka.dir/src/packet.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/semestralka.dir/src/packet.c.s"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/doomshade/CLionProjects/semestralka/src/packet.c -o CMakeFiles/semestralka.dir/src/packet.c.s
 
+CMakeFiles/semestralka.dir/src/game_mngr.c.o: CMakeFiles/semestralka.dir/flags.make
+CMakeFiles/semestralka.dir/src/game_mngr.c.o: ../src/game_mngr.c
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building C object CMakeFiles/semestralka.dir/src/game_mngr.c.o"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/semestralka.dir/src/game_mngr.c.o -c /home/doomshade/CLionProjects/semestralka/src/game_mngr.c
+
+CMakeFiles/semestralka.dir/src/game_mngr.c.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/semestralka.dir/src/game_mngr.c.i"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/doomshade/CLionProjects/semestralka/src/game_mngr.c > CMakeFiles/semestralka.dir/src/game_mngr.c.i
+
+CMakeFiles/semestralka.dir/src/game_mngr.c.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/semestralka.dir/src/game_mngr.c.s"
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/doomshade/CLionProjects/semestralka/src/game_mngr.c -o CMakeFiles/semestralka.dir/src/game_mngr.c.s
+
 # Object files for target semestralka
 semestralka_OBJECTS = \
 "CMakeFiles/semestralka.dir/src/main.c.o" \
 "CMakeFiles/semestralka.dir/src/packet_handler.c.o" \
 "CMakeFiles/semestralka.dir/src/packet_validator.c.o" \
-"CMakeFiles/semestralka.dir/src/connection.c.o" \
-"CMakeFiles/semestralka.dir/src/packet.c.o"
+"CMakeFiles/semestralka.dir/src/server.c.o" \
+"CMakeFiles/semestralka.dir/src/packet.c.o" \
+"CMakeFiles/semestralka.dir/src/game_mngr.c.o"
 
 # External object files for target semestralka
 semestralka_EXTERNAL_OBJECTS =
@@ -145,11 +159,12 @@ semestralka_EXTERNAL_OBJECTS =
 semestralka: CMakeFiles/semestralka.dir/src/main.c.o
 semestralka: CMakeFiles/semestralka.dir/src/packet_handler.c.o
 semestralka: CMakeFiles/semestralka.dir/src/packet_validator.c.o
-semestralka: CMakeFiles/semestralka.dir/src/connection.c.o
+semestralka: CMakeFiles/semestralka.dir/src/server.c.o
 semestralka: CMakeFiles/semestralka.dir/src/packet.c.o
+semestralka: CMakeFiles/semestralka.dir/src/game_mngr.c.o
 semestralka: CMakeFiles/semestralka.dir/build.make
 semestralka: CMakeFiles/semestralka.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking C executable semestralka"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Linking C executable semestralka"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/semestralka.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
