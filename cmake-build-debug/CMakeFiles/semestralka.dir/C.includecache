@@ -1,0 +1,46 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/doomshade/CLionProjects/semestralka/include/packet.h
+
+/home/doomshade/CLionProjects/semestralka/include/packet_handler.h
+../include/packet.h
+/home/doomshade/CLionProjects/semestralka/include/packet.h
+
+/home/doomshade/CLionProjects/semestralka/include/packet_validator.h
+
+/home/doomshade/CLionProjects/semestralka/src/main.c
+stdlib.h
+-
+stdio.h
+-
+../include/packet_handler.h
+/home/doomshade/CLionProjects/semestralka/include/packet_handler.h
+
+/home/doomshade/CLionProjects/semestralka/src/packet.c
+stdlib.h
+-
+../include/packet.h
+/home/doomshade/CLionProjects/semestralka/include/packet.h
+
+/home/doomshade/CLionProjects/semestralka/src/packet_handler.c
+stdlib.h
+-
+stdio.h
+-
+../include/packet_handler.h
+/home/doomshade/CLionProjects/semestralka/include/packet_handler.h
+
+/home/doomshade/CLionProjects/semestralka/src/packet_validator.c
+stdio.h
+-
+../include/packet_validator.h
+/home/doomshade/CLionProjects/semestralka/include/packet_validator.h
+../include/packet.h
+/home/doomshade/CLionProjects/semestralka/include/packet.h
+
