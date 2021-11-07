@@ -3,6 +3,7 @@
 #include <argp.h>
 #include <stdbool.h>
 #include "../include/packet_handler.h"
+#include "../include/server.h"
 
 /*int IDwithBuiltinKTH(problemposition) {
     for (int depth = 1; depth < maxDepth; depth += depthstep) {
@@ -84,7 +85,7 @@ static struct argp_option options[] = {
 
 /* Used by main to communicate with parse_opt. */
 struct arguments {
-    long port;
+    unsigned port;
 };
 
 /* Parse a single option. */
@@ -94,7 +95,6 @@ static error_t parse_opt(int key, char* arg, struct argp_state* state) {
     struct arguments* arguments = state->input;
 
     char* end;
-    printf("Key and arg: %c (0x%x) %s\n", key, key, arg);
     switch (key) {
         case 'p':
             arguments->port = strtol(arg, &end, 10);
@@ -120,7 +120,8 @@ int main(int argc, char** argv) {
        be reflected in arguments. */
     argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
-    printf("port: %ld\n", arguments.port);
+    printf("Starting server on port: %u...\n", arguments.port);
+    start_server(arguments.port);
 
     exit(0);
 }
