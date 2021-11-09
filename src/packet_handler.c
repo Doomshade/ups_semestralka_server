@@ -1,17 +1,17 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "../include/packet_handler.h"
+#include "../include/packet_in.h"
 
-// TODO char* -> packet*
-int handle_packet(char* buf) {
+#define PACKET_MAGIC_HEADER "CHESS"
+#define PACKET_FORMAT "%04s%02d%03d"
+
+int handle_packet(int fd, struct packet* packet) {
     // CHESS01004AHOJ
 
-    char ss[BUFSIZ];
+    printf("ID: %d, size: %d, data: %s\n", packet->id, packet->len, packet->data);
+    get_handler(packet->id)(fd, packet->data);
 
-    struct packet* p = create_packet(0, 0, buf);
-    if (!p) {
-        return -1;
-    }
-
-    return PACKET_OK;
+    return 0;
 }

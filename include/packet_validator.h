@@ -1,5 +1,9 @@
 #ifndef SEMESTRALKA_PACKET_VALIDATOR_H
 #define SEMESTRALKA_PACKET_VALIDATOR_H
+#define PACKET_OK 0
+#define PACKET_INVALID_HEADER 1
+#define PACKET_INVALID_FORMAT 2
+#define PACKET_INVALID_DATA 3
 
 int validate_packet(char *packet, char *dest);
 

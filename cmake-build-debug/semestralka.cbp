@@ -79,10 +79,13 @@
 		<Unit filename="/home/doomshade/CLionProjects/semestralka/include/game_mngr.h">
 			<Option target="semestralka"/>
 		</Unit>
-		<Unit filename="/home/doomshade/CLionProjects/semestralka/include/packet.h">
+		<Unit filename="/home/doomshade/CLionProjects/semestralka/include/packet_handler.h">
 			<Option target="semestralka"/>
 		</Unit>
-		<Unit filename="/home/doomshade/CLionProjects/semestralka/include/packet_handler.h">
+		<Unit filename="/home/doomshade/CLionProjects/semestralka/include/packet_in.h">
+			<Option target="semestralka"/>
+		</Unit>
+		<Unit filename="/home/doomshade/CLionProjects/semestralka/include/packet_registry.h">
 			<Option target="semestralka"/>
 		</Unit>
 		<Unit filename="/home/doomshade/CLionProjects/semestralka/include/packet_validator.h">
@@ -97,10 +100,13 @@
 		<Unit filename="/home/doomshade/CLionProjects/semestralka/src/main.c">
 			<Option target="semestralka"/>
 		</Unit>
-		<Unit filename="/home/doomshade/CLionProjects/semestralka/src/packet.c">
+		<Unit filename="/home/doomshade/CLionProjects/semestralka/src/packet_handler.c">
 			<Option target="semestralka"/>
 		</Unit>
-		<Unit filename="/home/doomshade/CLionProjects/semestralka/src/packet_handler.c">
+		<Unit filename="/home/doomshade/CLionProjects/semestralka/src/packet_in.c">
+			<Option target="semestralka"/>
+		</Unit>
+		<Unit filename="/home/doomshade/CLionProjects/semestralka/src/packet_registry.c">
 			<Option target="semestralka"/>
 		</Unit>
 		<Unit filename="/home/doomshade/CLionProjects/semestralka/src/packet_validator.c">

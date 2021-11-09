@@ -177,30 +177,6 @@ src/main.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/main.c.s
 .PHONY : src/main.c.s
 
-src/packet.o: src/packet.c.o
-.PHONY : src/packet.o
-
-# target to build an object file
-src/packet.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/packet.c.o
-.PHONY : src/packet.c.o
-
-src/packet.i: src/packet.c.i
-.PHONY : src/packet.i
-
-# target to preprocess a source file
-src/packet.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/packet.c.i
-.PHONY : src/packet.c.i
-
-src/packet.s: src/packet.c.s
-.PHONY : src/packet.s
-
-# target to generate assembly for a file
-src/packet.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/packet.c.s
-.PHONY : src/packet.c.s
-
 src/packet_handler.o: src/packet_handler.c.o
 .PHONY : src/packet_handler.o
 
@@ -224,6 +200,54 @@ src/packet_handler.s: src/packet_handler.c.s
 src/packet_handler.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/packet_handler.c.s
 .PHONY : src/packet_handler.c.s
+
+src/packet_in.o: src/packet_in.c.o
+.PHONY : src/packet_in.o
+
+# target to build an object file
+src/packet_in.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/packet_in.c.o
+.PHONY : src/packet_in.c.o
+
+src/packet_in.i: src/packet_in.c.i
+.PHONY : src/packet_in.i
+
+# target to preprocess a source file
+src/packet_in.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/packet_in.c.i
+.PHONY : src/packet_in.c.i
+
+src/packet_in.s: src/packet_in.c.s
+.PHONY : src/packet_in.s
+
+# target to generate assembly for a file
+src/packet_in.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/packet_in.c.s
+.PHONY : src/packet_in.c.s
+
+src/packet_registry.o: src/packet_registry.c.o
+.PHONY : src/packet_registry.o
+
+# target to build an object file
+src/packet_registry.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/packet_registry.c.o
+.PHONY : src/packet_registry.c.o
+
+src/packet_registry.i: src/packet_registry.c.i
+.PHONY : src/packet_registry.i
+
+# target to preprocess a source file
+src/packet_registry.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/packet_registry.c.i
+.PHONY : src/packet_registry.c.i
+
+src/packet_registry.s: src/packet_registry.c.s
+.PHONY : src/packet_registry.s
+
+# target to generate assembly for a file
+src/packet_registry.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/packet_registry.c.s
+.PHONY : src/packet_registry.c.s
 
 src/packet_validator.o: src/packet_validator.c.o
 .PHONY : src/packet_validator.o
@@ -288,12 +312,15 @@ help:
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
-	@echo "... src/packet.o"
-	@echo "... src/packet.i"
-	@echo "... src/packet.s"
 	@echo "... src/packet_handler.o"
 	@echo "... src/packet_handler.i"
 	@echo "... src/packet_handler.s"
+	@echo "... src/packet_in.o"
+	@echo "... src/packet_in.i"
+	@echo "... src/packet_in.s"
+	@echo "... src/packet_registry.o"
+	@echo "... src/packet_registry.i"
+	@echo "... src/packet_registry.s"
 	@echo "... src/packet_validator.o"
 	@echo "... src/packet_validator.i"
 	@echo "... src/packet_validator.s"
