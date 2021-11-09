@@ -6,7 +6,25 @@
 
 #define FEN_PATTERN "((([rnbqkpRNBQKP1-8]+)\\/){7}([rnbqkpRNBQKP1-8]+)) ([wb]) (K?Q?k?q?|\\-) (([a-h][0-7])|\\-) (\\d+) (\\d+)"
 
+struct player* players[MAX_PLAYER_COUNT] = {0};
 struct game* games[MAX_GAME_COUNT] = {0};
+
+int lookup_player(char* name, struct player** p) {
+    int i;
+    struct player* _p;
+
+    for (i = 0; i < MAX_PLAYER_COUNT; ++i) {
+        _p = players[i];
+        if (_p == NULL) {
+            continue;
+        }
+        if (strcmp(_p->name, name) == 0) {
+            *p = _p;
+            return 0;
+        }
+    }
+    return 1;
+}
 
 struct player* create_player(int fd, char* name) {
     if (name == NULL) {

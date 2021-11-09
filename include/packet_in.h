@@ -1,7 +1,8 @@
 #ifndef SEMESTRALKA_PACKET_IN_H
 #define SEMESTRALKA_PACKET_IN_H
+#include "../include/game_mngr.h"
 
-int p_hello(int fd, char* packet);
+int p_hello(struct player* p, char* packet);
 
 int p_findgm(int fd, char* data);
 

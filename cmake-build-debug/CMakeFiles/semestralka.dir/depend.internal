@@ -6,29 +6,35 @@ CMakeFiles/semestralka.dir/src/game_mngr.c.o
  /home/doomshade/CLionProjects/semestralka/include/server.h
  /home/doomshade/CLionProjects/semestralka/src/game_mngr.c
 CMakeFiles/semestralka.dir/src/main.c.o
+ /home/doomshade/CLionProjects/semestralka/include/game_mngr.h
  /home/doomshade/CLionProjects/semestralka/include/packet_handler.h
  /home/doomshade/CLionProjects/semestralka/include/packet_registry.h
  /home/doomshade/CLionProjects/semestralka/include/server.h
  /home/doomshade/CLionProjects/semestralka/src/main.c
 CMakeFiles/semestralka.dir/src/packet_handler.c.o
+ /home/doomshade/CLionProjects/semestralka/include/game_mngr.h
  /home/doomshade/CLionProjects/semestralka/include/packet_handler.h
  /home/doomshade/CLionProjects/semestralka/include/packet_in.h
  /home/doomshade/CLionProjects/semestralka/include/packet_registry.h
  /home/doomshade/CLionProjects/semestralka/src/packet_handler.c
 CMakeFiles/semestralka.dir/src/packet_in.c.o
+ /home/doomshade/CLionProjects/semestralka/include/game_mngr.h
  /home/doomshade/CLionProjects/semestralka/include/packet_in.h
  /home/doomshade/CLionProjects/semestralka/src/packet_in.c
 CMakeFiles/semestralka.dir/src/packet_registry.c.o
+ /home/doomshade/CLionProjects/semestralka/include/game_mngr.h
  /home/doomshade/CLionProjects/semestralka/include/packet_in.h
  /home/doomshade/CLionProjects/semestralka/include/packet_registry.h
  /home/doomshade/CLionProjects/semestralka/src/packet_registry.c
 CMakeFiles/semestralka.dir/src/packet_validator.c.o
- /home/doomshade/CLionProjects/semestralka/include/packet_in.h
+ /home/doomshade/CLionProjects/semestralka/include/game_mngr.h
+ /home/doomshade/CLionProjects/semestralka/include/packet_registry.h
  /home/doomshade/CLionProjects/semestralka/include/packet_validator.h
  /home/doomshade/CLionProjects/semestralka/src/packet_validator.c
 CMakeFiles/semestralka.dir/src/server.c.o
  /home/doomshade/CLionProjects/semestralka/include/game_mngr.h
  /home/doomshade/CLionProjects/semestralka/include/packet_handler.h
  /home/doomshade/CLionProjects/semestralka/include/packet_registry.h
+ /home/doomshade/CLionProjects/semestralka/include/packet_validator.h
  /home/doomshade/CLionProjects/semestralka/include/server.h
  /home/doomshade/CLionProjects/semestralka/src/server.c

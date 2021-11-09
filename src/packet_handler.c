@@ -4,14 +4,25 @@
 #include "../include/packet_handler.h"
 #include "../include/packet_in.h"
 
-#define PACKET_MAGIC_HEADER "CHESS"
-#define PACKET_FORMAT "%04s%02d%03d"
-
 int handle_packet(int fd, struct packet* packet) {
     // CHESS01004AHOJ
+    packet_handle* handle_func;
+    struct player *p;
+    int ret;
 
+    if (packet == NULL) {
+        return -1;
+    }
+
+    ret = lookup_player()
+    p = create_player(fd, "");
     printf("ID: %d, size: %d, data: %s\n", packet->id, packet->len, packet->data);
-    get_handler(packet->id)(fd, packet->data);
+    handle_func = get_handler(packet->id);
+    if (handle_func == NULL) {
+        return 1;
+    }
+
+    handle_func(p, packet->data);
 
     return 0;
 }

@@ -10,46 +10,6 @@
  */
 #define START_FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
-enum player_state {
-    /**
-     * The initial state -- when the player connects to the server
-     */
-    JUST_CONNECTED,
-
-    /**
-     * The player is in a queue
-     */
-    QUEUE,
-
-    /**
-     * The player is in a game and white is to move
-     */
-    WHITE_TO_MOVE,
-
-    /**
-     * The player is in a game and black is to move
-     */
-    BLACK_TO_MOVE
-};
-
-struct player {
-
-    /**
-     * The current state of the player
-     */
-    enum player_state ps;
-
-    /**
-     * The file descriptor of this player
-     */
-    int fd;
-
-    /**
-     * The name of this player
-     */
-    char* name;
-};
-
 struct chessboard {
     /**
      * Board represented by chars of pieces - "rnbqkpRNBQKP" (r = rook, n = knight, ...)
@@ -76,6 +36,7 @@ struct game {
 
 int setup_game(char* fen);
 
+int lookup_player(char* name, struct player** p);
 
 struct player* create_player(int fd, char* name);
 

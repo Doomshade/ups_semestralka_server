@@ -5,6 +5,7 @@ file(REMOVE_RECURSE
   "CMakeFiles/semestralka.dir/src/packet_in.c.o"
   "CMakeFiles/semestralka.dir/src/packet_registry.c.o"
   "CMakeFiles/semestralka.dir/src/packet_validator.c.o"
+  "CMakeFiles/semestralka.dir/src/player-handler.c.o"
   "CMakeFiles/semestralka.dir/src/server.c.o"
   "semestralka"
   "semestralka.pdb"

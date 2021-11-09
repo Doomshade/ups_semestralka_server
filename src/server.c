@@ -5,26 +5,13 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <stdlib.h>
+
 // kvuli iotctl
 #include <sys/ioctl.h>
 #include "../include/server.h"
 #include "../include/game_mngr.h"
 #include "../include/packet_handler.h"
-
-int send_packet(struct player* p, char* buf, long* len) {
-    long total = 0; // how many bytes we've sent
-    long bytesleft = *len; // how many we have left to send
-    long n;
-    while (total < *len) {
-        n = send(p->fd, buf + total, bytesleft, 0);
-        if (n == -1) { break; }
-        total += n;
-        bytesleft -= n;
-    }
-    *len = total; // return number actually sent here
-    return n == -1 ? -1 : 0; // return -1 on failure, 0 on success
-}
+#include "../include/packet_validator.h"
 
 int start_server(unsigned port) {
     int server_socket, client_socket, fd, rval, a2read;
@@ -32,10 +19,12 @@ int start_server(unsigned port) {
     socklen_t len_addr;
     struct sockaddr_in my_addr, peer_addr;
     fd_set client_socks, tests; // mnozina file deskriptoru (mj. i napr. socketu)
+    char ip[64];
+    int param = 1;
+    int erc;
 
     server_socket = socket(AF_INET, SOCK_STREAM, 0);
 
-    int param = 1;
     rval = setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, (const char*) &param, sizeof(int));
 
     if (rval == -1) {
@@ -49,7 +38,6 @@ int start_server(unsigned port) {
     my_addr.sin_addr.s_addr = INADDR_ANY;
     rval = bind(server_socket, (struct sockaddr*) &my_addr, sizeof(struct sockaddr_in));
 
-    char ip[64];
     inet_ntop(AF_INET, &my_addr.sin_addr, ip, sizeof(ip));
     if (rval == 0)
         printf("Successfully bound the socket to %s:%d\n", ip, port);
@@ -102,10 +90,10 @@ int start_server(unsigned port) {
                         memset(buf, 0, BUFSIZ);
                         recv(fd, &buf, BUFSIZ, 0);
                         printf("Prijato %s\n", buf);
-
-                        // offset by 10 cuz of the magic, id, and len
-                        struct packet* p = create_packet(0x0, 4, buf + 11);
-                        handle_packet(fd, p);
+                        handle_packet(fd, parse_packet(buf, &erc));
+                        if (erc != PACKET_OK) {
+                            printf("INVALID PACKET: errno: %d\n", erc);
+                        }
                     } else // na socketu se stalo neco spatneho
                     {
                         close(fd);

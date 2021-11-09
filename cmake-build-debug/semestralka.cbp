@@ -91,6 +91,9 @@
 		<Unit filename="/home/doomshade/CLionProjects/semestralka/include/packet_validator.h">
 			<Option target="semestralka"/>
 		</Unit>
+		<Unit filename="/home/doomshade/CLionProjects/semestralka/include/player_handler.h">
+			<Option target="semestralka"/>
+		</Unit>
 		<Unit filename="/home/doomshade/CLionProjects/semestralka/include/server.h">
 			<Option target="semestralka"/>
 		</Unit>
@@ -110,6 +113,9 @@
 			<Option target="semestralka"/>
 		</Unit>
 		<Unit filename="/home/doomshade/CLionProjects/semestralka/src/packet_validator.c">
+			<Option target="semestralka"/>
+		</Unit>
+		<Unit filename="/home/doomshade/CLionProjects/semestralka/src/player-handler.c">
 			<Option target="semestralka"/>
 		</Unit>
 		<Unit filename="/home/doomshade/CLionProjects/semestralka/src/server.c">

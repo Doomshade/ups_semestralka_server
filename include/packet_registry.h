@@ -1,5 +1,6 @@
 #ifndef SEMESTRALKA_PACKET_REGISTRY_H
 #define SEMESTRALKA_PACKET_REGISTRY_H
+#include "game_mngr.h"
 
 struct packet {
     unsigned int id;
@@ -7,7 +8,7 @@ struct packet {
     char* data;
 };
 
-typedef int packet_handle(int fd, char* data);
+typedef int packet_handle(struct player *fd, char* data);
 
 struct packet* create_packet(unsigned int id, unsigned int len, char* data);
 

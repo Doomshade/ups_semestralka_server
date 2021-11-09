@@ -273,6 +273,30 @@ src/packet_validator.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/packet_validator.c.s
 .PHONY : src/packet_validator.c.s
 
+src/player-handler.o: src/player-handler.c.o
+.PHONY : src/player-handler.o
+
+# target to build an object file
+src/player-handler.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/player-handler.c.o
+.PHONY : src/player-handler.c.o
+
+src/player-handler.i: src/player-handler.c.i
+.PHONY : src/player-handler.i
+
+# target to preprocess a source file
+src/player-handler.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/player-handler.c.i
+.PHONY : src/player-handler.c.i
+
+src/player-handler.s: src/player-handler.c.s
+.PHONY : src/player-handler.s
+
+# target to generate assembly for a file
+src/player-handler.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/player-handler.c.s
+.PHONY : src/player-handler.c.s
+
 src/server.o: src/server.c.o
 .PHONY : src/server.o
 
@@ -324,6 +348,9 @@ help:
 	@echo "... src/packet_validator.o"
 	@echo "... src/packet_validator.i"
 	@echo "... src/packet_validator.s"
+	@echo "... src/player-handler.o"
+	@echo "... src/player-handler.i"
+	@echo "... src/player-handler.s"
 	@echo "... src/server.o"
 	@echo "... src/server.i"
 	@echo "... src/server.s"
