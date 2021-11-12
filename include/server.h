@@ -8,6 +8,11 @@
 
 #define MAX_PLAYER_COUNT MAX_GAME_COUNT * 2
 
+/**
+ * Starts the server on the given port
+ * @param port the port
+ * @return
+ */
 int start_server(unsigned port);
 
 #endif //SEMESTRALKA_SERVER_H

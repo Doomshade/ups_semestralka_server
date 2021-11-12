@@ -22,10 +22,26 @@
 #define PACKET_INVALID_FORMAT 1
 #define PACKET_INVALID_DATA 3
 
+/**
+ * Initializes the packet validator
+ */
 void init_pvalidator();
 
+/**
+ * Attempts to parse the packet sent by the player. Note that the
+ * pointer is shifted, if packet such as "CHESS00001ACHESS01" is sent,
+ * the pointer will point to the next packet - "CHESS01"
+ * @param packet the packet
+ * @param erc the error code, see definitions starting with PACKET_
+ * @param pl the player
+ * @return the packet once the packet is parsed
+ */
 struct packet* parse_packet(char** packet, int* erc, struct player* pl);
 
+/**
+ * Frees the header and data buffers of a client
+ * @param fd the client's file descriptor
+ */
 void free_buffers(int fd);
 
 #endif //SEMESTRALKA_PACKET_VALIDATOR_H

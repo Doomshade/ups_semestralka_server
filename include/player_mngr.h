@@ -43,14 +43,36 @@ struct player {
     char* name;
 };
 
+/**
+ * Attempts to lookup the player in the memory by name
+ * @param name the player's name
+ * @param p the player to be set
+ * @return
+ */
 int lookup_player_by_name(char* name, struct player** p);
 
+/**
+ * Attempts to lookup the player in the memory by the file descriptor
+ * @param fd the client's file descriptor
+ * @param p the player to be set
+ * @return
+ */
 int lookup_player_by_fd(int fd, struct player** p);
 
+/**
+ * Handles the connection of a client
+ * @param fd the client's file descriptor
+ * @return
+ */
 int handle_new_connection(int fd);
 
 int handle_possible_reconnection(struct player** p);
 
+/**
+ * Handles the disconnection of the client - storing his current state
+ * @param fd the client's file descriptor
+ * @return
+ */
 int handle_disconnection(int fd);
 
 

@@ -2,6 +2,7 @@
 #define SEMESTRALKA_PACKET_H
 
 #include "../include/player_mngr.h"
+
 #define PACKET_IN_OFFSET 0x80
 #define PACKET_IN(out) out + PACKET_IN_OFFSET
 #define PACKET_OUT(offset, id) offset + id
@@ -9,7 +10,6 @@
 #define LOGGED_IN_P_OFFSET 0x20
 #define QUEUE_P_OFFSET 0x40
 #define PLAY_P_OFFSET 0x60
-
 
 enum just_connected_p {
     HELLO_IN = PACKET_OUT(JUST_CONNECTED_P_OFFSET, 0),
@@ -42,13 +42,45 @@ enum play_p {
  */
 int p_hello(struct player* p, char* packet);
 
-int p_findgm(int fd, char* data);
+/**
+ * The player wants to look for a game, we put him in a queue. The
+ * client should be in the LOGGED_IN state and is updated once an
+ * opponent is found
+ * @param p the player
+ * @param packet the packet
+ * @return 0 if everything was okay
+ */
+int p_findgm(struct player* p, char* packet);
 
-int p_movepc(int fd, char* data);
+/**
+ * The player wants to move a piece on the board. The client should
+ * be in the PLAY state. The data should always be of length 4 and
+ * the data should be in format [file_from][rank_from][file_to][rank_to]
+ * E.g. A2A4 E5E4
+ * @param p the player
+ * @param packet the packet
+ * @return 0 if everything was okay
+ */
+int p_movepc(struct player* p, char* packet);
 
-int p_offdraw(int fd, char* data);
+/**
+ * The player offered a draw. The client should be in the PLAY state.
+ * The data should always be of length 0 and the data should be empty.
+ * @param p the player
+ * @param packet the packet
+ * @return 0 if everything was okay
+ */
+int p_offdraw(struct player* p, char* packet);
 
-int p_resign(int fd, char* data);
+/**
+ * The player resigned. The client should be in the PLAY state.
+ * The data should always be of length 0 and the data should be empty.
+ * This puts the player into the LOGGED_IN state.
+ * @param p the player
+ * @param packet the packet
+ * @return 0 if everything was okay
+ */
+int p_resign(struct player* p, char* packet);
 
 
 #endif //SEMESTRALKA_PACKET_H

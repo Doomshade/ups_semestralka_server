@@ -22,7 +22,6 @@ struct chessboard {
     char lpm[2];
 };
 
-
 struct game {
     struct player* white;
     struct player* black;
@@ -34,10 +33,21 @@ struct game {
     bool white_to_move;
 };
 
+/**
+ * Sets up the game from the fen string
+ * @param fen the fen string
+ * @return 0 if everything went alright
+ */
 int setup_game(char* fen);
 
 struct player* create_player(int fd, char* name);
 
+/**
+ * Attempts to lookup a game by player's name and then assigns the player's state etc
+ * @param name the player's name
+ * @param p the player
+ * @return the game if it exists
+ */
 struct game* lookup_game(char* name, struct player** p);
 
 struct game* create_game(struct player* white, struct player* black, bool white_to_move);
