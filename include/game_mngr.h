@@ -36,8 +36,6 @@ struct game {
 
 int setup_game(char* fen);
 
-int lookup_player(char* name, struct player** p);
-
 struct player* create_player(int fd, char* name);
 
 struct game* lookup_game(char* name, struct player** p);

@@ -10,11 +10,11 @@ set(CMAKE_DEPENDS_LANGUAGES
 set(CMAKE_DEPENDS_CHECK_C
   "/home/doomshade/CLionProjects/semestralka/src/game_mngr.c" "/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles/semestralka.dir/src/game_mngr.c.o"
   "/home/doomshade/CLionProjects/semestralka/src/main.c" "/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles/semestralka.dir/src/main.c.o"
+  "/home/doomshade/CLionProjects/semestralka/src/packet.c" "/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles/semestralka.dir/src/packet.c.o"
   "/home/doomshade/CLionProjects/semestralka/src/packet_handler.c" "/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles/semestralka.dir/src/packet_handler.c.o"
-  "/home/doomshade/CLionProjects/semestralka/src/packet_in.c" "/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles/semestralka.dir/src/packet_in.c.o"
   "/home/doomshade/CLionProjects/semestralka/src/packet_registry.c" "/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles/semestralka.dir/src/packet_registry.c.o"
   "/home/doomshade/CLionProjects/semestralka/src/packet_validator.c" "/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles/semestralka.dir/src/packet_validator.c.o"
-  "/home/doomshade/CLionProjects/semestralka/src/player-handler.c" "/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles/semestralka.dir/src/player-handler.c.o"
+  "/home/doomshade/CLionProjects/semestralka/src/player_mngr.c" "/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles/semestralka.dir/src/player_mngr.c.o"
   "/home/doomshade/CLionProjects/semestralka/src/server.c" "/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles/semestralka.dir/src/server.c.o"
   )
 set(CMAKE_C_COMPILER_ID "GNU")

@@ -1,11 +1,11 @@
 file(REMOVE_RECURSE
   "CMakeFiles/semestralka.dir/src/game_mngr.c.o"
   "CMakeFiles/semestralka.dir/src/main.c.o"
+  "CMakeFiles/semestralka.dir/src/packet.c.o"
   "CMakeFiles/semestralka.dir/src/packet_handler.c.o"
-  "CMakeFiles/semestralka.dir/src/packet_in.c.o"
   "CMakeFiles/semestralka.dir/src/packet_registry.c.o"
   "CMakeFiles/semestralka.dir/src/packet_validator.c.o"
-  "CMakeFiles/semestralka.dir/src/player-handler.c.o"
+  "CMakeFiles/semestralka.dir/src/player_mngr.c.o"
   "CMakeFiles/semestralka.dir/src/server.c.o"
   "semestralka"
   "semestralka.pdb"

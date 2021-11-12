@@ -1,43 +1,13 @@
 #include "../include/game_mngr.h"
 #include "../include/server.h"
+#include "../include/player_mngr.h"
 #include "string.h"
 #include <regex.h>
 #include <stdio.h>
 
 #define FEN_PATTERN "((([rnbqkpRNBQKP1-8]+)\\/){7}([rnbqkpRNBQKP1-8]+)) ([wb]) (K?Q?k?q?|\\-) (([a-h][0-7])|\\-) (\\d+) (\\d+)"
 
-struct player* players[MAX_PLAYER_COUNT] = {0};
 struct game* games[MAX_GAME_COUNT] = {0};
-
-int lookup_player(char* name, struct player** p) {
-    int i;
-    struct player* _p;
-
-    for (i = 0; i < MAX_PLAYER_COUNT; ++i) {
-        _p = players[i];
-        if (_p == NULL) {
-            continue;
-        }
-        if (strcmp(_p->name, name) == 0) {
-            *p = _p;
-            return 0;
-        }
-    }
-    return 1;
-}
-
-struct player* create_player(int fd, char* name) {
-    if (name == NULL) {
-        return NULL;
-    }
-    struct player* p = malloc(sizeof(struct player));
-    if (!p) {
-        return NULL;
-    }
-    p->fd = fd;
-    p->name = name;
-    return p;
-}
 
 struct game* lookup_game(char* name, struct player** p) {
     if (name == NULL || p == NULL) {
@@ -49,10 +19,10 @@ struct game* lookup_game(char* name, struct player** p) {
             continue;
         }
         if (strcmp(g->white->name, name) == 0) {
-            *p = g->white;
+            g->white = *p;
             return g;
         } else if (strcmp(g->black->name, name) == 0) {
-            *p = g->black;
+            g->black = *p;
             return g;
         }
     }
@@ -131,6 +101,10 @@ struct game* create_game(struct player* white, struct player* black, bool white_
     g->board = board;
     g->white_to_move = white_to_move;
     return g;
+}
+
+int reconnect_to_game(struct game* g, struct player* p) {
+
 }
 
 void free_player(struct player* p) {

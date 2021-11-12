@@ -2,27 +2,22 @@
 #include <stdio.h>
 #include <string.h>
 #include "../include/packet_handler.h"
-#include "../include/packet_in.h"
+#include "../include/packet.h"
 
-int handle_packet(int fd, struct packet* packet) {
+int handle_packet(struct player* pl, struct packet* pckt) {
     // CHESS01004AHOJ
     packet_handle* handle_func;
-    struct player *p;
-    int ret;
+    struct player* p;
 
-    if (packet == NULL) {
+    if (pckt == NULL) {
         return -1;
     }
 
-    ret = lookup_player()
-    p = create_player(fd, "");
-    printf("ID: %d, size: %d, data: %s\n", packet->id, packet->len, packet->data);
-    handle_func = get_handler(packet->id);
+    printf("ID: %d, size: %d, data: %s\n", pckt->id, pckt->len, pckt->data);
+    handle_func = get_handler(pckt->id);
     if (handle_func == NULL) {
         return 1;
     }
 
-    handle_func(p, packet->data);
-
-    return 0;
+    return handle_func(pl, pckt->data);
 }

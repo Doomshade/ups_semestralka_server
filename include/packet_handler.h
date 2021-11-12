@@ -2,6 +2,6 @@
 #define SEMESTRALKA_PACKET_HANDLER_H
 #include "packet_registry.h"
 
-int handle_packet(int fd, struct packet* packet);
+int handle_packet(struct player* pl, struct packet* pckt);
 
 #endif //SEMESTRALKA_PACKET_HANDLER_H

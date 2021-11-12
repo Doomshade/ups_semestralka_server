@@ -1,8 +1,8 @@
 #include "../include/packet_registry.h"
-#include "../include/packet_in.h"
+#include "../include/packet.h"
 #include <stdlib.h>
 
-#define PACKET_COUNT 0xA0
+#define PACKET_COUNT 0x80
 packet_handle* handlers[PACKET_COUNT] = {0};
 
 void register_packets() {
