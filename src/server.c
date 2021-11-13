@@ -12,6 +12,7 @@
 #include "../include/packet_handler.h"
 #include "../include/packet_validator.h"
 #include "../include/player_mngr.h"
+#include "../include/queue_mngr.h"
 
 void disconnect(int fd, fd_set* client_socks);
 
@@ -60,9 +61,10 @@ int start_server(unsigned port) {
         return rval;
     }
 
-    // initialize packet validator and register all packets
+    // initialize things
     init_pvalidator();
     register_packets();
+    init_queue();
 
     // clear the descriptors and add the server socket
     FD_ZERO(&client_socks);
@@ -180,6 +182,7 @@ int start_server(unsigned port) {
 
 void disconnect(int fd, fd_set* client_socks) {
     free_buffers(fd); // cleanup in the packet_validator (due to potential buffered header/data)
+    remove_from_queue(fd); // remove the player from the queue
     handle_disconnection(fd); // cleanup in player_mngr and store the state
     close(fd);
     FD_CLR(fd, client_socks);

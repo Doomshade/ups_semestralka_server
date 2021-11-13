@@ -10,6 +10,7 @@ CMakeFiles/semestralka.dir/src/main.c.o: \
  ../include/game_mngr.h \
  ../include/packet_handler.h \
  ../include/packet_registry.h \
+ ../include/player_mngr.h \
  ../include/server.h \
  ../src/main.c
 CMakeFiles/semestralka.dir/src/packet.c.o: \
@@ -21,7 +22,6 @@ CMakeFiles/semestralka.dir/src/packet.c.o: \
  ../src/packet.c
 CMakeFiles/semestralka.dir/src/packet_handler.c.o: \
  ../include/game_mngr.h \
- ../include/packet.h \
  ../include/packet_handler.h \
  ../include/packet_registry.h \
  ../include/player_mngr.h \
@@ -44,11 +44,17 @@ CMakeFiles/semestralka.dir/src/player_mngr.c.o: \
  ../include/player_mngr.h \
  ../include/server.h \
  ../src/player_mngr.c
+CMakeFiles/semestralka.dir/src/queue_mngr.c.o: \
+ ../include/player_mngr.h \
+ ../include/queue_mngr.h \
+ ../include/server.h \
+ ../src/queue_mngr.c
 CMakeFiles/semestralka.dir/src/server.c.o: \
  ../include/game_mngr.h \
  ../include/packet_handler.h \
  ../include/packet_registry.h \
  ../include/packet_validator.h \
  ../include/player_mngr.h \
+ ../include/queue_mngr.h \
  ../include/server.h \
  ../src/server.c

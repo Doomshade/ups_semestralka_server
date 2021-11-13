@@ -1,36 +1,8 @@
 #ifndef SEMESTRALKA_PACKET_H
 #define SEMESTRALKA_PACKET_H
 
-#include "../include/player_mngr.h"
-
-#define PACKET_IN_OFFSET 0x80
-#define PACKET_IN(out) out + PACKET_IN_OFFSET
-#define PACKET_OUT(offset, id) offset + id
-#define JUST_CONNECTED_P_OFFSET 0x00
-#define LOGGED_IN_P_OFFSET 0x20
-#define QUEUE_P_OFFSET 0x40
-#define PLAY_P_OFFSET 0x60
-
-enum just_connected_p {
-    HELLO_IN = PACKET_OUT(JUST_CONNECTED_P_OFFSET, 0),
-    HELLO_OUT = PACKET_IN(HELLO_IN),
-};
-
-enum logged_in_p {
-    QUEUE_IN = PACKET_OUT(LOGGED_IN_P_OFFSET, 0),
-    QUEUE_OUT = PACKET_IN(QUEUE_IN)
-};
-
-enum queue_p {
-    CONNECT_IN = PACKET_OUT(QUEUE_P_OFFSET, 0),
-    CONNECT_OUT = PACKET_IN(CONNECT_IN)
-};
-
-enum play_p {
-    MOVE_IN = PACKET_OUT(PLAY_P_OFFSET, 0),
-    MOVE_OUT = PACKET_IN(MOVE_IN)
-};
-
+#include "player_mngr.h"
+#include "packet_registry.h"
 /**
  * The first packet that should be sent by the client, meaning
  * the client should be in the JUST_CONNECTED state. Pushes the
@@ -43,14 +15,17 @@ enum play_p {
 int p_hello(struct player* p, char* packet);
 
 /**
- * The player wants to look for a game, we put him in a queue. The
- * client should be in the LOGGED_IN state and is updated once an
- * opponent is found
+ * The player wants to look for a game OR he wants to leave one.
+ * The client should be in the LOGGED_IN state to be added to the
+ * queue, and his state is changed to QUEUE. The client's state is
+ * changed to PLAY once an opponent is found.
+ * The client should be in the QUEUE state to be removed from the
+ * queue, and his state is changed to LOGGED_IN.
  * @param p the player
- * @param packet the packet
+ * @param data the packet
  * @return 0 if everything was okay
  */
-int p_findgm(struct player* p, char* packet);
+int p_queue(struct player* p, char* data);
 
 /**
  * The player wants to move a piece on the board. The client should

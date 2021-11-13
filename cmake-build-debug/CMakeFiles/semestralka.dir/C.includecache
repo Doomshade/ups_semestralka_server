@@ -25,6 +25,8 @@ packet_registry.h
 /home/doomshade/CLionProjects/semestralka/include/packet_registry.h
 game_mngr.h
 /home/doomshade/CLionProjects/semestralka/include/game_mngr.h
+player_mngr.h
+/home/doomshade/CLionProjects/semestralka/include/player_mngr.h
 
 /home/doomshade/CLionProjects/semestralka/include/packet_validator.h
 string.h
@@ -33,6 +35,8 @@ string.h
 /home/doomshade/CLionProjects/semestralka/include/packet_registry.h
 
 /home/doomshade/CLionProjects/semestralka/include/player_mngr.h
+
+/home/doomshade/CLionProjects/semestralka/include/queue_mngr.h
 
 /home/doomshade/CLionProjects/semestralka/include/server.h
 
@@ -79,16 +83,12 @@ sys/socket.h
 /home/doomshade/CLionProjects/semestralka/include/packet_validator.h
 
 /home/doomshade/CLionProjects/semestralka/src/packet_handler.c
-stdlib.h
--
 stdio.h
 -
 string.h
 -
 ../include/packet_handler.h
 /home/doomshade/CLionProjects/semestralka/include/packet_handler.h
-../include/packet.h
-/home/doomshade/CLionProjects/semestralka/include/packet.h
 
 /home/doomshade/CLionProjects/semestralka/src/packet_registry.c
 ../include/packet_registry.h
@@ -96,6 +96,8 @@ string.h
 ../include/packet.h
 /home/doomshade/CLionProjects/semestralka/include/packet.h
 stdlib.h
+-
+stdio.h
 -
 
 /home/doomshade/CLionProjects/semestralka/src/packet_validator.c
@@ -119,6 +121,18 @@ string.h
 /home/doomshade/CLionProjects/semestralka/include/server.h
 ../include/game_mngr.h
 /home/doomshade/CLionProjects/semestralka/include/game_mngr.h
+
+/home/doomshade/CLionProjects/semestralka/src/queue_mngr.c
+stdio.h
+-
+stdlib.h
+/home/doomshade/CLionProjects/semestralka/src/stdlib.h
+../include/queue_mngr.h
+/home/doomshade/CLionProjects/semestralka/include/queue_mngr.h
+../include/server.h
+/home/doomshade/CLionProjects/semestralka/include/server.h
+../include/player_mngr.h
+/home/doomshade/CLionProjects/semestralka/include/player_mngr.h
 
 /home/doomshade/CLionProjects/semestralka/src/server.c
 stdio.h
@@ -145,4 +159,6 @@ sys/ioctl.h
 /home/doomshade/CLionProjects/semestralka/include/packet_validator.h
 ../include/player_mngr.h
 /home/doomshade/CLionProjects/semestralka/include/player_mngr.h
+../include/queue_mngr.h
+/home/doomshade/CLionProjects/semestralka/include/queue_mngr.h
 

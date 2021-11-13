@@ -10,6 +10,7 @@ CMakeFiles/semestralka.dir/src/main.c.o
  /home/doomshade/CLionProjects/semestralka/include/game_mngr.h
  /home/doomshade/CLionProjects/semestralka/include/packet_handler.h
  /home/doomshade/CLionProjects/semestralka/include/packet_registry.h
+ /home/doomshade/CLionProjects/semestralka/include/player_mngr.h
  /home/doomshade/CLionProjects/semestralka/include/server.h
  /home/doomshade/CLionProjects/semestralka/src/main.c
 CMakeFiles/semestralka.dir/src/packet.c.o
@@ -21,7 +22,6 @@ CMakeFiles/semestralka.dir/src/packet.c.o
  /home/doomshade/CLionProjects/semestralka/src/packet.c
 CMakeFiles/semestralka.dir/src/packet_handler.c.o
  /home/doomshade/CLionProjects/semestralka/include/game_mngr.h
- /home/doomshade/CLionProjects/semestralka/include/packet.h
  /home/doomshade/CLionProjects/semestralka/include/packet_handler.h
  /home/doomshade/CLionProjects/semestralka/include/packet_registry.h
  /home/doomshade/CLionProjects/semestralka/include/player_mngr.h
@@ -44,11 +44,17 @@ CMakeFiles/semestralka.dir/src/player_mngr.c.o
  /home/doomshade/CLionProjects/semestralka/include/player_mngr.h
  /home/doomshade/CLionProjects/semestralka/include/server.h
  /home/doomshade/CLionProjects/semestralka/src/player_mngr.c
+CMakeFiles/semestralka.dir/src/queue_mngr.c.o
+ /home/doomshade/CLionProjects/semestralka/include/player_mngr.h
+ /home/doomshade/CLionProjects/semestralka/include/queue_mngr.h
+ /home/doomshade/CLionProjects/semestralka/include/server.h
+ /home/doomshade/CLionProjects/semestralka/src/queue_mngr.c
 CMakeFiles/semestralka.dir/src/server.c.o
  /home/doomshade/CLionProjects/semestralka/include/game_mngr.h
  /home/doomshade/CLionProjects/semestralka/include/packet_handler.h
  /home/doomshade/CLionProjects/semestralka/include/packet_registry.h
  /home/doomshade/CLionProjects/semestralka/include/packet_validator.h
  /home/doomshade/CLionProjects/semestralka/include/player_mngr.h
+ /home/doomshade/CLionProjects/semestralka/include/queue_mngr.h
  /home/doomshade/CLionProjects/semestralka/include/server.h
  /home/doomshade/CLionProjects/semestralka/src/server.c

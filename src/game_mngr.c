@@ -7,7 +7,69 @@
 
 #define FEN_PATTERN "((([rnbqkpRNBQKP1-8]+)\\/){7}([rnbqkpRNBQKP1-8]+)) ([wb]) (K?Q?k?q?|\\-) (([a-h][0-7])|\\-) (\\d+) (\\d+)"
 
-struct game* games[MAX_GAME_COUNT] = {0};
+struct game** games = NULL;
+int free_game_index = 0;
+
+void free_game(struct game* g) {
+    free(g->board);
+    free(g);
+}
+
+void setup_game_mngr() {
+    // the manager has already been set up
+    if (games) {
+        return;
+    }
+
+    games = calloc(MAX_GAME_COUNT, sizeof(struct game*));
+    free_game_index = 0;
+}
+
+int add_game(struct game* g) {
+    int i;
+    if (!g) {
+        return 1;
+    }
+    if (free_game_index < 0) {
+        return 2;
+    }
+
+    games[free_game_index] = g;
+    free_game_index = -1;
+    for (i = 0; i < MAX_GAME_COUNT; ++i) {
+        if (!games[i]) {
+            free_game_index = i;
+            break;
+        }
+    }
+    return 0;
+}
+
+void remove_game_by_idx(int idx) {
+    struct game* g;
+    if (idx >= MAX_GAME_COUNT) {
+        return;
+    }
+
+    free_game(games[idx]);
+    games[idx] = NULL;
+}
+
+void finish_game(struct game* g, int winner) {
+    int i;
+    if (!g) {
+        return;
+    }
+
+    
+
+    for (i = 0; i < MAX_GAME_COUNT; ++i) {
+        if (games[i] && g == games[i]) {
+            remove_game_by_idx(i);
+            return;
+        }
+    }
+}
 
 struct game* lookup_game(char* name, struct player** p) {
     if (name == NULL || p == NULL) {
@@ -29,7 +91,7 @@ struct game* lookup_game(char* name, struct player** p) {
     return NULL;
 }
 
-int setup_game(char* fen) {
+int setup_game(struct game* g, char* fen) {
     if (fen == NULL) {
         return 1;
     }
@@ -103,6 +165,19 @@ struct game* create_game(struct player* white, struct player* black, bool white_
     return g;
 }
 
+int game_create(struct player* white, struct player* black) {
+    struct game* g;
+    if (!white || !black) {
+        return 1;
+    }
+    g = create_game(white, black, true);
+    if (!g) {
+        return 1;
+    }
+
+    return 0;
+}
+
 int reconnect_to_game(struct game* g, struct player* p) {
 
 }
@@ -113,9 +188,4 @@ void free_player(struct player* p) {
     }
     free(p->name);
     free(p);
-}
-
-void free_game(struct game* g) {
-    free_player(g->white);
-    free_player(g->black);
 }

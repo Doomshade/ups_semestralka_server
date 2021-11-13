@@ -297,6 +297,30 @@ src/player_mngr.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/player_mngr.c.s
 .PHONY : src/player_mngr.c.s
 
+src/queue_mngr.o: src/queue_mngr.c.o
+.PHONY : src/queue_mngr.o
+
+# target to build an object file
+src/queue_mngr.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/queue_mngr.c.o
+.PHONY : src/queue_mngr.c.o
+
+src/queue_mngr.i: src/queue_mngr.c.i
+.PHONY : src/queue_mngr.i
+
+# target to preprocess a source file
+src/queue_mngr.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/queue_mngr.c.i
+.PHONY : src/queue_mngr.c.i
+
+src/queue_mngr.s: src/queue_mngr.c.s
+.PHONY : src/queue_mngr.s
+
+# target to generate assembly for a file
+src/queue_mngr.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/queue_mngr.c.s
+.PHONY : src/queue_mngr.c.s
+
 src/server.o: src/server.c.o
 .PHONY : src/server.o
 
@@ -351,6 +375,9 @@ help:
 	@echo "... src/player_mngr.o"
 	@echo "... src/player_mngr.i"
 	@echo "... src/player_mngr.s"
+	@echo "... src/queue_mngr.o"
+	@echo "... src/queue_mngr.i"
+	@echo "... src/queue_mngr.s"
 	@echo "... src/server.o"
 	@echo "... src/server.i"
 	@echo "... src/server.s"

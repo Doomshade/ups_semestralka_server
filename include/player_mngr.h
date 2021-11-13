@@ -2,6 +2,9 @@
 #ifndef SEMESTRALKA_PLAYER_MNGR_H
 #define SEMESTRALKA_PLAYER_MNGR_H
 
+/**
+ * The player's state
+ */
 enum player_state {
 
     /**
@@ -25,6 +28,9 @@ enum player_state {
     PLAY
 };
 
+/**
+ * The client wrapper
+ */
 struct player {
 
     /**
