@@ -65,8 +65,6 @@ void init_pvalidator() {
     buffered_pdata = calloc(MAX_PLAYER_COUNT, sizeof(char*));
 }
 
-void free_buffers(int fd);
-
 struct packet* parse_packet(char** packet, int* erc, struct player* pl) {
     // pl's fd
     int fd;

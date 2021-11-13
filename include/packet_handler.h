@@ -2,6 +2,7 @@
 #define SEMESTRALKA_PACKET_HANDLER_H
 
 #include "packet_registry.h"
+#define PLAYER_INVALID_STATE 0x24
 
 /**
  * Handles the packet sent by the player

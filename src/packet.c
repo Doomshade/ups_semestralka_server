@@ -38,7 +38,7 @@ int p_hello(struct player* p, char* data) {
     const char* HI = "Hi %s!\n";
     struct packet* pckt;
     if (p->ps != JUST_CONNECTED) {
-        return CLIENT_SENT_PACKET_IN_INVALID_STATE;
+        return PACKER_ERR_INVALID_CLIENT_STATE;
     }
     printf("FD: %d\n", p->fd);
     printf("Name (before): %s\n", p->name);
@@ -56,18 +56,22 @@ int p_hello(struct player* p, char* data) {
     return ret;
 }
 
-int p_findgm(int fd, char* data) {
+int p_findgm(struct player* p, char* data) {
+    int ret;
+    char* buf;
+
+
     return 0;
 }
 
-int p_movepc(int fd, char* data) {
+int p_movepc(struct player* p, char* data) {
     return 0;
 }
 
-int p_offdraw(int fd, char* data) {
+int p_offdraw(struct player* p, char* data) {
     return 0;
 }
 
-int p_resign(int fd, char* data) {
+int p_resign(struct player* p, char* data) {
     return 0;
 }

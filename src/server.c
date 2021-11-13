@@ -143,11 +143,22 @@ int start_server(unsigned port) {
                 }
                 rval = handle_packet(player, pckt); // the packet is valid, handle it
 
-                // the packet was sent in an invalid state
-                if (rval == CLIENT_SENT_PACKET_IN_INVALID_STATE) {
-                    printf("A client has sent a packet in an invalid state\n");
-                    disconnect(fd, &client_socks);
-                    goto FREE;
+                switch (rval) {
+                    case PACKET_ERR_INVALID_ID:
+                        printf("A client sent a packet with invalid ID\n");
+                        disconnect(fd, &client_socks);
+                        goto FREE;
+                    case PACKET_ERR_STATE_OUT_OF_BOUNDS:
+                        printf("A client sent a packet in a state that was out of bounds\n");
+                        printf("This should not happen! Contact the authors for fix\n");
+                        disconnect(fd, &client_socks);
+                        goto FREE;
+                    case PACKER_ERR_INVALID_CLIENT_STATE:
+                        printf("A client sent a packet in an invalid state\n");
+                        disconnect(fd, &client_socks);
+                        goto FREE;
+                    default:
+                        break;
                 }
 
                 // there could still be some leftover data in the buffer,
