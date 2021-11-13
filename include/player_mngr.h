@@ -74,6 +74,8 @@ int handle_new_connection(int fd);
 
 int handle_possible_reconnection(struct player** p);
 
+void change_state(struct player* p, enum player_state ps);
+
 /**
  * Handles the disconnection of the client - storing his current state
  * @param fd the client's file descriptor

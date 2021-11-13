@@ -71,7 +71,7 @@ int game_create(struct player* white, struct player* black);
  * 4 if white by time,
  * 5 if black by time
  */
-void finish_game(struct game* g, int winner);
+int finish_game(struct game* g, int winner);
 
 /**
  * Sets up the game manager
@@ -79,11 +79,11 @@ void finish_game(struct game* g, int winner);
 void setup_game_mngr();
 
 /**
- * Attempts to lookup a game by player's name and then assigns the player's state etc
+ * Attempts to lookup a game by player's name
  * @param name the player's name
  * @param p the player
- * @return the game if it exists
+ * @return the game if it exists or NULL
  */
-struct game* lookup_game(char* name, struct player** p);
+struct game* lookup_game(struct player* p);
 
 #endif //SEMESTRALKA_GAME_MNGR_H

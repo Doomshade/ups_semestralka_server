@@ -13,6 +13,8 @@ void register_packets() {
     handlers[LOGGED_IN][QUEUE_IN] = p_queue;
     handlers[QUEUE][QUEUE_IN] = p_queue;
     handlers[PLAY][MOVE_IN] = p_movepc;
+    handlers[PLAY][DRAW_OFFER_IN] = p_offdraw;
+    handlers[PLAY][RESIGN_IN] = p_resign;
 }
 
 int send_raw(struct player* p, char* buf, unsigned long* len) {

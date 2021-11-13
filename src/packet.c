@@ -4,22 +4,21 @@
 #include "../include/packet_validator.h"
 #include "../include/queue_mngr.h"
 
+#define VALIDATE_PARAM(p) if (!p) return 1;
+#define VALIDATE_PARAMS(p, data) VALIDATE_PARAM(p) VALIDATE_PARAM(data)
+
 int p_hello(struct player* p, char* data) {
     int ret;
     char* buf; // the packet data we send
     const char* HI = "Hi %s!\n";
     struct packet* pckt;
 
-    if (!p || !data) {
-        return 1;
-    }
+    VALIDATE_PARAMS(p, data)
 
     // handle the packet
-    printf("FD: %d\n", p->fd);
-    printf("Name (before): %s\n", p->name);
     p->name = data;
-    printf("Name (after): %s\n", p->name);
-    p->ps = LOGGED_IN;
+    //p->ps = LOGGED_IN;
+    change_state(p, LOGGED_IN);
 
     // the OUT packet data
     buf = malloc(sizeof(char) * (strlen("Hi !\n") + strlen(p->name) + 1));
@@ -36,9 +35,7 @@ int p_hello(struct player* p, char* data) {
 }
 
 int p_queue(struct player* p, char* data) {
-    if (!p || !data) {
-        return 1;
-    }
+    VALIDATE_PARAM(p)
 
     // check for the state and do things based on that
     switch (p->ps) {
@@ -52,14 +49,42 @@ int p_queue(struct player* p, char* data) {
 }
 
 int p_movepc(struct player* p, char* data) {
-
+    // TODO
     return 0;
 }
 
 int p_offdraw(struct player* p, char* data) {
-    return 0;
+    struct game* g;
+    char* PAYLOAD = "";
+
+    VALIDATE_PARAM(p)
+
+    // TODO add a timeout for the draw offer
+    g = lookup_game(p);
+    if (!g) {
+        return 1;
+    }
+
+    return send_packet(g->white == p ? g->black : g->white,
+                       create_packet(DRAW_OFFER_OUT, strlen(PAYLOAD), PAYLOAD));
 }
 
 int p_resign(struct player* p, char* data) {
-    return 0;
+    struct game* g;
+    int winner;
+
+    VALIDATE_PARAM(p)
+
+    g = lookup_game(p);
+    if (!g) {
+        return 1;
+    }
+    if (g->white == p){
+        winner = BLACK_WINNER;
+    } else {
+        winner = WHITE_WINNER;
+    }
+
+    winner |= WIN_BY_RESIGNATION;
+    return finish_game(g, winner);
 }

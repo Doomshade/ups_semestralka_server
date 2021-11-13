@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdio.h>
 #include "../include/player_mngr.h"
 #include "../include/server.h"
 #include "../include/game_mngr.h"
@@ -47,7 +48,7 @@ struct player* create_player(int fd, char* name) {
         return NULL;
     }
     p->fd = fd;
-    p->ps = JUST_CONNECTED;
+    change_state(p, JUST_CONNECTED);
     p->name = name;
     return p;
 }
@@ -71,6 +72,11 @@ int handle_new_connection(int fd) {
     return 0;
 }
 
+void change_state(struct player* p, enum player_state ps) {
+    p->ps = ps;
+    printf("Changed %s state to %d\n", p->name, ps);
+}
+
 int handle_possible_reconnection(struct player** p) {
     int i;
     struct game* g;
@@ -84,11 +90,12 @@ int handle_possible_reconnection(struct player** p) {
         // from the disconnected instance to the new one EXCEPT
         // for the FD (and the name can be skipped too)
         if (strcmp(dc_players[i]->name, (*p)->name) == 0) {
-            (*p)->ps = dc_players[i]->ps;
+            change_state(*p, dc_players[i]->ps);
 
+            // TODO
             // the client was in-game, lookup the game and reconnect him
             if ((*p)->ps == PLAY) {
-                g = lookup_game((*p)->name, p);
+                g = lookup_game(*p);
 
                 // the game has likely ended
                 if (!g) {
