@@ -49,7 +49,56 @@ int p_queue(struct player* p, char* data) {
 }
 
 int p_movepc(struct player* p, char* data) {
-    // TODO
+    unsigned int rank_from; // A-H -> 0-7
+    unsigned int rank_to; // A-H -> 0-7
+    unsigned int file_from; // 1-8 -> 0-7
+    unsigned int file_to; // 1-8 -> 0-7
+    unsigned int max_bound; // 0-7
+    struct game* g;
+    struct packet* pc;
+    char* msg;
+
+    VALIDATE_PARAMS(p, data)
+
+    g = lookup_game(p);
+    if (!g) {
+        return 1;
+    }
+
+    // the packet should be in "A2A4" format
+    if (strlen(data) != 4) {
+        return 1;
+    }
+    file_from = data[0] - 'A';
+    file_to = data[2] - 'A';
+    rank_from = data[1] - '1';
+    rank_to = data[3] - '1';
+
+    // basically wee should get a value 0-7 like that
+    max_bound = rank_from | rank_to | file_from | file_to;
+    if (max_bound >= 8) {
+        msg = "INVALID";
+        pc = create_packet(MOVE_OUT, strlen(msg), msg);
+        if (!pc) {
+            return 1;
+        }
+
+        send_packet(p, pc);
+        return 1;
+    }
+
+    // check whose turn it is
+
+
+    if (move_piece(g, p, rank_from, file_from, rank_to, file_to)) {
+        printf("Invalid move!\n");
+        return 1;
+    }
+    // TODO validate the move
+    pc = create_packet(MOVE_OUT, strlen(data), data);
+    send_packet(g->white, pc);
+    send_packet(g->black, pc);
+
     return 0;
 }
 
@@ -79,7 +128,7 @@ int p_resign(struct player* p, char* data) {
     if (!g) {
         return 1;
     }
-    if (g->white == p){
+    if (g->white == p) {
         winner = BLACK_WINNER;
     } else {
         winner = WHITE_WINNER;

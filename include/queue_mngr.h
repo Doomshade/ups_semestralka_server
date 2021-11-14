@@ -1,7 +1,7 @@
 #ifndef SEMESTRALKA_QUEUE_MNGR_H
 #define SEMESTRALKA_QUEUE_MNGR_H
 
-void init_queue();
+void init_qman();
 
 int add_to_queue(int fd);
 

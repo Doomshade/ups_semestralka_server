@@ -62,9 +62,10 @@ int start_server(unsigned port) {
     }
 
     // initialize things
-    init_pvalidator();
-    register_packets();
-    init_queue();
+    init_pval(); // packet validator
+    init_preg(); // packet registry
+    init_qman(); // queue manager
+    init_gman(); // game manager
 
     // clear the descriptors and add the server socket
     FD_ZERO(&client_socks);
@@ -89,7 +90,11 @@ int start_server(unsigned port) {
                     printf("A client has connected and was assigned fd %d\n", client_socket);
 
                     // this adds the client to the player array
-                    handle_new_connection(client_socket);
+                    rval = handle_new_connection(client_socket);
+                    if (rval == 2) {
+                        printf("An FD with ID %d is already registered, this should not happen!\n", fd);
+                        disconnect(fd, &client_socks);
+                    }
                     continue;
                 }
                 // client sent some data
@@ -146,6 +151,8 @@ int start_server(unsigned port) {
                 rval = handle_packet(player, pckt); // the packet is valid, handle it
 
                 switch (rval) {
+                    case 0:
+                        break;
                     case PACKET_ERR_INVALID_ID:
                         printf("A client sent a packet with invalid ID\n");
                         disconnect(fd, &client_socks);
@@ -160,6 +167,7 @@ int start_server(unsigned port) {
                         disconnect(fd, &client_socks);
                         goto FREE;
                     default:
+                        printf("An error occurred when handling the packet\n");
                         break;
                 }
 

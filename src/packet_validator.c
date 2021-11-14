@@ -59,7 +59,7 @@ int validate_header(char* header, unsigned int* p_id, unsigned int* p_siz) {
     return PACKET_OK;
 }
 
-void init_pvalidator() {
+void init_pval() {
 
     buffered_pheaders = calloc(MAX_PLAYER_COUNT, sizeof(char) * (PACKET_HEADER_SIZE + 1));
     buffered_pdata = calloc(MAX_PLAYER_COUNT, sizeof(char*));

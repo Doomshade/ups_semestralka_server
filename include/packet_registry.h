@@ -7,12 +7,16 @@
 #define PACKET_ERR_INVALID_ID 0x11
 #define PACKET_ERR_STATE_OUT_OF_BOUNDS 0x12
 
-#define PACKET_IN_OFFSET 0x80
-#define PACKET_OUT(out) out + PACKET_IN_OFFSET
+#define PACKET_OUT_OFFSET 10
+#define PACKET_OUT(packet_in) packet_in + PACKET_OUT_OFFSET
 #define PACKET_IN(offset, id) offset + id
+// IN: 0-31 0x(00-1F); OUT: 128-159 0x(80-9F)
 #define JUST_CONNECTED_P_OFFSET 0x00
+// IN: 32-63 0x(20-3F) OUT: 160-191 0x(A0-BF)
 #define LOGGED_IN_P_OFFSET 0x20
+// IN: 64-96 0x(40-5F) OUT: 192-223 0x(C0-DF)
 #define QUEUE_P_OFFSET 0x40
+// IN: 96-127 0x(60-7F) OUT: 224-255 0x(E0-FF)
 #define PLAY_P_OFFSET 0x60
 
 /**
@@ -122,6 +126,6 @@ packet_handle* get_handler(unsigned int id, enum player_state pstate, int* erc);
 /**
  * Registers the packets in the memory
  */
-void register_packets();
+void init_preg();
 
 #endif //SEMESTRALKA_PACKET_REGISTRY_H

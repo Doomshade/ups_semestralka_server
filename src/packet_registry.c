@@ -8,7 +8,7 @@
 #define STATE_COUNT 4
 packet_handle* handlers[STATE_COUNT][PACKET_COUNT] = {0};
 
-void register_packets() {
+void init_preg() {
     handlers[JUST_CONNECTED][HELLO_IN] = p_hello;
     handlers[LOGGED_IN][QUEUE_IN] = p_queue;
     handlers[QUEUE][QUEUE_IN] = p_queue;

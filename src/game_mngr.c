@@ -5,6 +5,7 @@
 #include "../include/packet_registry.h"
 #include <regex.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #define FEN_PATTERN "((([rnbqkpRNBQKP1-8]+)\\/){7}([rnbqkpRNBQKP1-8]+)) ([wb]) (K?Q?k?q?|\\-) (([a-h][0-7])|\\-) (\\d+) (\\d+)"
 
@@ -16,7 +17,7 @@ void free_game(struct game* g) {
     free(g);
 }
 
-void setup_game_mngr() {
+void init_gman() {
     // the manager has already been set up
     if (games) {
         return;
@@ -28,7 +29,7 @@ void setup_game_mngr() {
 
 int add_game(struct game* g) {
     int i;
-    if (!g) {
+    if (!g || !games) {
         return 1;
     }
     if (free_game_index < 0) {
@@ -47,13 +48,14 @@ int add_game(struct game* g) {
 }
 
 void remove_game_by_idx(int idx) {
-    struct game* g;
-    if (idx >= MAX_GAME_COUNT) {
+    if (!games || idx >= MAX_GAME_COUNT) {
         return;
     }
 
-    free_game(games[idx]);
-    games[idx] = NULL;
+    if (games[idx]) {
+        free_game(games[idx]);
+        games[idx] = NULL;
+    }
 }
 
 char* int2bin(int a, char* buffer, int buf_size) {
@@ -80,7 +82,7 @@ int finish_game(struct game* g, int winner) {
     struct packet* pckt;
     int ret;
 
-    if (!g) {
+    if (!g || !games) {
         return 1;
     }
     msg[flags] = '\0';
@@ -106,7 +108,7 @@ int finish_game(struct game* g, int winner) {
 }
 
 struct game* lookup_game(struct player* p) {
-    if (!p) {
+    if (!p || !games) {
         return NULL;
     }
     for (int i = 0; i < MAX_GAME_COUNT; ++i) {
@@ -122,70 +124,12 @@ struct game* lookup_game(struct player* p) {
     return NULL;
 }
 
-int setup_game(struct game* g, char* fen) {
-    if (fen == NULL) {
-        return 1;
-    }
-    regex_t reg;
-    char buf[256];
-    char* board[8] = {0};
-    char* token;
-    char* es;
-    int rank = 0;
-    int ret;
-    int i = 0;
-
-    ret = regcomp(&reg, fen, 0);
-
-    // the regex is invalid (should not happen)
-    if (ret != 0) {
-        fprintf(stderr, "(%d) Could not compile regex\n", ret);
-        return ret;
-    }
-
-    ret = regexec(&reg, FEN_PATTERN, 0, NULL, 0);
-
-    // the fen is invalid
-    if (ret != 0) {
-        fprintf(stderr, "(%d) Invalid FEN pattern: %s\n", ret, fen);
-        return ret;
-    }
-
-    // the first part is the board
-    // "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR" w KQkq - 0 1
-    token = strtok(fen, "/");
-
-    // the "row" in chessboard
-    while (token != NULL && rank < 8) {
-        // check for an empty space
-        es = strchr(token, ' ');
-
-        // we reached the end of the first part: "RNBQKBNR w KQkq - 0 1"
-        if (es != NULL) {
-            memset(buf, 0, 256);
-            while (*es != ' ') {
-                buf[i++] = *es;
-                es++;
-            }
-            break;
-        }
-        token = strtok(NULL, "/");
-        board[rank] = token;
-        rank++;
-    }
-
-    // now we check who's to move
-
-    regfree(&reg);
-    return 0;
-}
-
 struct game* create_game(struct player* white, struct player* black, bool white_to_move) {
-    if (white == NULL || black == NULL) {
+    if (!white || !black || !games) {
         return NULL;
     }
     struct game* g = malloc(sizeof(struct game));
-    if (g == NULL) {
+    if (!g) {
         return NULL;
     }
     g->white = white;
@@ -198,25 +142,168 @@ struct game* create_game(struct player* white, struct player* black, bool white_
 
 int game_create(struct player* white, struct player* black) {
     struct game* g;
-    if (!white || !black) {
+    char* fen;
+    if (!white || !black || !games) {
         return 1;
     }
+
     g = create_game(white, black, true);
     if (!g) {
         return 1;
     }
+    printf("Creating a new game for %s (W) and %s (B)\n", white->name, black->name);
+    change_state(white, PLAY);
+    change_state(black, PLAY);
 
+    fen = malloc(sizeof(char) * (strlen(START_FEN) + 1));
+    strcpy(fen, START_FEN);
+    setup_game(g, fen);
+
+    return add_game(g);
+}
+
+void print_hline() {
+    int i;
+    printf("-");
+    for (i = 0; i < 8; ++i) {
+        printf("----");
+    }
+    printf("\n");
+}
+
+void print_board(struct game* g) {
+    int i, j;
+
+    if (!g || !g->board) {
+        return;
+    }
+
+    printf("\n");
+
+    print_hline();
+    for (i = 7; i >= 0; --i) {
+        printf("| ");
+        for (j = 0; j < 8; ++j) {
+            printf("%c | ", g->board->board[i][j]);
+        }
+        printf("\n");
+        print_hline();
+    }
+}
+
+int setup_game(struct game* g, char* fen) {
+
+    regex_t reg;
+    char buf[BUFSIZ];
+    char* board[8] = {0};
+    char* token;
+    char* es;
+    int rank = 0;
+    int ret;
+    int i = 0, j = 0;
+    regmatch_t match;
+
+    if (!g || !fen || !games) {
+        return 1;
+    }
+    // TODO fix the regex
+    /*ret = regcomp(&reg, FEN_PATTERN, 0);
+
+    // the regex is invalid (should not happen)
+    if (ret) {
+        fprintf(stderr, "(%d) Could not compile regex\n", ret);
+        return ret;
+    }
+
+    ret = regexec(&reg, fen, 0, &match, 0);
+
+    // the fen is invalid
+    if (ret == REG_NOMATCH) {
+        fprintf(stderr, "(%d) Invalid FEN pattern: %s\n", ret, fen);
+        return ret;
+    }*/
+
+    // the first part is the board
+    // "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR" w KQkq - 0 1
+    token = strtok(fen, "/");
+
+    // the "row" in chessboard
+    while (token != NULL && rank < 8) {
+        // check for an empty space
+        es = strchr(token, ' ');
+
+        // we reached the end of the first part: "RNBQKBNR w KQkq - 0 1"
+        if (es != NULL) {
+            memset(buf, 0, BUFSIZ);
+
+            // shift until we find non-space char
+            while (*es != ' ') {
+                buf[i++] = *es;
+                es++;
+            }
+            board[rank] = buf;
+            break;
+        }
+        token = strtok(NULL, "/");
+        board[rank++] = token;
+    }
+
+    for (i = 0; i < 8; ++i) {
+        for (j = 0; j < 8; ++j) {
+            g->board->board[i][j] = ' ';
+        }
+    }
+
+    // TODO
+    g->board->board[0][0] = 'r';
+    g->board->board[0][1] = 'n';
+    g->board->board[0][2] = 'b';
+    g->board->board[0][3] = 'q';
+    g->board->board[0][4] = 'd';
+    g->board->board[0][5] = 'b';
+    g->board->board[0][6] = 'n';
+    g->board->board[0][7] = 'r';
+
+    for (i = 0; i < 8; ++i) {
+        g->board->board[1][i] = 'p';
+        g->board->board[6][i] = 'P';
+        g->board->board[7][i] = (char) toupper(g->board->board[0][i]);
+    }
+    // now we check who's to move
+    // "w KQkq - 0 1"
+    // TODO
+    print_board(g);
+
+    regfree(&reg);
+    return 0;
+}
+
+int move_piece(struct game* g, struct player* p, unsigned int rank_from, unsigned int file_from, unsigned int rank_to,
+               unsigned int file_to) {
+    char pce_from;
+    bool white;
+    if (!g || !p || (file_from | rank_from | file_to | file_from) >= 8) {
+        return 1;
+    }
+    white = g->white == p;
+
+    // the player is not on the move
+    // ignore the packet
+    if (white != g->white_to_move){
+        return 0;
+    }
+    pce_from = g->board->board[rank_from][file_from];
+    if (pce_from == ' ') {
+        return 1;
+    }
+    printf("[%d,%d] '%c' -> [%d,%d] '%c'\n", rank_from, file_from, pce_from, rank_to, file_to,
+           g->board->board[rank_to][file_to]);
+    g->board->board[rank_to][file_to] = pce_from;
+    g->board->board[rank_from][file_from] = ' ';
+    print_board(g);
     return 0;
 }
 
 int reconnect_to_game(struct game* g, struct player* p) {
-
-}
-
-void free_player(struct player* p) {
-    if (p == NULL) {
-        return;
-    }
-    free(p->name);
-    free(p);
+    return 0;
 }

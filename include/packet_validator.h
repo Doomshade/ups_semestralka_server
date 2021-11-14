@@ -7,7 +7,8 @@
 #define PACKET_MAGIC_HEADER "CHESS"
 #define PACKET_ID_LENGTH 2
 #define PACKET_SIZE_LENGTH 3
-#define PACKET_HEADER_FORMAT "%4s%02x%03d%s"
+// (CHESS)(00-FF)(000-999)(<payload>)
+#define PACKET_HEADER_FORMAT "%5s%02x%03d%s"
 #define PACKET_HEADER_SIZE strlen(PACKET_MAGIC_HEADER) + PACKET_ID_LENGTH + PACKET_SIZE_LENGTH
 #define PACKET_OK 0
 #define PACKET_NOT_YET_FULLY_BUFFERED -1
@@ -25,7 +26,7 @@
 /**
  * Initializes the packet validator
  */
-void init_pvalidator();
+void init_pval();
 
 /**
  * Attempts to parse the packet sent by the player. Note that the

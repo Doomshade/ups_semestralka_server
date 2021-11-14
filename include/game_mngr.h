@@ -27,7 +27,7 @@ struct chessboard {
     /**
      * The last pawn move (because of en passant and FEN string)
      */
-    char lpm[2];
+    char lm[2];
 };
 
 /**
@@ -76,7 +76,16 @@ int finish_game(struct game* g, int winner);
 /**
  * Sets up the game manager
  */
-void setup_game_mngr();
+void init_gman();
+
+/**
+ * A move invoked by the player
+ * @param p the player
+ * @param file_from the file_from
+ * @param rank_from the rank_from
+ * @return 0 if everything went fine
+ */
+int move_piece(struct game* g, struct player* p, unsigned int rank_from, unsigned int file_from, unsigned int rank_to, unsigned int file_to);
 
 /**
  * Attempts to lookup a game by player's name
