@@ -57,7 +57,6 @@ int p_hello(struct player* pl, char* data) {
         printf("Player name too long! Max size is %d\n", MAX_PLAYER_NAME_LENGTH);
         return 0;
     }
-    change_state(pl, LOGGED_IN);
 
     // the OUT packet data
 #ifdef __DEBUG_MODE
@@ -91,15 +90,15 @@ int p_hello(struct player* pl, char* data) {
                     change_state(pl, LOGGED_IN);
                     return 0;
                 }
-                reconnect_to_game(pl, g);
-                break;
+                return reconnect_to_game(pl, g);
             case QUEUE:
-                change_state(pl, QUEUE);
-                break;
+                change_state(pl, LOGGED_IN);
+                return 0;
             default:
                 break;
         }
     }
+    change_state(pl, LOGGED_IN);
 
     // ret |= handle_possible_reconnection(&pl);
     return 0;

@@ -42,7 +42,7 @@ struct game {
 
 int reconnect_to_game(struct player* pl, struct game* g);
 
-const char* generate_fen(struct chessboard* board);
+char* generate_fen(struct chessboard* board);
 
 /**
  * Sets up the game from the fen string

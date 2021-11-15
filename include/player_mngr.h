@@ -65,6 +65,12 @@ int lookup_dc_player(char* name, struct player** p);
  */
 int lookup_player_by_fd(int fd, struct player** p);
 
+/**
+ * Validates and changes the players name
+ * @param p the player
+ * @param name the new name
+ * @return 0 if everything went ok
+ */
 int change_player_name(struct player* p, char* name);
 
 /**

@@ -49,6 +49,7 @@ int lookup_player_by_name(char* name, struct player** p) {
 int lookup_dc_player(char* name, struct player** p) {
     int i;
     struct player* _p;
+    struct player* arr_p;
     if (!name || !p) {
         return 1;
     }
@@ -58,8 +59,16 @@ int lookup_dc_player(char* name, struct player** p) {
             continue;
         }
         _p = dc_players[i];
-        if (strcmp(_p->name, name) == 0) {
-            *p = _p;
+        if (strcmp(_p->name, name) == 0) { // the player was previously disconnected
+            printf("Found a disconnected player under index %d with name %s, FD %d, and state %d\n", i, _p->name,
+                   _p->fd, _p->ps);
+            printf("Changing (current) name %s, FD: %d, and state: %d to ^\n", (*p)->name, (*p)->fd, (*p)->ps);
+            _p->fd = (*p)->fd; // change the FD to the new one
+            *p = _p; // return the previous state with the current FD
+            printf("Player after changes: %s, FD %d, state %d\n", (*p)->name, (*p)->fd, (*p)->ps);
+            lookup_player_by_fd((*p)->fd, &arr_p);
+            printf("Player after changes in arr: %s, FD %d, state %d\n", arr_p->name, arr_p->fd, arr_p->ps);
+            dc_players[i] = NULL; // remove the player from the dc_players
             return 0;
         }
     }
@@ -150,6 +159,11 @@ int handle_disconnection(int fd) {
 
     players[fd] = NULL;
 
+#ifdef __DEBUG_MODE
+    if (!(ret = lookup_player_by_fd(fd, &p))) {
+        printf("Player is still in memory somehow...\n");
+    }
+#endif
 
     // add him to the disconnected list
     // CAUTION: do not store it under the
@@ -158,8 +172,9 @@ int handle_disconnection(int fd) {
     // joins a game, disconnects,
     // a different client joins and is given
     // the FD 4 and that client would be reconnected!
-    for (i = 0; i < MAX_PLAYER_COUNT; ++i) {
+    for (i = 0; i < MAX_DISCONNECTED_COUNT; ++i) {
         if (dc_players[i] == NULL) {
+            printf("Storing %s under %d in the disconnected list\n", p->name, i);
             dc_players[i] = p;
             return 0;
         }
