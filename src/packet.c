@@ -107,9 +107,9 @@ int p_queue(struct player* p, char* data) {
     // check for the state and do things based on that
     switch (p->ps) {
         case LOGGED_IN: // the player wants to join the queue
-            return add_to_queue(p->fd);
+            return add_to_queue(p);
         case QUEUE: // the player wants to leave the queue
-            return remove_from_queue(p->fd);
+            return remove_from_queue(p);
         default:
             return 1;
     }

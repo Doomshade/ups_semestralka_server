@@ -3,12 +3,11 @@
 #include "stdlib.h"
 #include "../include/queue_mngr.h"
 #include "../include/server.h"
-#include "../include/player_mngr.h"
 #include "../include/packet_registry.h"
 
 #define NOT_IN_QUEUE 0
 #define IS_IN_QUEUE 1
-#define VALIDATE_QUEUE(fd) if(!queue || fd >= MAX_PLAYER_COUNT) return 1;
+#define VALIDATE_QUEUE(p) if(!queue || p->fd >= MAX_PLAYER_COUNT) return 1;
 
 // TODO make this an actual queue someday maybe?
 int* queue = NULL;
@@ -52,34 +51,31 @@ int send_queue_out_pc(struct player* p, bool white, char* op) {
     return ret;
 }
 
-int add_to_queue(int fd) {
+int add_to_queue(struct player* p) {
     int i;
     int q_state; // the state of the player in queue
     int ret;
+    int fd;
     struct packet* pc;
-    struct player* pl; // the player
     struct player* op; // opponent
 
-    VALIDATE_QUEUE(fd)
+    VALIDATE_QUEUE(p)
+    fd = p->fd;
     q_state = queue[fd];
 
     switch (q_state) {
         case NOT_IN_QUEUE:
-            printf("Adding %d to the queue...\n", fd);
+            printf("Adding %s to the queue...\n", p->name);
             queue[fd] = IS_IN_QUEUE;
 
-            lookup_player_by_fd(fd, &pl);
-            if (!pl) {
-                return 1;
-            }
             pc = create_packet(QUEUE_OUT, strlen("0"), "0");
             if (!pc) {
                 return 1;
             }
-            if (send_packet(pl, pc)) {
+            if (send_packet(p, pc)) {
                 return 1;
             }
-            change_state(pl, QUEUE);
+            change_state(p, QUEUE);
 
             // check for a game now
             for (i = 0; i < MAX_PLAYER_COUNT; ++i) {
@@ -99,15 +95,15 @@ int add_to_queue(int fd) {
                     // yes this is perhaps utterly retarded, but basically
                     // if the first packet fails, we don't even send the
                     // second one and immediately remove both from queue
-                    if ((ret = send_queue_out_pc(pl, true, op->name)) ||
-                        (ret = send_queue_out_pc(op, false, pl->name)));
+                    if ((ret = send_queue_out_pc(p, true, op->name)) ||
+                        (ret = send_queue_out_pc(op, false, p->name)));
 
-                    remove_from_queue(fd);
-                    remove_from_queue(i);
+                    remove_from_queue(p);
+                    remove_from_queue(op);
 
                     if (!ret) {
                         printf("Creating a new game...\n");
-                        ret = game_create(pl, op);
+                        ret = game_create(p, op);
                         if (ret) {
                             printf("Failed to create a new game! (%d)\n", ret);
                         }
@@ -117,33 +113,30 @@ int add_to_queue(int fd) {
             }
             return 0;
         case IS_IN_QUEUE:
-            printf("%d is already in the queue\n", fd);
+            printf("%s is already in the queue\n", p->name);
             return 0;
         default:
-            printf("Invalid queue state %d for fd %d\n", q_state, fd);
+            printf("Invalid queue state %d for fd %s\n", q_state, p->name);
             return 1;
     }
 }
 
-int remove_from_queue(int fd) {
+int remove_from_queue(struct player* p) {
     int q_state;
-    struct player* p;
     struct packet* pc;
     int ret;
+    int fd;
 
-    VALIDATE_QUEUE(fd)
+    VALIDATE_QUEUE(p)
+    fd = p->fd;
     q_state = queue[fd];
 
     switch (q_state) {
         case NOT_IN_QUEUE:
             return 0;
         case IS_IN_QUEUE:
-            printf("%d has been removed from the queue\n", fd);
+            printf("%s has been removed from the queue\n", p->name);
             queue[fd] = NOT_IN_QUEUE;
-            lookup_player_by_fd(fd, &p);
-            if (!p) {
-                return 1;
-            }
             pc = create_packet(QUEUE_OUT, strlen("1"), "1");
             if (!pc) {
                 return 1;
@@ -155,7 +148,7 @@ int remove_from_queue(int fd) {
             change_state(p, LOGGED_IN);
             return 0;
         default:
-            printf("Invalid queue state %d for fd %d\n", q_state, fd);
+            printf("Invalid queue state %d for %s\n", q_state, p->name);
             return 1;
     }
 }

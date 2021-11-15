@@ -35,6 +35,8 @@ packet_registry.h
 /home/doomshade/CLionProjects/semestralka/include/player_mngr.h
 
 /home/doomshade/CLionProjects/semestralka/include/queue_mngr.h
+player_mngr.h
+/home/doomshade/CLionProjects/semestralka/include/player_mngr.h
 
 /home/doomshade/CLionProjects/semestralka/include/server.h
 
