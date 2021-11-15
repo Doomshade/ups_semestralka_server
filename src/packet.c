@@ -3,34 +3,103 @@
 #include "../include/packet.h"
 #include "../include/packet_validator.h"
 #include "../include/queue_mngr.h"
+#include "../include//server.h"
 
 #define VALIDATE_PARAM(p) if (!p) return 1;
 #define VALIDATE_PARAMS(p, data) VALIDATE_PARAM(p) VALIDATE_PARAM(data)
 
-int p_hello(struct player* p, char* data) {
-    int ret;
-    char* buf; // the packet data we send
-    const char* HI = "Hi %s!\n";
-    struct packet* pckt;
+#ifdef __DEBUG_MODE
+#define RESPONSE_VALID "Hi %s!"
+#define RESPONSE_INVALID "Name exists!"
+#else
+#define RESPONSE_VALID "0"
+#define RESPONSE_INVALID "1"
+#endif
 
-    VALIDATE_PARAMS(p, data)
+
+
+int p_hello(struct player* pl, char* data) {
+    struct game* g;
+    int ret;
+#ifdef __DEBUG_MODE
+    char* buf; // the packet data we send
+#endif
+    struct packet* pc;
+    struct player* e_pl = NULL; // existing player
+
+    VALIDATE_PARAMS(pl, data)
+
+    ret = lookup_player_by_name(data, &e_pl);
+    // the player exists
+    if (!ret) {
+        buf = malloc(sizeof(char) * (strlen(RESPONSE_INVALID)));
+        strcpy(buf, RESPONSE_INVALID);
+        pc = create_packet(HELLO_OUT, strlen(buf), buf);
+        if (e_pl) {
+            printf("A player with the name %s (%d) already exists!\n", e_pl->name, e_pl->fd);
+        } else {
+            printf("A player with name %s already exists!\n", data);
+        }
+        if (!pc) {
+            return 1;
+        }
+        ret = send_packet(pl, pc);
+        if (ret) {
+            printf("Failed to send packet!\n");
+        }
+        return 0;
+    }
 
     // handle the packet
-    p->name = data;
-    //p->ps = LOGGED_IN;
-    change_state(p, LOGGED_IN);
+    ret = change_player_name(pl, data);
+    if (ret) {
+        printf("Player name too long! Max size is %d\n", MAX_PLAYER_NAME_LENGTH);
+        return 0;
+    }
+    change_state(pl, LOGGED_IN);
 
     // the OUT packet data
-    buf = malloc(sizeof(char) * (strlen("Hi !\n") + strlen(p->name) + 1));
-    sprintf(buf, HI, p->name);
+#ifdef __DEBUG_MODE
+    buf = malloc(sizeof(char) * (strlen(RESPONSE_VALID) + strlen(pl->name) + 1));
+    sprintf(buf, RESPONSE_VALID, pl->name);
+    pc = create_packet(HELLO_OUT, strlen(buf), buf);
+#else
+    pc = create_packet(HELLO_OUT, strlen(RESPONSE_VALID), RESPONSE_VALID);
+#endif
+    ret = send_packet(pl, pc);
 
-    // send the packet
-    pckt = create_packet(HELLO_OUT, strlen(buf), buf);
-    ret = send_packet(p, pckt);
-
+#ifdef __DEBUG_MODE
     free(buf);
-    free(pckt);
-    // ret |= handle_possible_reconnection(&p);
+#endif
+    free_packet(pc);
+
+    if (ret) {
+        printf("Failed to send the packet!\n");
+        return 1;
+    }
+
+    ret = lookup_dc_player(pl->name, &pl);
+    // the player previously disconnected
+    if (!ret) {
+        switch (pl->ps) {
+            case PLAY: // the play was in-game, inform the players
+                g = lookup_game(pl);
+                if (!g) {
+                    printf("The player %s was in state PLAY, but the game was not found!\n", pl->name);
+                    change_state(pl, LOGGED_IN);
+                    return 0;
+                }
+                reconnect_to_game(pl, g);
+                break;
+            case QUEUE:
+                change_state(pl, QUEUE);
+                break;
+            default:
+                break;
+        }
+    }
+
+    // ret |= handle_possible_reconnection(&pl);
     return ret;
 }
 
@@ -84,11 +153,11 @@ int p_movepc(struct player* p, char* data) {
         }
 
         send_packet(p, pc);
+        free_packet(pc);
         return 1;
     }
 
     // check whose turn it is
-
 
     if (move_piece(g, p, rank_from, file_from, rank_to, file_to)) {
         printf("Invalid move!\n");
@@ -105,6 +174,8 @@ int p_movepc(struct player* p, char* data) {
 int p_offdraw(struct player* p, char* data) {
     struct game* g;
     char* PAYLOAD = "";
+    struct packet* pc;
+    int ret;
 
     VALIDATE_PARAM(p)
 
@@ -114,8 +185,11 @@ int p_offdraw(struct player* p, char* data) {
         return 1;
     }
 
-    return send_packet(g->white == p ? g->black : g->white,
-                       create_packet(DRAW_OFFER_OUT, strlen(PAYLOAD), PAYLOAD));
+    pc = create_packet(DRAW_OFFER_OUT, strlen(PAYLOAD), PAYLOAD);
+    ret = send_packet(g->white == p ? g->black : g->white,
+                      pc);
+    free(pc);
+    return ret;
 }
 
 int p_resign(struct player* p, char* data) {

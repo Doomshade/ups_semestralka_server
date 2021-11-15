@@ -1,6 +1,7 @@
 
 #ifndef SEMESTRALKA_PLAYER_MNGR_H
 #define SEMESTRALKA_PLAYER_MNGR_H
+#define MAX_PLAYER_NAME_LENGTH 64
 
 /**
  * The player's state
@@ -46,42 +47,54 @@ struct player {
     /**
      * The name of this player
      */
-    char* name;
+    char name[MAX_PLAYER_NAME_LENGTH + 1];
 };
 
 /**
- * Attempts to lookup the player in the memory by name
+ * Attempts to lookup the player in the disconnected list by name
  * @param name the player's name
  * @param p the player to be set
- * @return
+ * @return 0 if found
  */
-int lookup_player_by_name(char* name, struct player** p);
+int lookup_dc_player(char* name, struct player** p);
 
 /**
- * Attempts to lookup the player in the memory by the file descriptor
+ * Attempts to lookup the player in the players arr by the file descriptor
  * @param fd the client's file descriptor
  * @param p the player to be set
- * @return
+ * @return 0 if found
  */
 int lookup_player_by_fd(int fd, struct player** p);
 
+int change_player_name(struct player* p, char* name);
+
+/**
+ * Attempts to lookup the player in the players arr by the name
+ * @param name the player's name
+ * @param p the player to be set
+ * @return 0 if found
+ */
+int lookup_player_by_name(char* name, struct player** p);
 /**
  * Handles the connection of a client
  * @param fd the client's file descriptor
- * @return
+ * @return 0 if everything went alright
  */
 int handle_new_connection(int fd);
 
-int handle_possible_reconnection(struct player** p);
-
+/**
+ * Changes the state of the player. Used for logging purposes only.
+ * @param p the player
+ * @param ps the state
+ */
 void change_state(struct player* p, enum player_state ps);
 
 /**
- * Handles the disconnection of the client - storing his current state
+ * Handles the disconnection of the client - storing the player
+ * in the disconnected array to be later restored
  * @param fd the client's file descriptor
  * @return
  */
 int handle_disconnection(int fd);
-
 
 #endif //SEMESTRALKA_PLAYER_MNGR_H

@@ -4,17 +4,25 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define PACKET_COUNT 0x80
+// the amount of IN packets = (0-PACKET_OUT_OFFSET)
+#define PACKET_COUNT PACKET_OUT_OFFSET
 #define STATE_COUNT 4
 packet_handle* handlers[STATE_COUNT][PACKET_COUNT] = {0};
+bool registered = false;
 
 void init_preg() {
+    if (registered) {
+        return;
+    }
+    //[STATE_COUNT][PACKET_COUNT]
+    printf("Initializing packet registry...\n");
     handlers[JUST_CONNECTED][HELLO_IN] = p_hello;
     handlers[LOGGED_IN][QUEUE_IN] = p_queue;
     handlers[QUEUE][QUEUE_IN] = p_queue;
     handlers[PLAY][MOVE_IN] = p_movepc;
     handlers[PLAY][DRAW_OFFER_IN] = p_offdraw;
     handlers[PLAY][RESIGN_IN] = p_resign;
+    registered = true;
 }
 
 int send_raw(struct player* p, char* buf, unsigned long* len) {
@@ -31,6 +39,13 @@ int send_raw(struct player* p, char* buf, unsigned long* len) {
     return n == -1 ? -1 : 0; // return -1 on failure, 0 on success
 }
 
+void free_packet(struct packet* pc) {
+    if (pc) {
+        //free(pc->data);
+        //free(pc);
+    }
+}
+
 int send_packet(struct player* pl, struct packet* pc) {
     int ret;
     char* s = malloc(PACKET_HEADER_SIZE + strlen(pc->data) + 1); // the data we send
@@ -44,14 +59,15 @@ int send_packet(struct player* pl, struct packet* pc) {
     return ret;
 }
 
-struct packet* create_packet(unsigned int id, unsigned int len, char* data) {
+struct packet* create_packet(unsigned int id, unsigned int len, const char* data) {
     struct packet* p = malloc(sizeof(struct packet));
     if (p == NULL) {
         return NULL;
     }
     p->id = id;
     p->len = len;
-    p->data = data;
+    p->data = malloc(sizeof(char) * (strlen(data) + 1));
+    strcpy(p->data, data);
     return p;
 }
 

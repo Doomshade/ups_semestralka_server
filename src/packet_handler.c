@@ -3,7 +3,6 @@
 #include "../include/packet_handler.h"
 
 int handle_packet(struct player* pl, struct packet* pckt) {
-    // CHESS01004AHOJ
     packet_handle* handle_func;
     int erc;
 

@@ -8,11 +8,11 @@
  * the client should be in the JUST_CONNECTED state. Pushes the
  * client to the LOGGED_IN state and updates the data in the player
  * arr if the client has actually reconnected
- * @param p the player
+ * @param pl the player
  * @param packet the packet
  * @return 0 if everything was okay
  */
-int p_hello(struct player* p, char* packet);
+int p_hello(struct player* pl, char* packet);
 
 /**
  * The player wants to look for a game OR he wants to leave one.

@@ -40,6 +40,10 @@ struct game {
     bool white_to_move;
 };
 
+int reconnect_to_game(struct player* pl, struct game* g);
+
+const char* generate_fen(struct chessboard* board);
+
 /**
  * Sets up the game from the fen string
  * @param fen the fen string

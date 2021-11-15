@@ -4,14 +4,20 @@
 #include "../include/server.h"
 #include "../include/game_mngr.h"
 
+#define MAX_DISCONNECTED_COUNT MAX_PLAYER_COUNT * 5
+
 #define VALIDATE_FD(fd, ret) if (fd >= MAX_PLAYER_COUNT) return ret;
+
 struct player* players[MAX_PLAYER_COUNT] = {0};
-struct player* dc_players[MAX_PLAYER_COUNT] = {0};
+struct player* dc_players[MAX_DISCONNECTED_COUNT] = {0};
 
 int lookup_player_by_fd(int fd, struct player** p) {
     struct player* _p;
 
     VALIDATE_FD(fd, 2)
+    if (!p) {
+        return 1;
+    }
     _p = players[fd];
     if (_p) {
         *p = _p;
@@ -21,45 +27,75 @@ int lookup_player_by_fd(int fd, struct player** p) {
 }
 
 int lookup_player_by_name(char* name, struct player** p) {
-    int i;
     struct player* _p;
+    int i;
+    if (!name || !p) {
+        return 1;
+    }
 
     for (i = 0; i < MAX_PLAYER_COUNT; ++i) {
-        _p = players[i];
-        if (_p == NULL) {
+        if (!players[i]) {
             continue;
         }
-
-        // the player was found (he disconnected)
+        _p = players[i];
         if (strcmp(_p->name, name) == 0) {
-
+            *p = _p;
             return 0;
         }
     }
     return 1;
 }
 
-struct player* create_player(int fd, char* name) {
+int lookup_dc_player(char* name, struct player** p) {
+    int i;
+    struct player* _p;
+    if (!name || !p) {
+        return 1;
+    }
+
+    for (i = 0; i < MAX_DISCONNECTED_COUNT; ++i) {
+        if (!dc_players[i]) {
+            continue;
+        }
+        _p = dc_players[i];
+        if (strcmp(_p->name, name) == 0) {
+            *p = _p;
+            return 0;
+        }
+    }
+    return 1;
+}
+
+struct player* create_player(int fd) {
     struct player* p;
 
     VALIDATE_FD(fd, NULL)
-    if (!name) {
-        return NULL;
-    }
 
     p = malloc(sizeof(struct player));
     if (!p) {
         return NULL;
     }
     p->fd = fd;
-    p->name = "New Player";
+    change_player_name(p, "New Player");
     change_state(p, JUST_CONNECTED);
     return p;
+}
+
+int change_player_name(struct player* p, char* name) {
+    if (!p || !name) {
+        return 2;
+    }
+    if (strlen(name) > MAX_PLAYER_NAME_LENGTH) {
+        return 1;
+    }
+    strcpy(p->name, name);
+    return 0;
 }
 
 int handle_new_connection(int fd) {
     VALIDATE_FD(fd, 1)
 
+    // the player under this FD is already connected
     // this should not happen, if this
     // happens some logic inside the
     // server failed
@@ -68,7 +104,7 @@ int handle_new_connection(int fd) {
     }
 
     // add the client to the connected players
-    players[fd] = create_player(fd, "");
+    players[fd] = create_player(fd);
     return players[fd] != NULL;
 }
 
@@ -95,53 +131,16 @@ void change_state(struct player* p, enum player_state ps) {
     printf("Changed %s's state to: %s\n", p->name, ps_str);
 }
 
-int handle_possible_reconnection(struct player** p) {
-    int i;
-    struct game* g;
-    if (p == NULL || *p == NULL) {
-        return 1;
-    }
-    VALIDATE_FD((*p)->fd, 1)
-
-    for (i = 0; i < MAX_PLAYER_COUNT; ++i) {
-        // the player has previously disconnected, copy the data
-        // from the disconnected instance to the new one EXCEPT
-        // for the FD (and the name can be skipped too)
-        if (strcmp(dc_players[i]->name, (*p)->name) == 0) {
-            change_state(*p, dc_players[i]->ps);
-
-            // TODO
-            // the client was in-game, lookup the game and reconnect him
-            if ((*p)->ps == PLAY) {
-                g = lookup_game(*p);
-
-                // the game has likely ended
-                if (!g) {
-                    return 1;
-                }
-
-            }
-        }
-    }
-    return 0;
-}
-
 int handle_disconnection(int fd) {
     int i;
     struct player* p;
+    int ret;
 
     VALIDATE_FD(fd, 2)
 
-    // look up the player by his current FD before disconnection
-    // and remove him from the connected list
-    for (i = 0; i < MAX_PLAYER_COUNT; ++i) {
-        if (!players[i]) {
-            continue;
-        }
-        if (players[i]->fd == fd) {
-            p = players[i];
-            players[i] = NULL; // remove him from the player list, add him to the disconnected one
-        }
+    // the player was not found
+    if ((ret = lookup_player_by_fd(fd, &p))) {
+        return ret;
     }
 
     // player not found, ignore it
@@ -149,7 +148,16 @@ int handle_disconnection(int fd) {
         return 1;
     }
 
+    players[fd] = NULL;
+
+
     // add him to the disconnected list
+    // CAUTION: do not store it under the
+    // clients FD! a situation like:
+    // a client connects with an FD of 4,
+    // joins a game, disconnects,
+    // a different client joins and is given
+    // the FD 4 and that client would be reconnected!
     for (i = 0; i < MAX_PLAYER_COUNT; ++i) {
         if (dc_players[i] == NULL) {
             dc_players[i] = p;

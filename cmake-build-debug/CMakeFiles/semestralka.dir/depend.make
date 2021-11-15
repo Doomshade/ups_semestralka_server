@@ -21,6 +21,7 @@ CMakeFiles/semestralka.dir/src/packet.c.o: \
  ../include/packet_validator.h \
  ../include/player_mngr.h \
  ../include/queue_mngr.h \
+ ../include/server.h \
  ../src/packet.c
 CMakeFiles/semestralka.dir/src/packet_handler.c.o: \
  ../include/game_mngr.h \

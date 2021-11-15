@@ -7,7 +7,7 @@
 #define PACKET_ERR_INVALID_ID 0x11
 #define PACKET_ERR_STATE_OUT_OF_BOUNDS 0x12
 
-#define PACKET_OUT_OFFSET 10
+#define PACKET_OUT_OFFSET 0x80
 #define PACKET_OUT(packet_in) packet_in + PACKET_OUT_OFFSET
 #define PACKET_IN(offset, id) offset + id
 // IN: 0-31 0x(00-1F); OUT: 128-159 0x(80-9F)
@@ -89,7 +89,19 @@ enum play_p {
     RESIGN_IN = PACKET_IN(PLAY_P_OFFSET, 2),
 
     // A game is finished, sent to both players
-    GAME_FINISH_OUT = PACKET_OUT(PACKET_IN(PLAY_P_OFFSET, 3))
+    GAME_FINISH_OUT = PACKET_OUT(PACKET_IN(PLAY_P_OFFSET, 3)),
+
+    // A message sent by a player
+    MESSAGE_IN = PACKET_IN(PLAY_P_OFFSET, 4),
+
+    // A message sent to a player
+    MESSAGE_OUT = PACKET_OUT(MESSAGE_IN),
+
+    // A keep alive packet to check whether the player
+    // is still connected
+    KEEP_ALIVE_OUT = PACKET_OUT(PACKET_IN(PLAY_P_OFFSET, 5)),
+
+    OPPONENT_NAME_OUT = PACKET_OUT(PACKET_IN(PLAY_P_OFFSET, 6))
 };
 
 /**
@@ -114,7 +126,7 @@ int send_packet(struct player* pl, struct packet* pc);
  * @param data the data
  * @return
  */
-struct packet* create_packet(unsigned int id, unsigned int len, char* data);
+struct packet* create_packet(unsigned int id, unsigned int len, const char* data);
 
 /**
  * Gets the packet handler based on the packet ID
@@ -127,5 +139,11 @@ packet_handle* get_handler(unsigned int id, enum player_state pstate, int* erc);
  * Registers the packets in the memory
  */
 void init_preg();
+
+/**
+ * Frees the packet from the memory
+ * @param pc the packet
+ */
+void free_packet(struct packet* pc);
 
 #endif //SEMESTRALKA_PACKET_REGISTRY_H

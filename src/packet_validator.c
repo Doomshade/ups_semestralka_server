@@ -60,7 +60,10 @@ int validate_header(char* header, unsigned int* p_id, unsigned int* p_siz) {
 }
 
 void init_pval() {
-
+    if (buffered_pheaders || buffered_pdata) {
+        return;
+    }
+    printf("Initializing packet validator...\n");
     buffered_pheaders = calloc(MAX_PLAYER_COUNT, sizeof(char) * (PACKET_HEADER_SIZE + 1));
     buffered_pdata = calloc(MAX_PLAYER_COUNT, sizeof(char*));
 }

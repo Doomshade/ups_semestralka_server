@@ -119,9 +119,6 @@ int main(int argc, char** argv) {
     /* Parse our arguments; every option seen by parse_opt will
        be reflected in arguments. */
     argp_parse(&argp, argc, argv, 0, 0, &arguments);
-
-    printf("Starting server on port: %u...\n", arguments.port);
     start_server(arguments.port);
-
-    exit(0);
+    return 0;
 }

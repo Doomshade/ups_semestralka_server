@@ -14,10 +14,11 @@
 int* queue = NULL;
 
 void init_qman() {
-    // the queue has been already initialized
     if (queue) {
         return;
     }
+
+    printf("Initializing queue manager...\n");
     queue = calloc(MAX_PLAYER_COUNT, sizeof(int));
 }
 
@@ -25,6 +26,7 @@ int send_queue_out_pc(struct player* p, bool white, char* op) {
     char* buf;
     size_t siz;
     struct packet* pc;
+    int ret;
 
     if (!p || !op) {
         return 1;
@@ -41,8 +43,15 @@ int send_queue_out_pc(struct player* p, bool white, char* op) {
     if (!pc) {
         return 1;
     }
+    free_packet(pc);
 
-    return send_packet(p, pc);
+    ret = send_packet(p, pc);
+    if (ret) {
+        return ret;
+    }
+    // TODO
+    // pc = create_packet(OPPONENT_NAME_OUT, strlen());
+    return ret;
 }
 
 int add_to_queue(int fd) {

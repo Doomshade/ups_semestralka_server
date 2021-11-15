@@ -8,6 +8,7 @@
 #include <ctype.h>
 
 #define FEN_PATTERN "((([rnbqkpRNBQKP1-8]+)\\/){7}([rnbqkpRNBQKP1-8]+)) ([wb]) (K?Q?k?q?|\\-) (([a-h][0-7])|\\-) (\\d+) (\\d+)"
+#define PLAYER_RECON_MESSAGE "Player %s reconnected to the game"
 
 struct game** games = NULL;
 int free_game_index = 0;
@@ -23,6 +24,7 @@ void init_gman() {
         return;
     }
 
+    printf("Initializing game manager...\n");
     games = calloc(MAX_GAME_COUNT, sizeof(struct game*));
     free_game_index = 0;
 }
@@ -116,8 +118,8 @@ struct game* lookup_game(struct player* p) {
         if (g == NULL) {
             continue;
         }
-        if (strcmp(g->white->name, p->name) == 0 ||
-            strcmp(g->black->name, p->name) == 0) {
+        if (g->white == p ||
+            g->black == p) {
             return g;
         }
     }
@@ -278,6 +280,39 @@ int setup_game(struct game* g, char* fen) {
     return 0;
 }
 
+const char* generate_fen(struct chessboard* board) {
+    // TODO
+    return START_FEN;
+}
+
+int reconnect_to_game(struct player* pl, struct game* g) {
+    struct packet* pc;
+    int ret;
+    char* fen;
+
+    if (g->white != pl && g->black != pl) {
+        printf("Player %s is not in game: %s vs %s\n", pl->name, g->white->name, g->black->name);
+        return 1;
+    }
+
+    // send the player that a game started
+    fen = generate_fen(g->board);
+    pc = create_packet(GAME_START_OUT, strlen(fen), fen);
+    ret = send_packet(pl, pc);
+
+    // send the information to the opponent
+    // TODO create a new packet ID for this
+    pc = create_packet(MESSAGE_OUT, strlen(PLAYER_RECON_MESSAGE), PLAYER_RECON_MESSAGE);
+    ret = send_packet(g->white == pl ? g->black : g->white, pc);
+    free_packet(pc);
+    return ret;
+}
+
+bool is_players_piece(bool white, char piece) {
+    char target_piece = (char) (white ? tolower(piece) : toupper(piece));
+    return piece == target_piece;
+}
+
 int move_piece(struct game* g, struct player* p, unsigned int rank_from, unsigned int file_from, unsigned int rank_to,
                unsigned int file_to) {
     char pce_from;
@@ -289,21 +324,26 @@ int move_piece(struct game* g, struct player* p, unsigned int rank_from, unsigne
 
     // the player is not on the move
     // ignore the packet
-    if (white != g->white_to_move){
+    if (white != g->white_to_move) {
+        printf("It is not %s's turn yet!\n", p->name);
         return 0;
     }
     pce_from = g->board->board[rank_from][file_from];
+
     if (pce_from == ' ') {
-        return 1;
+        printf("No piece found on [%d, %d]\n", rank_from, file_from);
+        return 0;
     }
+    if (!is_players_piece(white, pce_from)) {
+        printf("Piece on [%d, %d] (%d) is the opponent's piece!\n", rank_from, file_from, pce_from);
+        return 0;
+    }
+
     printf("[%d,%d] '%c' -> [%d,%d] '%c'\n", rank_from, file_from, pce_from, rank_to, file_to,
            g->board->board[rank_to][file_to]);
     g->board->board[rank_to][file_to] = pce_from;
     g->board->board[rank_from][file_from] = ' ';
+    g->white_to_move = !g->white_to_move;
     print_board(g);
-    return 0;
-}
-
-int reconnect_to_game(struct game* g, struct player* p) {
     return 0;
 }
