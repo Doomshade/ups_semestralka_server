@@ -10,6 +10,12 @@
 packet_handle* handlers[STATE_COUNT][PACKET_COUNT] = {0};
 bool registered = false;
 
+/**
+ * Frees the packet from the memory
+ * @param pc the packet
+ */
+void free_packet(struct packet* pc);
+
 void init_preg() {
     if (registered) {
         return;
@@ -56,6 +62,7 @@ int send_packet(struct player* pl, struct packet* pc) {
     len = strlen(s);
     ret = send_raw(pl, s, &len);
     free(s);
+    free_packet(pc);
     //sscanf(s, PACKET_MAGIC_HEADER, pc->id, pc->len, pc->data);
     return ret;
 }

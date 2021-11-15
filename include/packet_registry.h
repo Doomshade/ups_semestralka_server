@@ -140,10 +140,4 @@ packet_handle* get_handler(unsigned int id, enum player_state pstate, int* erc);
  */
 void init_preg();
 
-/**
- * Frees the packet from the memory
- * @param pc the packet
- */
-void free_packet(struct packet* pc);
-
 #endif //SEMESTRALKA_PACKET_REGISTRY_H

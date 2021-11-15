@@ -43,8 +43,6 @@ int send_queue_out_pc(struct player* p, bool white, char* op) {
     if (!pc) {
         return 1;
     }
-    free_packet(pc);
-
     ret = send_packet(p, pc);
     if (ret) {
         return ret;

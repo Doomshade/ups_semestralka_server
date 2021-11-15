@@ -45,6 +45,8 @@ CMakeFiles/semestralka.dir/src/packet_validator.c.o: \
  ../src/packet_validator.c
 CMakeFiles/semestralka.dir/src/player_mngr.c.o: \
  ../include/game_mngr.h \
+ ../include/packet.h \
+ ../include/packet_registry.h \
  ../include/player_mngr.h \
  ../include/server.h \
  ../src/player_mngr.c

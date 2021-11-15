@@ -211,7 +211,6 @@ int start_listening(int server_socket) {
 
             // no more data, free the malloced packet data
             FREE:
-            free_packet(pckt);
             free(p_ptr_copy);
         } // END FOR (FD)
     } // END WHILE(1)

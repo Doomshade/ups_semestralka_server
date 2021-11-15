@@ -52,17 +52,3 @@ stdio.h
 ../include/server.h
 /home/doomshade/CLionProjects/semestralka/include/server.h
 
-/home/doomshade/CLionProjects/semestralka/src/player_mngr.c
-string.h
--
-stdio.h
--
-../include/player_mngr.h
-/home/doomshade/CLionProjects/semestralka/include/player_mngr.h
-../include/server.h
-/home/doomshade/CLionProjects/semestralka/include/server.h
-../include/game_mngr.h
-/home/doomshade/CLionProjects/semestralka/include/game_mngr.h
-../include/packet.h
-/home/doomshade/CLionProjects/semestralka/include/packet.h
-

@@ -70,8 +70,6 @@ int p_hello(struct player* pl, char* data) {
 #ifdef __DEBUG_MODE
     free(buf);
 #endif
-    free_packet(pc);
-
     if (ret) {
         printf("Failed to send the packet!\n");
         return 1;
@@ -136,16 +134,7 @@ int p_movepc(struct player* p, char* data) {
 
     // the packet should be in "A2A4" format
     if (strlen(data) != 4) {
-        return 1;
-    }
-    file_from = data[0] - 'A';
-    file_to = data[2] - 'A';
-    rank_from = data[1] - '1';
-    rank_to = data[3] - '1';
-
-    // basically wee should get a value 0-7 like that
-    max_bound = rank_from | rank_to | file_from | file_to;
-    if (max_bound >= 8) {
+        printf("Incorrect format received\n");
         msg = "INVALID";
         pc = create_packet(MOVE_OUT, strlen(msg), msg);
         if (!pc) {
@@ -153,7 +142,22 @@ int p_movepc(struct player* p, char* data) {
         }
 
         send_packet(p, pc);
-        free_packet(pc);
+        return 1;
+    }
+    file_from = data[0] - 'A';
+    file_to = data[2] - 'A';
+    rank_from = data[1] - '1';
+    rank_to = data[3] - '1';
+
+    // basically wee should get a value 0-7
+    max_bound = rank_from | rank_to | file_from | file_to;
+    if (max_bound >= 8) {
+        msg = "INVALID";
+        pc = create_packet(MOVE_OUT, strlen(msg), msg);
+        if (!pc) {
+            return 1;
+        }
+        send_packet(p, pc);
         return 1;
     }
 
@@ -161,11 +165,13 @@ int p_movepc(struct player* p, char* data) {
 
     if (move_piece(g, p, rank_from, file_from, rank_to, file_to)) {
         printf("Invalid move!\n");
-        return 1;
+        return 0; // perhaps the client miscalculated, don't dc the player
     }
     // TODO validate the move
     pc = create_packet(MOVE_OUT, strlen(data), data);
     send_packet(g->white, pc);
+
+    pc = create_packet(MOVE_OUT, strlen(data), data);
     send_packet(g->black, pc);
 
     return 0;
@@ -188,7 +194,6 @@ int p_offdraw(struct player* p, char* data) {
     pc = create_packet(DRAW_OFFER_OUT, strlen(PAYLOAD), PAYLOAD);
     ret = send_packet(g->white == p ? g->black : g->white,
                       pc);
-    free(pc);
     return ret;
 }
 
@@ -235,6 +240,5 @@ int p_message(struct player* p, char* packet) {
     op = OPPONENT(g, p);
     pc = create_packet(MESSAGE_OUT, strlen(buf), buf);
     send_packet(op, pc);
-
     return 0;
 }

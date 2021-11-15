@@ -314,17 +314,16 @@ int reconnect_to_game(struct player* pl, struct game* g) {
     pc = create_packet(GAME_START_OUT, strlen(fen), fen);
     printf("Sending %s game start packet...\n", pl->name);
     ret = send_packet(pl, pc);
-    free_packet(pc);
 
     // send the information to the opponent about the
     // reconnection of the disconnected player
     // TODO create a new packet ID for this
     op = OPPONENT(g, pl);
     sprintf(buf, PLAYER_RECON_MESSAGE, pl->name);
+
     pc = create_packet(MESSAGE_OUT, strlen(buf), buf);
     printf("Sending %s that %s has reconnected...\n", op->name, pl->name);
     ret = send_packet(op, pc);
-    free_packet(pc);
     return ret;
 }
 
