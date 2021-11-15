@@ -13,25 +13,25 @@
 #include "../include/packet_validator.h"
 #include "../include/queue_mngr.h"
 
+/**
+ * Starts listening to
+ * @param server_socket
+ * @param peer_addr
+ * @return
+ */
+int start_listening(int server_socket,
+                    struct sockaddr_in* peer_addr);
+
 void disconnect(int fd, fd_set* client_socks);
 
 int start_server(unsigned port) {
-    int server_socket, client_socket, fd, rval, a2read; // .., .., a client's FD, return value, amount to read from recv
-    // char p_buf[BUFSIZ]; // packet buffer
-    char* p_ptr = NULL;
-    char* p_ptr_copy = NULL; // to later free the p_ptr
+    int server_socket, rval;
     char ip[64]; // buffer to output IP:port
-    unsigned int len_addr;
     struct sockaddr_in my_addr, peer_addr;
-    fd_set client_socks, tests; // fd sets (for socks too)
-    int param = 1, erc = 0;
-    struct packet* pckt;
-    struct player* player = NULL;
+    int param = 1;
 
     server_socket = socket(AF_INET, SOCK_STREAM, 0);
-
     rval = setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, (const char*) &param, sizeof(int));
-
     if (rval == -1) {
         printf("setsockopt ERR\n");
     }
@@ -44,9 +44,7 @@ int start_server(unsigned port) {
     my_addr.sin_addr.s_addr = INADDR_ANY;
 
     inet_ntop(AF_INET, &my_addr.sin_addr, ip, sizeof(ip));
-
     printf("Starting server on %s:%d\n", ip, port);
-
     rval = bind(server_socket, (struct sockaddr*) &my_addr, sizeof(struct sockaddr_in));
     if (!rval) {
         printf("Successfully bound the socket\n");
@@ -55,24 +53,35 @@ int start_server(unsigned port) {
         return rval;
     }
 
+    rval = listen(server_socket, 5);
+    if (rval) {
+        printf("Failed to start listening\n");
+        return rval;
+    }
+    return start_listening(server_socket, &peer_addr);
+}
+
+int start_listening(int server_socket, struct sockaddr_in* peer_addr) {
+    int client_socket, fd, rval, a2read;
+    char* p_ptr = NULL;
+    char* p_ptr_copy = NULL; // to later free the p_ptr
+    unsigned int len_addr;
+    fd_set client_socks, tests; // fd sets (for socks too)
+    int erc = 0;
+    struct packet* pckt;
+    struct player* player = NULL;
+
     // initialize things
     init_pval(); // packet validator
     init_preg(); // packet registry
     init_qman(); // queue manager
     init_gman(); // game manager
 
-    rval = listen(server_socket, 5);
-    if (!rval) {
-        printf("Started listening to incoming connections...\n");
-    } else {
-        printf("Failed to start listening\n");
-        return rval;
-    }
-
     // clear the descriptors and add the server socket
     FD_ZERO(&client_socks);
     FD_SET(server_socket, &client_socks);
 
+    printf("Started listening to incoming connections...\n");
     for (;;) {
         // copy the old fd_set to the new one (select destroys them)
         tests = client_socks;
@@ -90,7 +99,7 @@ int start_server(unsigned port) {
 
             // is it a new connection?
             if (fd == server_socket) {
-                client_socket = accept(server_socket, (struct sockaddr*) &peer_addr, &len_addr);
+                client_socket = accept(server_socket, (struct sockaddr*) peer_addr, &len_addr);
                 FD_SET(client_socket, &client_socks);
                 printf("A client has connected and was assigned FD #%d\n", client_socket);
                 // this adds the client to the player array
@@ -204,6 +213,7 @@ int start_server(unsigned port) {
             free(p_ptr_copy);
         } // END FOR (FD)
     } // END WHILE(1)
+    return 0;
 }
 
 void disconnect(int fd, fd_set* client_socks) {

@@ -14,9 +14,7 @@ stdlib.h
 sys/socket.h
 -
 
-/home/doomshade/CLionProjects/semestralka/include/packet.h
-player_mngr.h
-/home/doomshade/CLionProjects/semestralka/include/player_mngr.h
+/home/doomshade/CLionProjects/semestralka/include/packet_handler.h
 packet_registry.h
 /home/doomshade/CLionProjects/semestralka/include/packet_registry.h
 
@@ -34,15 +32,33 @@ string.h
 
 /home/doomshade/CLionProjects/semestralka/include/player_mngr.h
 
-/home/doomshade/CLionProjects/semestralka/src/packet_registry.c
-../include/packet_registry.h
-/home/doomshade/CLionProjects/semestralka/include/packet_registry.h
-../include/packet.h
-/home/doomshade/CLionProjects/semestralka/include/packet.h
-../include/packet_validator.h
-/home/doomshade/CLionProjects/semestralka/include/packet_validator.h
-stdlib.h
--
+/home/doomshade/CLionProjects/semestralka/include/queue_mngr.h
+
+/home/doomshade/CLionProjects/semestralka/include/server.h
+
+/home/doomshade/CLionProjects/semestralka/src/server.c
 stdio.h
 -
+sys/types.h
+-
+sys/socket.h
+-
+sys/un.h
+-
+unistd.h
+-
+netinet/in.h
+-
+arpa/inet.h
+-
+sys/ioctl.h
+-
+../include/server.h
+/home/doomshade/CLionProjects/semestralka/include/server.h
+../include/packet_handler.h
+/home/doomshade/CLionProjects/semestralka/include/packet_handler.h
+../include/packet_validator.h
+/home/doomshade/CLionProjects/semestralka/include/packet_validator.h
+../include/queue_mngr.h
+/home/doomshade/CLionProjects/semestralka/include/queue_mngr.h
 
