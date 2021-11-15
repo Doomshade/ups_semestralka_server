@@ -2,7 +2,7 @@
 #define SEMESTRALKA_PACKET_VALIDATOR_H
 
 #include <string.h>
-#include "../include/packet_registry.h"
+#include "packet_registry.h"
 
 #define PACKET_MAGIC_HEADER "CHESS"
 #define PACKET_ID_LENGTH 2
