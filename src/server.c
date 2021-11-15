@@ -24,6 +24,13 @@ int start_listening(int server_socket,
 
 void disconnect(int fd, fd_set* client_socks);
 
+void init_server(int server_socket, fd_set* client_socks);
+
+void handle_new_client(int server_socket,
+                       struct sockaddr_in* peer_addr,
+                       unsigned int* len_addr,
+                       fd_set client_socks);
+
 int start_server(unsigned port) {
     int server_socket, rval;
     char ip[64]; // buffer to output IP:port
@@ -72,14 +79,7 @@ int start_listening(int server_socket, struct sockaddr_in* peer_addr) {
     struct player* player = NULL;
 
     // initialize things
-    init_pval(); // packet validator
-    init_preg(); // packet registry
-    init_qman(); // queue manager
-    init_gman(); // game manager
-
-    // clear the descriptors and add the server socket
-    FD_ZERO(&client_socks);
-    FD_SET(server_socket, &client_socks);
+    init_server(server_socket, &client_socks);
 
     printf("Started listening to incoming connections...\n");
     for (;;) {
@@ -214,6 +214,35 @@ int start_listening(int server_socket, struct sockaddr_in* peer_addr) {
         } // END FOR (FD)
     } // END WHILE(1)
     return 0;
+}
+
+void handle_new_client(int server_socket,
+                      struct sockaddr_in* peer_addr,
+                      unsigned int* len_addr,
+                      fd_set client_socks) {
+    int client_socket;
+    int rval;
+
+    client_socket = accept(server_socket, (struct sockaddr*) peer_addr, len_addr);
+    FD_SET(client_socket, &client_socks);
+    printf("A client has connected and was assigned FD #%d\n", client_socket);
+    // this adds the client to the player array
+    rval = handle_new_connection(client_socket);
+    if (rval == 2) {
+        printf("An FD with ID %d is already registered, this should not happen!\n", client_socket);
+        disconnect(client_socket, &client_socks);
+    }
+}
+
+void init_server(int server_socket, fd_set* client_socks) {
+    init_pval(); // packet validator
+    init_preg(); // packet registry
+    init_qman(); // queue manager
+    init_gman(); // game manager
+
+    // clear the descriptors and add the server socket
+    FD_ZERO(client_socks);
+    FD_SET(server_socket, client_socks);
 }
 
 void disconnect(int fd, fd_set* client_socks) {
