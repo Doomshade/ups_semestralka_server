@@ -166,9 +166,19 @@ int game_create(struct player* white, struct player* black) {
 
 void print_hline() {
     int i;
-    printf("-");
+    printf("  -");
     for (i = 0; i < 8; ++i) {
         printf("----");
+    }
+    printf("\n");
+}
+
+void print_files() {
+    int i;
+
+    printf("    ");
+    for (i = 'A'; i < 'A' + 8; ++i) {
+        printf("%c   ", (char) i);
     }
     printf("\n");
 }
@@ -182,15 +192,17 @@ void print_board(struct game* g) {
 
     printf("\n");
 
+    print_files();
     print_hline();
     for (i = 7; i >= 0; --i) {
-        printf("| ");
+        printf("%d | ", (i + 1));
         for (j = 0; j < 8; ++j) {
             printf("%c | ", g->board->board[i][j]);
         }
-        printf("\n");
+        printf("%d\n", (i + 1));
         print_hline();
     }
+    print_files();
 }
 
 int setup_game(struct game* g, char* fen) {
@@ -326,17 +338,17 @@ int move_piece(struct game* g, struct player* p, unsigned int rank_from, unsigne
     // ignore the packet
     if (white != g->white_to_move) {
         printf("It is not %s's turn yet!\n", p->name);
-        return 0;
+        return 1;
     }
     pce_from = g->board->board[rank_from][file_from];
 
     if (pce_from == ' ') {
         printf("No piece found on [%d, %d]\n", rank_from, file_from);
-        return 0;
+        return 1;
     }
     if (!is_players_piece(white, pce_from)) {
         printf("Piece on [%d, %d] (%d) is the opponent's piece!\n", rank_from, file_from, pce_from);
-        return 0;
+        return 1;
     }
 
     printf("[%d,%d] '%c' -> [%d,%d] '%c'\n", rank_from, file_from, pce_from, rank_to, file_to,

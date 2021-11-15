@@ -19,22 +19,21 @@
  * @param peer_addr
  * @return
  */
-int start_listening(int server_socket,
-                    struct sockaddr_in* peer_addr);
+int start_listening(int server_socket);
 
 void disconnect(int fd, fd_set* client_socks);
 
-void init_server(int server_socket, fd_set* client_socks);
+void init_server();
 
 void handle_new_client(int server_socket,
                        struct sockaddr_in* peer_addr,
                        unsigned int* len_addr,
-                       fd_set client_socks);
+                       fd_set* client_socks);
 
 int start_server(unsigned port) {
     int server_socket, rval;
     char ip[64]; // buffer to output IP:port
-    struct sockaddr_in my_addr, peer_addr;
+    struct sockaddr_in my_addr;
     int param = 1;
 
     server_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -44,7 +43,6 @@ int start_server(unsigned port) {
     }
 
     memset(&my_addr, 0, sizeof(struct sockaddr_in));
-    memset(&peer_addr, 0, sizeof(struct sockaddr_in));
 
     my_addr.sin_family = AF_INET;
     my_addr.sin_port = htons(port);
@@ -65,10 +63,11 @@ int start_server(unsigned port) {
         printf("Failed to start listening\n");
         return rval;
     }
-    return start_listening(server_socket, &peer_addr);
+    return start_listening(server_socket);
 }
 
-int start_listening(int server_socket, struct sockaddr_in* peer_addr) {
+int start_listening(int server_socket) {
+    struct sockaddr_in peer_addr;
     int client_socket, fd, rval, a2read;
     char* p_ptr = NULL;
     char* p_ptr_copy = NULL; // to later free the p_ptr
@@ -78,8 +77,13 @@ int start_listening(int server_socket, struct sockaddr_in* peer_addr) {
     struct packet* pckt;
     struct player* player = NULL;
 
+    memset(&peer_addr, 0, sizeof(struct sockaddr_in));
     // initialize things
-    init_server(server_socket, &client_socks);
+    init_server();
+
+    // clear the descriptors and add the server socket
+    FD_ZERO(&client_socks);
+    FD_SET(server_socket, &client_socks);
 
     printf("Started listening to incoming connections...\n");
     for (;;) {
@@ -99,14 +103,14 @@ int start_listening(int server_socket, struct sockaddr_in* peer_addr) {
 
             // is it a new connection?
             if (fd == server_socket) {
-                client_socket = accept(server_socket, (struct sockaddr*) peer_addr, &len_addr);
+                client_socket = accept(server_socket, (struct sockaddr*) &peer_addr, &len_addr);
                 FD_SET(client_socket, &client_socks);
                 printf("A client has connected and was assigned FD #%d\n", client_socket);
                 // this adds the client to the player array
                 rval = handle_new_connection(client_socket);
                 if (rval == 2) {
-                    printf("An FD with ID %d is already registered, this should not happen!\n", fd);
-                    disconnect(fd, &client_socks);
+                    printf("An FD with ID %d is already registered, this should not happen!\n", client_socket);
+                    disconnect(client_socket, &client_socks);
                 }
                 continue;
             }
@@ -196,7 +200,7 @@ int start_listening(int server_socket, struct sockaddr_in* peer_addr) {
                     disconnect(fd, &client_socks);
                     goto FREE;
                 default:
-                    printf("An error occurred when handling the packet\n");
+                    printf("An error occurred when handling the packet (%d)\n", rval);
                     free_buffers(fd);
                     break;
             }
@@ -216,33 +220,30 @@ int start_listening(int server_socket, struct sockaddr_in* peer_addr) {
     return 0;
 }
 
+
 void handle_new_client(int server_socket,
-                      struct sockaddr_in* peer_addr,
-                      unsigned int* len_addr,
-                      fd_set client_socks) {
+                       struct sockaddr_in* peer_addr,
+                       unsigned int* len_addr,
+                       fd_set* client_socks) {
     int client_socket;
     int rval;
 
     client_socket = accept(server_socket, (struct sockaddr*) peer_addr, len_addr);
-    FD_SET(client_socket, &client_socks);
+    FD_SET(client_socket, client_socks);
     printf("A client has connected and was assigned FD #%d\n", client_socket);
     // this adds the client to the player array
     rval = handle_new_connection(client_socket);
     if (rval == 2) {
         printf("An FD with ID %d is already registered, this should not happen!\n", client_socket);
-        disconnect(client_socket, &client_socks);
+        disconnect(client_socket, client_socks);
     }
 }
 
-void init_server(int server_socket, fd_set* client_socks) {
+void init_server() {
     init_pval(); // packet validator
     init_preg(); // packet registry
     init_qman(); // queue manager
     init_gman(); // game manager
-
-    // clear the descriptors and add the server socket
-    FD_ZERO(client_socks);
-    FD_SET(server_socket, client_socks);
 }
 
 void disconnect(int fd, fd_set* client_socks) {

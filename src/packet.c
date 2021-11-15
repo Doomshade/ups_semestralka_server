@@ -41,6 +41,7 @@ int p_hello(struct player* pl, char* data) {
             printf("A player with name %s already exists!\n", data);
         }
         if (!pc) {
+            printf("Failed to create a packet!\n");
             return 1;
         }
         ret = send_packet(pl, pc);
@@ -79,6 +80,7 @@ int p_hello(struct player* pl, char* data) {
     }
 
     ret = lookup_dc_player(pl->name, &pl);
+
     // the player previously disconnected
     if (!ret) {
         switch (pl->ps) {
@@ -100,7 +102,7 @@ int p_hello(struct player* pl, char* data) {
     }
 
     // ret |= handle_possible_reconnection(&pl);
-    return ret;
+    return 0;
 }
 
 int p_queue(struct player* p, char* data) {
