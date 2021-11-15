@@ -21,7 +21,12 @@
  */
 int start_listening(int server_socket);
 
-void disconnect(int fd, fd_set* client_socks);
+/**
+ * Disconnects the player from the server
+ * @param p the player
+ * @param client_socks
+ */
+void disconnect(struct player* p, fd_set* client_socks);
 
 void init_server();
 
@@ -112,12 +117,21 @@ int start_listening(int server_socket) {
                 //tst(server_socket, &peer_addr, &len_addr, &client_socks);
                 continue;
             }
+            lookup_player_by_fd(fd, &player); // look for the connected player
+
+            // this should NOT return NULL as we handled the new connection
+            if (!player) {
+                printf("An error occurred during the creation of client (FD=%d)...\n", fd);
+                continue;
+            }
+            printf("------------%s------------\n", player->name);
+
             // nope, a client sent some data
             ioctl(fd, FIONREAD, &a2read);
 
             // something happened on the client side
             if (a2read <= 0) {
-                disconnect(fd, &client_socks);
+                disconnect(player, &client_socks);
                 continue;
             }
 
@@ -132,12 +146,6 @@ int start_listening(int server_socket) {
 #ifdef __DEBUG_MODE
             printf("Received %s (%lu) from %d\n", p_ptr, strlen(p_ptr), fd);
 #endif
-            lookup_player_by_fd(fd, &player); // look for the connected player
-            // this should NOT return NULL as we handled the new connection
-            if (!player) {
-                printf("An error occurred during the creation of client (FD=%d)...\n", fd);
-                continue;
-            }
 
             HANDLE_PACKET:
 #ifdef __DEBUG_MODE
@@ -163,7 +171,7 @@ int start_listening(int server_socket) {
                 free_buffers(fd);
                 continue;
 #endif
-                disconnect(fd, &client_socks);
+                disconnect(player, &client_socks);
                 goto FREE;
             }
 
@@ -178,7 +186,7 @@ int start_listening(int server_socket) {
                     free_buffers(fd);
                     break;
 #endif
-                    disconnect(fd, &client_socks);
+                    disconnect(player, &client_socks);
                     goto FREE;
                 case PACKET_ERR_STATE_OUT_OF_BOUNDS:
                     printf("A client sent a packet in a state that was out of bounds\n");
@@ -187,7 +195,7 @@ int start_listening(int server_socket) {
                     free_buffers(fd);
                     break;
 #endif
-                    disconnect(fd, &client_socks);
+                    disconnect(player, &client_socks);
                     goto FREE;
                 case PACKER_ERR_INVALID_CLIENT_STATE:
                     printf("A client sent a packet in an invalid state\n");
@@ -195,7 +203,7 @@ int start_listening(int server_socket) {
                     free_buffers(fd);
                     break;
 #endif
-                    disconnect(fd, &client_socks);
+                    disconnect(player, &client_socks);
                     goto FREE;
                 default:
                     printf("An error occurred when handling the packet (%d)\n", rval);
@@ -217,22 +225,6 @@ int start_listening(int server_socket) {
     return 0;
 }
 
-void tst(int server_socket, struct sockaddr_in* peer_addr, unsigned int* len_addr,
-         fd_set* client_socks) {
-    int client_socket;
-    int rval;
-
-    client_socket = accept(server_socket, (struct sockaddr*) peer_addr, len_addr);
-    FD_SET(client_socket, client_socks);
-    printf("A client has connected and was assigned FD #%d\n", client_socket);
-    // this adds the client to the player array
-    rval = handle_new_player(client_socket);
-    if (rval == 2) {
-        printf("An FD with ID %d is already registered, this should not happen!\n", client_socket);
-        disconnect(client_socket, client_socks);
-    }
-}
-
 
 void handle_new_client(int server_socket,
                        struct sockaddr_in* peer_addr,
@@ -248,7 +240,7 @@ void handle_new_client(int server_socket,
     rval = handle_new_player(client_socket);
     if (rval == 2) {
         printf("An FD with ID %d is already registered, this should not happen!\n", client_socket);
-        disconnect(client_socket, client_socks);
+        exit(0);
     }
 }
 
@@ -259,12 +251,18 @@ void init_server() {
     init_gman(); // game manager
 }
 
-void disconnect(int fd, fd_set* client_socks) {
+void disconnect(struct player* p, fd_set* client_socks) {
+    int fd;
+    if (!p || !client_socks) {
+        return;
+    }
+
+    fd = p->fd;
     free_buffers(fd); // cleanup in the packet_validator (due to potential buffered header/data)
-    remove_from_queue(fd); // remove the player from the queue
-    handle_disconnection(fd); // cleanup in player_mngr and store the state
+    remove_from_queue(p); // remove the player from the queue
+    handle_disconnection(p); // cleanup in player_mngr and store the state
 
     close(fd);
     FD_CLR(fd, client_socks);
-    printf("A client has disconnected\n");
+    printf("%s has disconnected\n", p->name);
 }

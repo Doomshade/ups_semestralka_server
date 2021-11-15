@@ -8,10 +8,6 @@ CMakeFiles/semestralka.dir/src/game_mngr.c.o
  /home/doomshade/CLionProjects/semestralka/include/server.h
  /home/doomshade/CLionProjects/semestralka/src/game_mngr.c
 CMakeFiles/semestralka.dir/src/main.c.o
- /home/doomshade/CLionProjects/semestralka/include/game_mngr.h
- /home/doomshade/CLionProjects/semestralka/include/packet_handler.h
- /home/doomshade/CLionProjects/semestralka/include/packet_registry.h
- /home/doomshade/CLionProjects/semestralka/include/player_mngr.h
  /home/doomshade/CLionProjects/semestralka/include/server.h
  /home/doomshade/CLionProjects/semestralka/src/main.c
 CMakeFiles/semestralka.dir/src/packet.c.o

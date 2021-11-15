@@ -273,7 +273,7 @@ int setup_game(struct game* g, char* fen) {
     g->board->board[0][1] = 'n';
     g->board->board[0][2] = 'b';
     g->board->board[0][3] = 'q';
-    g->board->board[0][4] = 'd';
+    g->board->board[0][4] = 'k';
     g->board->board[0][5] = 'b';
     g->board->board[0][6] = 'n';
     g->board->board[0][7] = 'r';

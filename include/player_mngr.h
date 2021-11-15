@@ -97,9 +97,9 @@ void change_state(struct player* p, enum player_state ps);
 /**
  * Handles the disconnection of the client - storing the player
  * in the disconnected array to be later restored
- * @param fd the client's file descriptor
+ * @param p the client's file descriptor
  * @return
  */
-int handle_disconnection(int fd);
+int handle_disconnection(struct player* p);
 
 #endif //SEMESTRALKA_PLAYER_MNGR_H

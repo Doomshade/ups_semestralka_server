@@ -2,13 +2,21 @@
 #include <stdio.h>
 #include "../include/packet_validator.h"
 #include "../include/server.h"
-#include "../include/player_mngr.h"
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
 // for each fd make a buffer where the packets are sent
 char** buffered_pheaders = NULL;
 char** buffered_pdata = NULL;
+
+void init_pval() {
+    if (buffered_pheaders || buffered_pdata) {
+        return;
+    }
+    printf("Initializing packet validator...\n");
+    buffered_pheaders = calloc(MAX_PLAYER_COUNT, sizeof(char) * (PACKET_HEADER_SIZE + 1));
+    buffered_pdata = calloc(MAX_PLAYER_COUNT, sizeof(char*));
+}
 
 int validate_header(char* header, unsigned int* p_id, unsigned int* p_siz) {
     char* tmp;
@@ -29,17 +37,14 @@ int validate_header(char* header, unsigned int* p_id, unsigned int* p_siz) {
 
     // CHESS01004
     tmp = header;
-    printf("Parsing %s\n", tmp);
 
     // 01004
     tmp += strlen(PACKET_MAGIC_HEADER);
-    printf("Skipped to %s\n", tmp);
     for (i = 0; i < PACKET_ID_LENGTH; ++i, tmp++) {
         s_id[i] = *tmp;
     }
     s_id[PACKET_ID_LENGTH] = '\0';
 
-    printf("Parsing ID: %s\n", s_id);
     *p_id = strtol(s_id, &end, 16);
     if (strcmp(end, "") != 0) {
         return PACKET_INVALID_HEADER_ID;
@@ -51,21 +56,11 @@ int validate_header(char* header, unsigned int* p_id, unsigned int* p_siz) {
     }
     s_siz[PACKET_SIZE_LENGTH] = '\0';
 
-    printf("Parsing size: %s\n", s_siz);
     *p_siz = strtol(s_siz, &end, 10);
     if (strcmp(end, "") != 0) {
         return PACKET_INVALID_HEADER_PACKET_SIZE;
     }
     return PACKET_OK;
-}
-
-void init_pval() {
-    if (buffered_pheaders || buffered_pdata) {
-        return;
-    }
-    printf("Initializing packet validator...\n");
-    buffered_pheaders = calloc(MAX_PLAYER_COUNT, sizeof(char) * (PACKET_HEADER_SIZE + 1));
-    buffered_pdata = calloc(MAX_PLAYER_COUNT, sizeof(char*));
 }
 
 struct packet* parse_packet(char** packet, int* erc, struct player* pl) {
@@ -126,8 +121,6 @@ struct packet* parse_packet(char** packet, int* erc, struct player* pl) {
 
     // the p_header buffer is not yet full
     if (strlen(pheader) < PACKET_HEADER_SIZE) {
-        printf("Strlen: %lu\n", strlen(pheader));
-        printf("Pheader len: %lu\n", PACKET_HEADER_SIZE);
         printf("Header '%s' not yet fully buffered, %lu bytes remaining...\n", pheader,
                PACKET_HEADER_SIZE - strlen(pheader));
         *erc = PACKET_NOT_YET_FULLY_BUFFERED;
@@ -160,14 +153,12 @@ struct packet* parse_packet(char** packet, int* erc, struct player* pl) {
     *packet += buf_damnt;
     // the data is not yet full
     if (strlen(pdata) < p_data_len) {
-        printf("Strlen: %lu\n", strlen(pdata));
-        printf("Pdata len: %u\n", p_data_len);
         printf("Data %s not yet fully buffered, %lu bytes remaining...\n", pdata, p_data_len - strlen(pdata));
         *erc = PACKET_NOT_YET_FULLY_BUFFERED;
         return NULL;
     }
     // we now have the packet, the leftover data should be handled again
-    // in a while loopstrcpy(pdata, "");
+    // in a while loop
     p_data_copy = malloc(sizeof(char) * (p_data_len + 1));
     strcpy(p_data_copy, pdata);
     p = create_packet(p_id, p_data_len, p_data_copy);

@@ -16,12 +16,11 @@ int lookup_player_by_fd(int fd, struct player** p) {
     struct player* _p;
 
     VALIDATE_FD(fd, 2)
-    if (!p) {
-        return 1;
-    }
     _p = players[fd];
     if (_p) {
-        *p = _p;
+        if (p) {
+            *p = _p;
+        }
         return 0;
     }
     return 1;
@@ -50,7 +49,6 @@ int lookup_player_by_name(char* name, struct player** p) {
 int lookup_dc_player(char* name, struct player** p) {
     int i;
     struct player* _p;
-    struct player* arr_p;
     if (!name || !p) {
         return 1;
     }
@@ -63,13 +61,9 @@ int lookup_dc_player(char* name, struct player** p) {
         if (strcmp(_p->name, name) == 0) { // the player was previously disconnected
             printf("Found a disconnected player under index %d with name %s, FD %d, and state %d\n", i, _p->name,
                    _p->fd, _p->ps);
-            printf("Changing (current) name %s, FD: %d, and state: %d to ^\n", (*p)->name, (*p)->fd, (*p)->ps);
             _p->fd = (*p)->fd; // change the FD to the new one
             *p = _p; // return the previous state with the current FD
             players[_p->fd] = _p; // update the player in the array
-            lookup_player_by_fd((*p)->fd, &arr_p);
-            printf("Player after changes: %s, FD %d, state %d\n", (*p)->name, (*p)->fd, (*p)->ps);
-            printf("Player after changes in arr: %s, FD %d, state %d\n", arr_p->name, arr_p->fd, arr_p->ps);
             dc_players[i] = NULL; // remove the player from the dc_players
             return 0;
         }
@@ -142,27 +136,19 @@ void change_state(struct player* p, enum player_state ps) {
     printf("Changed %s's state to: %s\n", p->name, ps_str);
 }
 
-int handle_disconnection(int fd) {
+int handle_disconnection(struct player* p) {
     int i;
-    struct player* p;
     int ret;
 
-    VALIDATE_FD(fd, 2)
-
-    // the player was not found
-    if ((ret = lookup_player_by_fd(fd, &p))) {
-        return ret;
-    }
-
-    // player not found, ignore it
     if (!p) {
         return 1;
     }
+    VALIDATE_FD(p->fd, 2)
 
-    players[fd] = NULL;
+    players[p->fd] = NULL;
 
 #ifdef __DEBUG_MODE
-    if (!(ret = lookup_player_by_fd(fd, &p))) {
+    if (!lookup_player_by_fd(p->fd, NULL)) {
         printf("Player is still in memory somehow...\n");
     }
 #endif
@@ -179,7 +165,6 @@ int handle_disconnection(int fd) {
             printf("Storing %s under %d in the disconnected list\n", p->name, i);
             dc_players[i] = p;
             inform_disconnect(p);
-            // TODO make a packet for this
             return 0;
         }
     }
