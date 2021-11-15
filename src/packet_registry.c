@@ -22,6 +22,7 @@ void init_preg() {
     handlers[PLAY][MOVE_IN] = p_movepc;
     handlers[PLAY][DRAW_OFFER_IN] = p_offdraw;
     handlers[PLAY][RESIGN_IN] = p_resign;
+    handlers[PLAY][MESSAGE_IN] = p_message;
     registered = true;
 }
 

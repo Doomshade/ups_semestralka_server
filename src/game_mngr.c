@@ -9,8 +9,7 @@
 
 #define FEN_PATTERN "((([rnbqkpRNBQKP1-8]+)\\/){7}([rnbqkpRNBQKP1-8]+)) ([wb]) (K?Q?k?q?|\\-) (([a-h][0-7])|\\-) (\\d+) (\\d+)"
 #define PLAYER_RECON_MESSAGE "Player %s has reconnected to the game"
-#define INGAME(g, p) (g->white == p || g->black == p)
-#define OPPONENT(g, p) (g->white == p ? g->black : g->white)
+#define PLAYER_DISCON_MESSAGE "Player %s has disconnected"
 
 struct game** games = NULL;
 int free_game_index = 0;
@@ -321,12 +320,37 @@ int reconnect_to_game(struct player* pl, struct game* g) {
     // reconnection of the disconnected player
     // TODO create a new packet ID for this
     op = OPPONENT(g, pl);
-    sprintf(buf, PLAYER_RECON_MESSAGE, op->name);
+    sprintf(buf, PLAYER_RECON_MESSAGE, pl->name);
     pc = create_packet(MESSAGE_OUT, strlen(buf), buf);
     printf("Sending %s that %s has reconnected...\n", op->name, pl->name);
     ret = send_packet(op, pc);
     free_packet(pc);
     return ret;
+}
+
+int inform_disconnect(struct player* p) {
+    struct game* g;
+    struct player* op;
+    struct packet* pc;
+    char buf[BUFSIZ];
+    int ret;
+
+    if (!p) {
+        return 1;
+    }
+    g = lookup_game(p);
+    if (!g) {
+        return 0;
+    }
+    op = OPPONENT(g, p);
+    sprintf(buf, PLAYER_DISCON_MESSAGE, p->name);
+    // TODO make a unique packet for this
+    pc = create_packet(MESSAGE_OUT, strlen(buf), buf);
+    ret = send_packet(p, pc);
+    if (ret) {
+        printf("Failed to send a disconnect packet...\n");
+    }
+    return 0;
 }
 
 bool is_players_piece(bool white, char piece) {

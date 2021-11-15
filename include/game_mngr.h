@@ -15,6 +15,9 @@
 #define WIN_BY_RESIGNATION 0b10
 #define WIN_BY_TIME 0b100
 
+#define INGAME(g, p) (g->white == p || g->black == p)
+#define OPPONENT(g, p) (g->white == p ? g->black : g->white)
+
 /**
  * The chessboard
  */
@@ -43,6 +46,8 @@ struct game {
 int reconnect_to_game(struct player* pl, struct game* g);
 
 char* generate_fen(struct chessboard* board);
+
+int inform_disconnect(struct player* p);
 
 /**
  * Sets up the game from the fen string

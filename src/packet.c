@@ -17,7 +17,6 @@
 #endif
 
 
-
 int p_hello(struct player* pl, char* data) {
     struct game* g;
     int ret;
@@ -211,4 +210,31 @@ int p_resign(struct player* p, char* data) {
 
     winner |= WIN_BY_RESIGNATION;
     return finish_game(g, winner);
+}
+
+int p_message(struct player* p, char* packet) {
+    struct game* g;
+    struct player* op;
+    struct packet* pc;
+    char buf[BUFSIZ];
+
+    VALIDATE_PARAMS(p, packet)
+
+    sprintf(buf, "%.*s", MAX_MESSAGE_SIZE, packet);
+    printf("[%s]: %s", p->name, buf);
+
+    if (strlen(packet) > MAX_MESSAGE_SIZE) {
+        printf(" (...)");
+    }
+    printf("\n");
+
+    g = lookup_game(p);
+    if (!g) {
+        return 1;
+    }
+    op = OPPONENT(g, p);
+    pc = create_packet(MESSAGE_OUT, strlen(buf), buf);
+    send_packet(op, pc);
+
+    return 0;
 }

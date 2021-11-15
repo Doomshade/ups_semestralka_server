@@ -3,6 +3,7 @@
 #include "../include/player_mngr.h"
 #include "../include/server.h"
 #include "../include/game_mngr.h"
+#include "../include/packet.h"
 
 #define MAX_DISCONNECTED_COUNT MAX_PLAYER_COUNT * 5
 
@@ -65,8 +66,9 @@ int lookup_dc_player(char* name, struct player** p) {
             printf("Changing (current) name %s, FD: %d, and state: %d to ^\n", (*p)->name, (*p)->fd, (*p)->ps);
             _p->fd = (*p)->fd; // change the FD to the new one
             *p = _p; // return the previous state with the current FD
-            printf("Player after changes: %s, FD %d, state %d\n", (*p)->name, (*p)->fd, (*p)->ps);
+            players[_p->fd] = _p; // update the player in the array
             lookup_player_by_fd((*p)->fd, &arr_p);
+            printf("Player after changes: %s, FD %d, state %d\n", (*p)->name, (*p)->fd, (*p)->ps);
             printf("Player after changes in arr: %s, FD %d, state %d\n", arr_p->name, arr_p->fd, arr_p->ps);
             dc_players[i] = NULL; // remove the player from the dc_players
             return 0;
@@ -94,7 +96,7 @@ int change_player_name(struct player* p, char* name) {
     if (!p || !name) {
         return 2;
     }
-    if (strlen(name) > MAX_PLAYER_NAME_LENGTH) {
+    if (strlen(name) >= MAX_PLAYER_NAME_LENGTH) {
         return 1;
     }
     strcpy(p->name, name);
@@ -176,6 +178,8 @@ int handle_disconnection(int fd) {
         if (dc_players[i] == NULL) {
             printf("Storing %s under %d in the disconnected list\n", p->name, i);
             dc_players[i] = p;
+            inform_disconnect(p);
+            // TODO make a packet for this
             return 0;
         }
     }

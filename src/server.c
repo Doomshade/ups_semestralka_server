@@ -264,6 +264,7 @@ void disconnect(int fd, fd_set* client_socks) {
     free_buffers(fd); // cleanup in the packet_validator (due to potential buffered header/data)
     remove_from_queue(fd); // remove the player from the queue
     handle_disconnection(fd); // cleanup in player_mngr and store the state
+
     close(fd);
     FD_CLR(fd, client_socks);
     printf("A client has disconnected\n");

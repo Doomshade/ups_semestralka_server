@@ -3,6 +3,9 @@
 
 #include "player_mngr.h"
 #include "packet_registry.h"
+
+#define MAX_MESSAGE_SIZE 50
+
 /**
  * The first packet that should be sent by the client, meaning
  * the client should be in the JUST_CONNECTED state. Pushes the
@@ -56,6 +59,16 @@ int p_offdraw(struct player* p, char* packet);
  * @return 0 if everything was okay
  */
 int p_resign(struct player* p, char* packet);
+
+/**
+ * The player sent some message kind of a message. The client should
+ * be in the PLAY state. The max message length sent is defined
+ * by MAX_MESSAGE_SIZE.
+ * @param p the player
+ * @param packet the packet
+ * @return
+ */
+int p_message(struct player* p, char* packet);
 
 
 #endif //SEMESTRALKA_PACKET_H
