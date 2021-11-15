@@ -79,7 +79,7 @@ int lookup_player_by_name(char* name, struct player** p);
  * @param fd the client's file descriptor
  * @return 0 if everything went alright
  */
-int handle_new_connection(int fd);
+int handle_new_player(int fd);
 
 /**
  * Changes the state of the player. Used for logging purposes only.

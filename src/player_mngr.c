@@ -92,7 +92,7 @@ int change_player_name(struct player* p, char* name) {
     return 0;
 }
 
-int handle_new_connection(int fd) {
+int handle_new_player(int fd) {
     VALIDATE_FD(fd, 1)
 
     // the player under this FD is already connected
