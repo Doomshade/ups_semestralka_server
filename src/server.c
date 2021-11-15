@@ -30,6 +30,11 @@ void handle_new_client(int server_socket,
                        unsigned int* len_addr,
                        fd_set* client_socks);
 
+void tst(int server_socket,
+         struct sockaddr_in* peer_addr,
+         unsigned int* len_addr,
+         fd_set* client_socks);
+
 int start_server(unsigned port) {
     int server_socket, rval;
     char ip[64]; // buffer to output IP:port
@@ -103,15 +108,8 @@ int start_listening(int server_socket) {
 
             // is it a new connection?
             if (fd == server_socket) {
-                client_socket = accept(server_socket, (struct sockaddr*) &peer_addr, &len_addr);
-                FD_SET(client_socket, &client_socks);
-                printf("A client has connected and was assigned FD #%d\n", client_socket);
-                // this adds the client to the player array
-                rval = handle_new_connection(client_socket);
-                if (rval == 2) {
-                    printf("An FD with ID %d is already registered, this should not happen!\n", client_socket);
-                    disconnect(client_socket, &client_socks);
-                }
+                handle_new_client(server_socket, &peer_addr, &len_addr, &client_socks);
+                //tst(server_socket, &peer_addr, &len_addr, &client_socks);
                 continue;
             }
             // nope, a client sent some data
@@ -220,6 +218,22 @@ int start_listening(int server_socket) {
     return 0;
 }
 
+void tst(int server_socket, struct sockaddr_in* peer_addr, unsigned int* len_addr,
+         fd_set* client_socks) {
+    int client_socket;
+    int rval;
+
+    client_socket = accept(server_socket, (struct sockaddr*) peer_addr, len_addr);
+    FD_SET(client_socket, client_socks);
+    printf("A client has connected and was assigned FD #%d\n", client_socket);
+    // this adds the client to the player array
+    rval = handle_new_player(client_socket);
+    if (rval == 2) {
+        printf("An FD with ID %d is already registered, this should not happen!\n", client_socket);
+        disconnect(client_socket, client_socks);
+    }
+}
+
 
 void handle_new_client(int server_socket,
                        struct sockaddr_in* peer_addr,
@@ -232,7 +246,7 @@ void handle_new_client(int server_socket,
     FD_SET(client_socket, client_socks);
     printf("A client has connected and was assigned FD #%d\n", client_socket);
     // this adds the client to the player array
-    rval = handle_new_connection(client_socket);
+    rval = handle_new_player(client_socket);
     if (rval == 2) {
         printf("An FD with ID %d is already registered, this should not happen!\n", client_socket);
         disconnect(client_socket, client_socks);
