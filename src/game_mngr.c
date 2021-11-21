@@ -7,6 +7,22 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#define EMPTY_SQUARE ' '
+#define IS_EMPTY_SQUARE(square) (square == EMPTY_SQUARE)
+#define PAWN 'p'
+#define ROOK 'r'
+#define KNIGHT 'n'
+#define BISHOP 'b'
+#define KING 'k'
+#define QUEEN 'q'
+
+#define IS_PAWN(square) (tolower(square) == PAWN)
+#define IS_ROOK(square) (tolower(square) == ROOK)
+#define IS_KNIGHT(square) (tolower(square) == KNIGHT)
+#define IS_BISHOP(square) (tolower(square) == BISHOP)
+#define IS_KING(square) (tolower(square) == KING)
+#define IS_QUEEN(square) (tolower(square) == QUEEN)
+
 #define FEN_PATTERN "((([rnbqkpRNBQKP1-8]+)\\/){7}([rnbqkpRNBQKP1-8]+)) ([wb]) (K?Q?k?q?|\\-) (([a-h][0-7])|\\-) (\\d+) (\\d+)"
 #define PLAYER_RECON_MESSAGE "Player %s has reconnected to the game"
 #define PLAYER_DISCON_MESSAGE "Player %s has disconnected"
@@ -136,6 +152,8 @@ struct game* create_game(struct player* white, struct player* black, bool white_
     }
     g->white = white;
     g->black = black;
+    g->fullmove_count = 1;
+    g->halfmove_clock = 0;
 
     g->board = malloc(sizeof(struct chessboard));
     g->white_to_move = white_to_move;
@@ -269,19 +287,19 @@ int setup_game(struct game* g, char* fen) {
     }
 
     // TODO
-    g->board->board[0][0] = 'r';
-    g->board->board[0][1] = 'n';
-    g->board->board[0][2] = 'b';
-    g->board->board[0][3] = 'q';
-    g->board->board[0][4] = 'k';
-    g->board->board[0][5] = 'b';
-    g->board->board[0][6] = 'n';
-    g->board->board[0][7] = 'r';
+    g->board->board[0][0] = 'R';
+    g->board->board[0][1] = 'N';
+    g->board->board[0][2] = 'B';
+    g->board->board[0][3] = 'Q';
+    g->board->board[0][4] = 'K';
+    g->board->board[0][5] = 'B';
+    g->board->board[0][6] = 'N';
+    g->board->board[0][7] = 'R';
 
     for (i = 0; i < 8; ++i) {
-        g->board->board[1][i] = 'p';
-        g->board->board[6][i] = 'P';
-        g->board->board[7][i] = (char) toupper(g->board->board[0][i]);
+        g->board->board[1][i] = 'P';
+        g->board->board[6][i] = 'p';
+        g->board->board[7][i] = (char) tolower(g->board->board[0][i]);
     }
     // now we check who's to move
     // "w KQkq - 0 1"
@@ -292,9 +310,65 @@ int setup_game(struct game* g, char* fen) {
     return 0;
 }
 
-char* generate_fen(struct chessboard* board) {
+char* generate_fen(struct game* g) {
     // TODO
-    return START_FEN;
+    int rank;
+    int file;
+    int empty;
+    char square[2] = {0};
+    char buf[BUFSIZ] = {0};
+    char* fen;
+
+    for (rank = 7; rank >= 0; --rank) {
+        for (empty = 0, file = 0; file < 8; ++file) {
+            square[0] = g->board->board[rank][file];
+            square[1] = '\0';
+            if (IS_EMPTY_SQUARE(square[0])) {
+                empty++;
+                continue;
+            }
+
+            if (empty != 0) {
+                // append the num of empty squares to the buf
+                sprintf(buf, "%s%d", buf, empty);
+            }
+            strcat(buf, square);
+            empty = 0;
+        }
+        if (empty != 0) {
+            // append the num of empty squares to the buf
+            sprintf(buf, "%s%d", buf, empty);
+        }
+        // don't add the / at the end
+        if (rank != 0) {
+            strcat(buf, "/");
+        }
+    }
+    // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR
+
+    strcat(buf, " ");
+    strcat(buf, g->white_to_move ? "w" : "b");
+    // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w
+
+    // TODO add castles check
+    strcat(buf, " ");
+    strcat(buf, "KQkq");
+    // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq
+
+    strcat(buf, " ");
+    if (strcmp(g->board->lm, "") != 0) {
+        strcat(buf, g->board->lm);
+    } else {
+        strcat(buf, "-");
+    }
+    // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -
+
+    sprintf(buf, "%s %d %d", buf, g->halfmove_clock, g->fullmove_count);
+    // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+
+    fen = malloc(sizeof(char) * (strlen(buf) + 1));
+    strcpy(fen, buf);
+    return fen;
 }
 
 int reconnect_to_game(struct player* pl, struct game* g) {
@@ -310,7 +384,7 @@ int reconnect_to_game(struct player* pl, struct game* g) {
     }
 
     // send the reconnecting player the game state
-    fen = generate_fen(g->board);
+    fen = generate_fen(g);
     pc = create_packet(GAME_START_OUT, strlen(fen), fen);
     printf("Sending %s game start packet...\n", pl->name);
     ret = send_packet(pl, pc);
@@ -353,7 +427,7 @@ int inform_disconnect(struct player* p) {
 }
 
 bool is_players_piece(bool white, char piece) {
-    char target_piece = (char) (white ? tolower(piece) : toupper(piece));
+    char target_piece = (char) (white ? toupper(piece) : tolower(piece));
     return piece == target_piece;
 }
 
@@ -361,6 +435,7 @@ int move_piece(struct game* g, struct player* p, unsigned int rank_from, unsigne
                unsigned int file_to) {
     char pce_from;
     bool white;
+    struct chessboard* cb;
     if (!g || !p || (file_from | rank_from | file_to | file_from) >= 8) {
         return 1;
     }
@@ -372,7 +447,9 @@ int move_piece(struct game* g, struct player* p, unsigned int rank_from, unsigne
         printf("It is not %s's turn yet!\n", p->name);
         return 1;
     }
-    pce_from = g->board->board[rank_from][file_from];
+
+    cb = g->board;
+    pce_from = cb->board[rank_from][file_from];
 
     if (pce_from == ' ') {
         printf("No piece found on [%d, %d]\n", rank_from, file_from);
@@ -383,10 +460,22 @@ int move_piece(struct game* g, struct player* p, unsigned int rank_from, unsigne
         return 1;
     }
 
+    // TODO add chess piece move logic
     printf("[%d,%d] '%c' -> [%d,%d] '%c'\n", rank_from, file_from, pce_from, rank_to, file_to,
-           g->board->board[rank_to][file_to]);
-    g->board->board[rank_to][file_to] = pce_from;
-    g->board->board[rank_from][file_from] = ' ';
+           cb->board[rank_to][file_to]);
+
+    // we are taking a piece, reset the halfmove
+    if (!IS_EMPTY_SQUARE(cb->board[rank_to][file_to]) || IS_PAWN(cb->board[rank_from][file_from])) {
+        g->halfmove_clock = 0;
+    } else {
+        g->halfmove_clock++;
+    }
+    cb->board[rank_to][file_to] = pce_from;
+    cb->board[rank_from][file_from] = ' ';
+    // increment the fullmove count after black's move
+    if (!g->white_to_move) {
+        g->fullmove_count++;
+    }
     g->white_to_move = !g->white_to_move;
     print_board(g);
     return 0;

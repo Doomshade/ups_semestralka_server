@@ -15,6 +15,12 @@
 #define WIN_BY_RESIGNATION 0b10
 #define WIN_BY_TIME 0b100
 
+// transforms A-F -> 0-7
+#define FILE_TO_UINT(file) (file - 'A')
+
+// transforms 1-8 -> 0-7
+#define RANK_TO_UINT(rank) (rank - '1')
+
 #define INGAME(g, p) (g->white == p || g->black == p)
 #define OPPONENT(g, p) (g->white == p ? g->black : g->white)
 
@@ -23,7 +29,8 @@
  */
 struct chessboard {
     /**
-     * Board represented by chars of pieces - "rnbqkpRNBQKP" (r = rook, n = knight, ...)
+     * Board represented by chars of pieces - "rnbqkpRNBQKP" (r = rook, n = knight, ...).
+     * First index is the file (1-8) and the second is the file (A-F) both represented as 0-7.
      */
     char board[8][8];
 
@@ -33,6 +40,18 @@ struct chessboard {
     char lm[2];
 };
 
+struct pos {
+    // rank = 1-8 represented as 0-7
+    unsigned int rank;
+    // file = A-F represented as 0-7
+    unsigned int file;
+};
+
+struct move {
+    struct pos* from;
+    struct pos* to;
+};
+
 /**
  * The game
  */
@@ -40,13 +59,36 @@ struct game {
     struct player* white;
     struct player* black;
     struct chessboard* board;
+
+    // the number of halfmoves since the last capture or pawn advance, used for the fifty-move rule.[
+    int halfmove_clock;
+    // the number of the full move. It starts at 1, and is incremented after black's move
+    int fullmove_count;
+    // whether the white is to move
     bool white_to_move;
 };
 
+/**
+ * Sends the player the FEN string and informs the
+ * opponent that the player has reconnected to the game.
+ * @param pl the player
+ * @param g the game
+ * @return 0 if the player was last in-game and everything went alright
+ */
 int reconnect_to_game(struct player* pl, struct game* g);
 
-char* generate_fen(struct chessboard* board);
+/**
+ * Generates the FEN string for the given board
+ * @param g the board
+ * @return the FEN string
+ */
+char* generate_fen(struct game* g);
 
+/**
+ * Informs the player that the opponent has disconnected
+ * @param p the player to inform
+ * @return 0 if everything went alright
+ */
 int inform_disconnect(struct player* p);
 
 /**
@@ -94,7 +136,8 @@ void init_gman();
  * @param rank_from the rank_from
  * @return 0 if everything went fine
  */
-int move_piece(struct game* g, struct player* p, unsigned int rank_from, unsigned int file_from, unsigned int rank_to, unsigned int file_to);
+int move_piece(struct game* g, struct player* p, unsigned int rank_from, unsigned int file_from, unsigned int rank_to,
+               unsigned int file_to);
 
 /**
  * Attempts to lookup a game by player's name
