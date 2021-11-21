@@ -88,9 +88,6 @@ int p_hello(struct player* pl, char* data) {
                     return 0;
                 }
                 return reconnect_to_game(pl, g);
-            case QUEUE:
-                change_state(pl, LOGGED_IN);
-                return 0;
             default:
                 break;
         }
@@ -116,10 +113,10 @@ int p_queue(struct player* p, char* data) {
 }
 
 int p_movepc(struct player* p, char* data) {
-    unsigned int rank_from; // A-H -> 0-7
-    unsigned int rank_to; // A-H -> 0-7
-    unsigned int file_from; // 1-8 -> 0-7
-    unsigned int file_to; // 1-8 -> 0-7
+    unsigned int rank_from; // 1-8 -> 0-7
+    unsigned int rank_to; // 1-8 -> 0-7
+    unsigned int file_from; // A-H -> 0-7
+    unsigned int file_to; // A-H -> 0-7
     unsigned int max_bound; // 0-7
     struct game* g;
     struct packet* pc;
@@ -144,10 +141,10 @@ int p_movepc(struct player* p, char* data) {
         send_packet(p, pc);
         return 1;
     }
-    file_from = data[0] - 'A';
-    file_to = data[2] - 'A';
-    rank_from = data[1] - '1';
-    rank_to = data[3] - '1';
+    file_from = FILE_TO_UINT(data[0]);
+    file_to = FILE_TO_UINT(data[2]);
+    rank_from = RANK_TO_UINT(data[1]);
+    rank_to = RANK_TO_UINT(data[3]);
 
     // basically wee should get a value 0-7
     max_bound = rank_from | rank_to | file_from | file_to;
