@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <stdlib.h>
+#include <netinet/tcp.h>
 
 // kvuli iotctl
 #include <sys/ioctl.h>
@@ -12,6 +14,8 @@
 #include "../include/packet_handler.h"
 #include "../include/packet_validator.h"
 #include "../include/queue_mngr.h"
+
+#define check(eval) if(!(eval)) printf("setsockopt error\n");
 
 /**
  * Starts listening to
@@ -40,6 +44,24 @@ void tst(int server_socket,
          unsigned int* len_addr,
          fd_set* client_socks);
 
+void enable_keepalive(int sock) {
+    int yes = 1;
+    check(setsockopt(
+            sock, SOL_SOCKET, SO_KEEPALIVE, &yes, sizeof(int)) != -1);
+
+    int idle = 1;
+    check(setsockopt(
+            sock, IPPROTO_TCP, TCP_KEEPIDLE, &idle, sizeof(int)) != -1);
+
+    int interval = 1;
+    check(setsockopt(
+            sock, IPPROTO_TCP, TCP_KEEPINTVL, &interval, sizeof(int)) != -1);
+
+    int maxpkt = 10;
+    check(setsockopt(
+            sock, IPPROTO_TCP, TCP_KEEPCNT, &maxpkt, sizeof(int)) != -1);
+}
+
 int start_server(unsigned port) {
     int server_socket, rval;
     char ip[64]; // buffer to output IP:port
@@ -47,10 +69,9 @@ int start_server(unsigned port) {
     int param = 1;
 
     server_socket = socket(AF_INET, SOCK_STREAM, 0);
-    rval = setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, (const char*) &param, sizeof(int));
-    if (rval == -1) {
-        printf("setsockopt ERR\n");
-    }
+    //rval = setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, (const char*) &param, sizeof(int));
+
+    check(setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, (const char*) &param, sizeof(int)) != -1);
 
     memset(&my_addr, 0, sizeof(struct sockaddr_in));
 
@@ -78,7 +99,7 @@ int start_server(unsigned port) {
 
 int start_listening(int server_socket) {
     struct sockaddr_in peer_addr;
-    int client_socket, fd, rval, a2read;
+    int fd, rval, a2read;
     char* p_ptr = NULL;
     char* p_ptr_copy = NULL; // to later free the p_ptr
     unsigned int len_addr;
@@ -124,7 +145,7 @@ int start_listening(int server_socket) {
                 printf("An error occurred during the creation of client (FD=%d)...\n", fd);
                 continue;
             }
-            printf("------------%s------------\n", player->name);
+            printf("--------------------%s--------------------\n", player->name);
 
             // nope, a client sent some data
             ioctl(fd, FIONREAD, &a2read);
@@ -158,7 +179,7 @@ int start_listening(int server_socket) {
 #ifdef __DEBUG_MODE
                 printf("Not yet fully buffered...\n");
 #endif
-                continue;
+                goto FREE;
             }
 
             // the packet has been handled -> check if handled correctly
@@ -169,9 +190,9 @@ int start_listening(int server_socket) {
 // don't disconnect the player if the packet format is incorrect
 #ifdef __DEBUG_MODE
                 free_buffers(fd);
-                continue;
-#endif
+#else
                 disconnect(player, &client_socks);
+#endif
                 goto FREE;
             }
 
@@ -184,31 +205,31 @@ int start_listening(int server_socket) {
 // don't disconnect if the packet data is invalid either
 #ifdef __DEBUG_MODE
                     free_buffers(fd);
-                    break;
-#endif
+#else
                     disconnect(player, &client_socks);
+#endif
                     goto FREE;
                 case PACKET_ERR_STATE_OUT_OF_BOUNDS:
                     printf("A client sent a packet in a state that was out of bounds\n");
                     printf("This should not happen! Contact the authors for fix\n");
 #ifdef __DEBUG_MODE
                     free_buffers(fd);
-                    break;
-#endif
+#else
                     disconnect(player, &client_socks);
+#endif
                     goto FREE;
                 case PACKER_ERR_INVALID_CLIENT_STATE:
                     printf("A client sent a packet in an invalid state\n");
 #ifdef __DEBUG_MODE
                     free_buffers(fd);
-                    break;
-#endif
+#else
                     disconnect(player, &client_socks);
+#endif
                     goto FREE;
                 default:
                     printf("An error occurred when handling the packet (%d)\n", rval);
                     free_buffers(fd);
-                    break;
+                    goto FREE;
             }
 
             // there could still be some leftover data in the buffer,
@@ -220,6 +241,7 @@ int start_listening(int server_socket) {
             // no more data, free the malloced packet data
             FREE:
             free(p_ptr_copy);
+            printf("--------------------%s--------------------\n\n", player->name);
         } // END FOR (FD)
     } // END WHILE(1)
     return 0;
@@ -235,6 +257,7 @@ void handle_new_client(int server_socket,
 
     client_socket = accept(server_socket, (struct sockaddr*) peer_addr, len_addr);
     FD_SET(client_socket, client_socks);
+    enable_keepalive(client_socket);
     printf("A client has connected and was assigned FD #%d\n", client_socket);
     // this adds the client to the player array
     rval = handle_new_player(client_socket);
