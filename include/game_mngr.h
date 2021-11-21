@@ -6,14 +6,15 @@
 #include <sys/socket.h>
 
 /**
- * The default board FEN string
+ * The default g FEN string
  */
 #define START_FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+#define DRAW 1 << 3
 #define WHITE_WINNER 0
 #define BLACK_WINNER 1
-#define WIN_BY_MATE 0b0
-#define WIN_BY_RESIGNATION 0b10
-#define WIN_BY_TIME 0b100
+#define WIN_BY_MATE 1 << 1
+#define WIN_BY_RESIGNATION 1 << 2
+#define WIN_BY_TIME 1 << 3
 
 // transforms A-F -> 0-7
 #define FILE_TO_UINT(file) (file - 'A')
@@ -25,31 +26,21 @@
 #define OPPONENT(g, p) (g->white == p ? g->black : g->white)
 
 /**
- * The chessboard
+ * The square on the g
  */
-struct chessboard {
-    /**
-     * Board represented by chars of pieces - "rnbqkpRNBQKP" (r = rook, n = knight, ...).
-     * First index is the file (1-8) and the second is the file (A-F) both represented as 0-7.
-     */
-    char board[8][8];
-
-    /**
-     * The last pawn move (because of en passant and FEN string)
-     */
-    char lm[2];
-};
-
-struct pos {
+struct square {
     // rank = 1-8 represented as 0-7
     unsigned int rank;
     // file = A-F represented as 0-7
     unsigned int file;
 };
 
+/**
+ * A move in-game
+ */
 struct move {
-    struct pos* from;
-    struct pos* to;
+    struct square* from;
+    struct square* to;
 };
 
 /**
@@ -58,15 +49,38 @@ struct move {
 struct game {
     struct player* white;
     struct player* black;
-    struct chessboard* board;
 
-    // the number of halfmoves since the last capture or pawn advance, used for the fifty-move rule.[
+
+    // board represented by chars of pieces - "rnbqkpRNBQKP" (r = rook, n = knight, ...).
+    // first index is the rank (1-8) and the second is the file (A-F) both represented as 0-7.
+    char board[8][8];
+
+    // The last pawn move (because of en passant and FEN string)
+    char lm[2];
+
+    // the number of halfmoves since the last capture or pawn advance, used for the fifty-move rule
     int halfmove_clock;
-    // the number of the full move. It starts at 1, and is incremented after black's move
+    // the number of the full move, it starts at 1, and is incremented after black's move
     int fullmove_count;
-    // whether the white is to move
+    // whether the white player is to move
     bool white_to_move;
 };
+
+/**
+ * Creates a move
+ * @param from
+ * @param to
+ * @return
+ */
+struct move* create_move(struct square* from, struct square* to);
+
+/**
+ * Creates a square
+ * @param file
+ * @param rank
+ * @return the square
+ */
+struct square* create_square(unsigned int file, unsigned int rank);
 
 /**
  * Sends the player the FEN string and informs the
@@ -78,8 +92,8 @@ struct game {
 int reconnect_to_game(struct player* pl, struct game* g);
 
 /**
- * Generates the FEN string for the given board
- * @param g the board
+ * Generates the FEN string for the given game
+ * @param g the game
  * @return the FEN string
  */
 char* generate_fen(struct game* g);
@@ -114,13 +128,15 @@ int game_create(struct player* white, struct player* black);
  * the players, informing them of the fact, and
  * changes their state to LOGGED_IN.
  * @param g the game
- * @param winner -1 if draw,
- * 0 if white by mate,
- * 1 if black by mate,
- * 2 if white by resignation,
- * 3 if black by resignation,
- * 4 if white by time,
- * 5 if black by time
+ * @param winner
+ * 1st bit (who won):\n
+ * (0) white\n
+ * (1) black\n\n
+ * 2-3 bits (game finished by):\n
+ * (00) mate\n
+ * (01) resignation\n
+ * (10) time\n
+ * (11) draw\n
  */
 int finish_game(struct game* g, int winner);
 
@@ -136,8 +152,7 @@ void init_gman();
  * @param rank_from the rank_from
  * @return 0 if everything went fine
  */
-int move_piece(struct game* g, struct player* p, unsigned int rank_from, unsigned int file_from, unsigned int rank_to,
-               unsigned int file_to);
+int move_piece(struct game* g, struct player* p, struct move* m);
 
 /**
  * Attempts to lookup a game by player's name

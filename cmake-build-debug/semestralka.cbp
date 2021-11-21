@@ -76,6 +76,9 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/home/doomshade/CLionProjects/semestralka/include/chesspiece.h">
+			<Option target="semestralka"/>
+		</Unit>
 		<Unit filename="/home/doomshade/CLionProjects/semestralka/include/game_mngr.h">
 			<Option target="semestralka"/>
 		</Unit>
@@ -98,6 +101,9 @@
 			<Option target="semestralka"/>
 		</Unit>
 		<Unit filename="/home/doomshade/CLionProjects/semestralka/include/server.h">
+			<Option target="semestralka"/>
+		</Unit>
+		<Unit filename="/home/doomshade/CLionProjects/semestralka/src/chesspiece.c">
 			<Option target="semestralka"/>
 		</Unit>
 		<Unit filename="/home/doomshade/CLionProjects/semestralka/src/game_mngr.c">

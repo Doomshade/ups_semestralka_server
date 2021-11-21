@@ -6,6 +6,16 @@
 
 #IncludeRegexTransform: 
 
+/home/doomshade/CLionProjects/semestralka/include/chesspiece.h
+stdbool.h
+-
+stdlib.h
+-
+sys/socket.h
+-
+game_mngr.h
+/home/doomshade/CLionProjects/semestralka/include/game_mngr.h
+
 /home/doomshade/CLionProjects/semestralka/include/game_mngr.h
 stdbool.h
 -
@@ -14,43 +24,9 @@ stdlib.h
 sys/socket.h
 -
 
-/home/doomshade/CLionProjects/semestralka/include/packet_handler.h
-packet_registry.h
-/home/doomshade/CLionProjects/semestralka/include/packet_registry.h
-
-/home/doomshade/CLionProjects/semestralka/include/packet_registry.h
-game_mngr.h
-/home/doomshade/CLionProjects/semestralka/include/game_mngr.h
-player_mngr.h
-/home/doomshade/CLionProjects/semestralka/include/player_mngr.h
-
-/home/doomshade/CLionProjects/semestralka/include/packet_validator.h
-string.h
+/home/doomshade/CLionProjects/semestralka/src/chesspiece.c
+../include/chesspiece.h
+/home/doomshade/CLionProjects/semestralka/include/chesspiece.h
+ctype.h
 -
-packet_registry.h
-/home/doomshade/CLionProjects/semestralka/include/packet_registry.h
-
-/home/doomshade/CLionProjects/semestralka/include/player_mngr.h
-
-/home/doomshade/CLionProjects/semestralka/include/server.h
-
-/home/doomshade/CLionProjects/semestralka/src/packet_handler.c
-stdio.h
--
-string.h
--
-../include/packet_handler.h
-/home/doomshade/CLionProjects/semestralka/include/packet_handler.h
-
-/home/doomshade/CLionProjects/semestralka/src/packet_validator.c
-stdlib.h
--
-stdio.h
--
-../include/packet_validator.h
-/home/doomshade/CLionProjects/semestralka/include/packet_validator.h
-../include/server.h
-/home/doomshade/CLionProjects/semestralka/include/server.h
-../include/player_mngr.h
-/home/doomshade/CLionProjects/semestralka/include/player_mngr.h
 

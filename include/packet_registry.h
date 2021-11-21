@@ -72,7 +72,7 @@ enum play_p {
     // A player moved a piece
     MOVE_IN = PACKET_IN(PLAY_P_OFFSET, 0),
 
-    // Sent to the sender as "INVALID_MOVE"
+    // Sent to the sender as "MOVE_INVALID"
     // or sent "OK" to both players
     // to update their game
     MOVE_OUT = PACKET_OUT(MOVE_IN),

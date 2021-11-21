@@ -7,7 +7,8 @@
 // the amount of IN packets = (0-PACKET_OUT_OFFSET)
 #define PACKET_COUNT PACKET_OUT_OFFSET
 #define STATE_COUNT 4
-packet_handle* handlers[STATE_COUNT][PACKET_COUNT] = {0};
+// I don't calloc this because callocing matrices is hard
+packet_handle* packet_handlers[STATE_COUNT][PACKET_COUNT] = {0};
 bool registered = false;
 
 /**
@@ -22,13 +23,13 @@ void init_preg() {
     }
     //[STATE_COUNT][PACKET_COUNT]
     printf("Initializing packet registry...\n");
-    handlers[JUST_CONNECTED][HELLO_IN] = p_hello;
-    handlers[LOGGED_IN][QUEUE_IN] = p_queue;
-    handlers[QUEUE][QUEUE_IN] = p_queue;
-    handlers[PLAY][MOVE_IN] = p_movepc;
-    handlers[PLAY][DRAW_OFFER_IN] = p_offdraw;
-    handlers[PLAY][RESIGN_IN] = p_resign;
-    handlers[PLAY][MESSAGE_IN] = p_message;
+    packet_handlers[JUST_CONNECTED][HELLO_IN] = p_hello;
+    packet_handlers[LOGGED_IN][QUEUE_IN] = p_queue;
+    packet_handlers[QUEUE][QUEUE_IN] = p_queue;
+    packet_handlers[PLAY][MOVE_IN] = p_movepc;
+    packet_handlers[PLAY][DRAW_OFFER_IN] = p_offdraw;
+    packet_handlers[PLAY][RESIGN_IN] = p_resign;
+    packet_handlers[PLAY][MESSAGE_IN] = p_message;
     registered = true;
 }
 
@@ -92,7 +93,7 @@ packet_handle* get_handler(unsigned int id, enum player_state pstate, int* erc) 
         *erc = PACKET_ERR_STATE_OUT_OF_BOUNDS;
         return NULL;
     }
-    handle = handlers[pstate][id];
+    handle = packet_handlers[pstate][id];
     if (!handle) {
         *erc = PACKET_ERR_INVALID_ID;
         return NULL;

@@ -8,6 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
+  "/home/doomshade/CLionProjects/semestralka/src/chesspiece.c" "/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles/semestralka.dir/src/chesspiece.c.o"
   "/home/doomshade/CLionProjects/semestralka/src/game_mngr.c" "/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles/semestralka.dir/src/game_mngr.c.o"
   "/home/doomshade/CLionProjects/semestralka/src/main.c" "/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles/semestralka.dir/src/main.c.o"
   "/home/doomshade/CLionProjects/semestralka/src/packet.c" "/home/doomshade/CLionProjects/semestralka/cmake-build-debug/CMakeFiles/semestralka.dir/src/packet.c.o"

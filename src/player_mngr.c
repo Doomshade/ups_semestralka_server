@@ -3,7 +3,6 @@
 #include "../include/player_mngr.h"
 #include "../include/server.h"
 #include "../include/game_mngr.h"
-#include "../include/packet.h"
 
 #define MAX_DISCONNECTED_COUNT MAX_PLAYER_COUNT * 5
 

@@ -118,6 +118,10 @@ int p_movepc(struct player* p, char* data) {
     unsigned int file_from; // A-H -> 0-7
     unsigned int file_to; // A-H -> 0-7
     unsigned int max_bound; // 0-7
+    struct square* from;
+    struct square* to;
+    struct move* m;
+
     struct game* g;
     struct packet* pc;
     char* msg;
@@ -158,9 +162,11 @@ int p_movepc(struct player* p, char* data) {
         return 1;
     }
 
-    // check whose turn it is
+    from = create_square(file_from, rank_from);
+    to = create_square(file_to, rank_to);
+    m = create_move(from, to);
 
-    if (move_piece(g, p, rank_from, file_from, rank_to, file_to)) {
+    if (move_piece(g, p, m)) {
         printf("Invalid move!\n");
         return 0; // perhaps the client miscalculated, don't dc the player
     }

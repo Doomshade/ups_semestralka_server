@@ -14,6 +14,7 @@
 #include "../include/packet_handler.h"
 #include "../include/packet_validator.h"
 #include "../include/queue_mngr.h"
+#include "../include/chesspiece.h"
 
 #define check(eval) if(!(eval)) printf("setsockopt error\n");
 
@@ -38,11 +39,6 @@ void handle_new_client(int server_socket,
                        struct sockaddr_in* peer_addr,
                        unsigned int* len_addr,
                        fd_set* client_socks);
-
-void tst(int server_socket,
-         struct sockaddr_in* peer_addr,
-         unsigned int* len_addr,
-         fd_set* client_socks);
 
 void enable_keepalive(int sock) {
     int yes = 1;
@@ -272,6 +268,7 @@ void init_server() {
     init_preg(); // packet registry
     init_qman(); // queue manager
     init_gman(); // game manager
+    init_cpce(); // chess pieces
 }
 
 void disconnect(struct player* p, fd_set* client_socks) {

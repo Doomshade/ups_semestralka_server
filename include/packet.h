@@ -4,7 +4,7 @@
 #include "player_mngr.h"
 #include "packet_registry.h"
 
-#define MAX_MESSAGE_SIZE 50
+#define MAX_MESSAGE_SIZE 50 // we don't want to let the players' messages to be too long
 
 /**
  * The first packet that should be sent by the client, meaning
@@ -31,7 +31,7 @@ int p_hello(struct player* pl, char* packet);
 int p_queue(struct player* p, char* data);
 
 /**
- * The player wants to move a piece on the board. The client should
+ * The player wants to move a piece on the g. The client should
  * be in the PLAY state. The data should always be of length 4 and
  * the data should be in format [file_from][rank_from][file_to][rank_to]
  * E.g. A2A4 E5E4

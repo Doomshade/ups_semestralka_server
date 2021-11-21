@@ -129,6 +129,30 @@ semestralka/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/build
 .PHONY : semestralka/fast
 
+src/chesspiece.o: src/chesspiece.c.o
+.PHONY : src/chesspiece.o
+
+# target to build an object file
+src/chesspiece.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/chesspiece.c.o
+.PHONY : src/chesspiece.c.o
+
+src/chesspiece.i: src/chesspiece.c.i
+.PHONY : src/chesspiece.i
+
+# target to preprocess a source file
+src/chesspiece.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/chesspiece.c.i
+.PHONY : src/chesspiece.c.i
+
+src/chesspiece.s: src/chesspiece.c.s
+.PHONY : src/chesspiece.s
+
+# target to generate assembly for a file
+src/chesspiece.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/semestralka.dir/build.make CMakeFiles/semestralka.dir/src/chesspiece.c.s
+.PHONY : src/chesspiece.c.s
+
 src/game_mngr.o: src/game_mngr.c.o
 .PHONY : src/game_mngr.o
 
@@ -354,6 +378,9 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... semestralka"
+	@echo "... src/chesspiece.o"
+	@echo "... src/chesspiece.i"
+	@echo "... src/chesspiece.s"
 	@echo "... src/game_mngr.o"
 	@echo "... src/game_mngr.i"
 	@echo "... src/game_mngr.s"

@@ -1,4 +1,5 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/semestralka.dir/src/chesspiece.c.o"
   "CMakeFiles/semestralka.dir/src/game_mngr.c.o"
   "CMakeFiles/semestralka.dir/src/main.c.o"
   "CMakeFiles/semestralka.dir/src/packet.c.o"

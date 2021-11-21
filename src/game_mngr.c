@@ -3,25 +3,10 @@
 #include "../include/player_mngr.h"
 #include "string.h"
 #include "../include/packet_registry.h"
+#include "../include/chesspiece.h"
 #include <regex.h>
 #include <stdio.h>
 #include <ctype.h>
-
-#define EMPTY_SQUARE ' '
-#define IS_EMPTY_SQUARE(square) (square == EMPTY_SQUARE)
-#define PAWN 'p'
-#define ROOK 'r'
-#define KNIGHT 'n'
-#define BISHOP 'b'
-#define KING 'k'
-#define QUEEN 'q'
-
-#define IS_PAWN(square) (tolower(square) == PAWN)
-#define IS_ROOK(square) (tolower(square) == ROOK)
-#define IS_KNIGHT(square) (tolower(square) == KNIGHT)
-#define IS_BISHOP(square) (tolower(square) == BISHOP)
-#define IS_KING(square) (tolower(square) == KING)
-#define IS_QUEEN(square) (tolower(square) == QUEEN)
 
 #define FEN_PATTERN "((([rnbqkpRNBQKP1-8]+)\\/){7}([rnbqkpRNBQKP1-8]+)) ([wb]) (K?Q?k?q?|\\-) (([a-h][0-7])|\\-) (\\d+) (\\d+)"
 #define PLAYER_RECON_MESSAGE "Player %s has reconnected to the game"
@@ -155,7 +140,6 @@ struct game* create_game(struct player* white, struct player* black, bool white_
     g->fullmove_count = 1;
     g->halfmove_clock = 0;
 
-    g->board = malloc(sizeof(struct chessboard));
     g->white_to_move = white_to_move;
     return g;
 }
@@ -204,7 +188,7 @@ void print_files() {
 void print_board(struct game* g) {
     int i, j;
 
-    if (!g || !g->board) {
+    if (!g) {
         return;
     }
 
@@ -215,7 +199,7 @@ void print_board(struct game* g) {
     for (i = 7; i >= 0; --i) {
         printf("%d | ", (i + 1));
         for (j = 0; j < 8; ++j) {
-            printf("%c | ", g->board->board[i][j]);
+            printf("%c | ", g->board[i][j]);
         }
         printf("%d\n", (i + 1));
         print_hline();
@@ -255,7 +239,7 @@ int setup_game(struct game* g, char* fen) {
         return ret;
     }*/
 
-    // the first part is the board
+    // the first part is the g
     // "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR" w KQkq - 0 1
     token = strtok(fen, "/");
 
@@ -282,24 +266,24 @@ int setup_game(struct game* g, char* fen) {
 
     for (i = 0; i < 8; ++i) {
         for (j = 0; j < 8; ++j) {
-            g->board->board[i][j] = ' ';
+            g->board[i][j] = ' ';
         }
     }
 
     // TODO
-    g->board->board[0][0] = 'R';
-    g->board->board[0][1] = 'N';
-    g->board->board[0][2] = 'B';
-    g->board->board[0][3] = 'Q';
-    g->board->board[0][4] = 'K';
-    g->board->board[0][5] = 'B';
-    g->board->board[0][6] = 'N';
-    g->board->board[0][7] = 'R';
+    g->board[0][0] = 'R';
+    g->board[0][1] = 'N';
+    g->board[0][2] = 'B';
+    g->board[0][3] = 'Q';
+    g->board[0][4] = 'K';
+    g->board[0][5] = 'B';
+    g->board[0][6] = 'N';
+    g->board[0][7] = 'R';
 
     for (i = 0; i < 8; ++i) {
-        g->board->board[1][i] = 'P';
-        g->board->board[6][i] = 'p';
-        g->board->board[7][i] = (char) tolower(g->board->board[0][i]);
+        g->board[1][i] = 'P';
+        g->board[6][i] = 'p';
+        g->board[7][i] = (char) tolower(g->board[0][i]);
     }
     // now we check who's to move
     // "w KQkq - 0 1"
@@ -321,7 +305,7 @@ char* generate_fen(struct game* g) {
 
     for (rank = 7; rank >= 0; --rank) {
         for (empty = 0, file = 0; file < 8; ++file) {
-            square[0] = g->board->board[rank][file];
+            square[0] = g->board[rank][file];
             square[1] = '\0';
             if (IS_EMPTY_SQUARE(square[0])) {
                 empty++;
@@ -356,8 +340,8 @@ char* generate_fen(struct game* g) {
     // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq
 
     strcat(buf, " ");
-    if (strcmp(g->board->lm, "") != 0) {
-        strcat(buf, g->board->lm);
+    if (strcmp(g->lm, "") != 0) {
+        strcat(buf, g->lm);
     } else {
         strcat(buf, "-");
     }
@@ -431,12 +415,17 @@ bool is_players_piece(bool white, char piece) {
     return piece == target_piece;
 }
 
-int move_piece(struct game* g, struct player* p, unsigned int rank_from, unsigned int file_from, unsigned int rank_to,
-               unsigned int file_to) {
+int move_piece(struct game* g, struct player* p, struct move* m) {
     char pce_from;
     bool white;
-    struct chessboard* cb;
-    if (!g || !p || (file_from | rank_from | file_to | file_from) >= 8) {
+    unsigned int rank_from, file_from, rank_to, file_to;
+
+    rank_from = m->from->rank;
+    file_from = m->from->file;
+    rank_to = m->to->rank;
+    file_to = m->to->file;
+
+    if (!g || !p || (rank_from | file_from | rank_to | file_to) >= 8) {
         return 1;
     }
     white = g->white == p;
@@ -448,8 +437,7 @@ int move_piece(struct game* g, struct player* p, unsigned int rank_from, unsigne
         return 1;
     }
 
-    cb = g->board;
-    pce_from = cb->board[rank_from][file_from];
+    pce_from = PIECE_SQ(g->board, m->from);
 
     if (pce_from == ' ') {
         printf("No piece found on [%d, %d]\n", rank_from, file_from);
@@ -462,16 +450,16 @@ int move_piece(struct game* g, struct player* p, unsigned int rank_from, unsigne
 
     // TODO add chess piece move logic
     printf("[%d,%d] '%c' -> [%d,%d] '%c'\n", rank_from, file_from, pce_from, rank_to, file_to,
-           cb->board[rank_to][file_to]);
+           PIECE_SQ(g->board, m->to));
 
-    // we are taking a piece, reset the halfmove
-    if (!IS_EMPTY_SQUARE(cb->board[rank_to][file_to]) || IS_PAWN(cb->board[rank_from][file_from])) {
+    // we are taking a piece or moving a pawn, reset the halfmove
+    if (!IS_EMPTY_SQUARE(PIECE_SQ(g->board, m->to)) || IS_PAWN(PIECE_SQ(g->board, m->from))) {
         g->halfmove_clock = 0;
     } else {
         g->halfmove_clock++;
     }
-    cb->board[rank_to][file_to] = pce_from;
-    cb->board[rank_from][file_from] = ' ';
+    PIECE_SQ(g->board, m->to) = pce_from;
+    PIECE_SQ(g->board, m->from) = EMPTY_SQUARE;
     // increment the fullmove count after black's move
     if (!g->white_to_move) {
         g->fullmove_count++;
@@ -479,4 +467,36 @@ int move_piece(struct game* g, struct player* p, unsigned int rank_from, unsigne
     g->white_to_move = !g->white_to_move;
     print_board(g);
     return 0;
+}
+
+struct move* create_move(struct square* from, struct square* to) {
+    struct move* m;
+
+    if (!from || !to) {
+        return NULL;
+    }
+
+    m = malloc(sizeof(struct move));
+    if (!m) {
+        return NULL;
+    }
+    m->from = from;
+    m->to = to;
+    return m;
+}
+
+struct square* create_square(unsigned int file, unsigned int rank) {
+    struct square* s;
+
+    if ((file | rank) >= 8) {
+        return NULL;
+    }
+
+    s = malloc(sizeof(struct square));
+    if (!s) {
+        return NULL;
+    }
+    s->file = file;
+    s->rank = rank;
+    return s;
 }
