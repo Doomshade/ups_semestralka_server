@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#include <ctype.h>
 #include "game_mngr.h"
 
 #define PAWN 'P' // white pawn

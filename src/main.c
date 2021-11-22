@@ -46,6 +46,7 @@ static struct argp argp = {options, parse_opt, args_doc, doc};
 int main(int argc, char** argv) {
     struct arguments arguments;
 
+    printf("%lli\n", LLONG_MAX);
     // default values
     arguments.port = 10000;
 

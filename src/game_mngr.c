@@ -1,11 +1,10 @@
 #include "../include/game_mngr.h"
 #include "../include/server.h"
-#include "../include/player_mngr.h"
-#include "string.h"
+#include <string.h>
 #include "../include/packet_registry.h"
 #include "../include/chesspiece.h"
-#include <regex.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 
 #define FEN_PATTERN "((([rnbqkpRNBQKP1-8]+)\\/){7}([rnbqkpRNBQKP1-8]+)) ([wb]) (K?Q?k?q?|\\-) (([a-h][0-7])|\\-) (\\d+) (\\d+)"
@@ -128,18 +127,23 @@ struct game* lookup_game(struct player* p) {
 }
 
 struct game* create_game(struct player* white, struct player* black, bool white_to_move) {
+    struct game* g;
     if (!white || !black || !games) {
         return NULL;
     }
-    struct game* g = malloc(sizeof(struct game));
+    g = malloc(sizeof(struct game));
     if (!g) {
         return NULL;
     }
+
     g->white = white;
     g->black = black;
+    g->castles = CASTLES_BLACK_QUEENSIDE |
+                 CASTLES_BLACK_KINGSIDE |
+                 CASTLES_WHITE_QUEENSIDE |
+                 CASTLES_WHITE_KINGSIDE;
     g->fullmove_count = 1;
     g->halfmove_clock = 0;
-
     g->white_to_move = white_to_move;
     return g;
 }
@@ -161,7 +165,7 @@ int game_create(struct player* white, struct player* black) {
 
     fen = malloc(sizeof(char) * (strlen(START_FEN) + 1));
     strcpy(fen, START_FEN);
-    setup_game(g, fen);
+    setup_game(g);
 
     return add_game(g);
 }
@@ -207,61 +211,11 @@ void print_board(struct game* g) {
     print_files();
 }
 
-int setup_game(struct game* g, char* fen) {
+int setup_game(struct game* g) {
+    int i, j;
 
-    regex_t reg;
-    char buf[BUFSIZ];
-    char* board[8] = {0};
-    char* token;
-    char* es;
-    int rank = 0;
-    int ret;
-    int i = 0, j = 0;
-    regmatch_t match;
-
-    if (!g || !fen || !games) {
+    if (!g || !games) {
         return 1;
-    }
-    // TODO fix the regex
-    /*ret = regcomp(&reg, FEN_PATTERN, 0);
-
-    // the regex is invalid (should not happen)
-    if (ret) {
-        fprintf(stderr, "(%d) Could not compile regex\n", ret);
-        return ret;
-    }
-
-    ret = regexec(&reg, fen, 0, &match, 0);
-
-    // the fen is invalid
-    if (ret == REG_NOMATCH) {
-        fprintf(stderr, "(%d) Invalid FEN pattern: %s\n", ret, fen);
-        return ret;
-    }*/
-
-    // the first part is the g
-    // "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR" w KQkq - 0 1
-    token = strtok(fen, "/");
-
-    // the "row" in chessboard
-    while (token != NULL && rank < 8) {
-        // check for an empty space
-        es = strchr(token, ' ');
-
-        // we reached the end of the first part: "RNBQKBNR w KQkq - 0 1"
-        if (es != NULL) {
-            memset(buf, 0, BUFSIZ);
-
-            // shift until we find non-space char
-            while (*es != ' ') {
-                buf[i++] = *es;
-                es++;
-            }
-            board[rank] = buf;
-            break;
-        }
-        token = strtok(NULL, "/");
-        board[rank++] = token;
     }
 
     for (i = 0; i < 8; ++i) {
@@ -270,39 +224,40 @@ int setup_game(struct game* g, char* fen) {
         }
     }
 
-    // TODO
-    g->board[0][0] = 'R';
-    g->board[0][1] = 'N';
-    g->board[0][2] = 'B';
-    g->board[0][3] = 'Q';
-    g->board[0][4] = 'K';
-    g->board[0][5] = 'B';
-    g->board[0][6] = 'N';
-    g->board[0][7] = 'R';
+    g->board[0][0] = ROOK;
+    g->board[0][1] = KNIGHT;
+    g->board[0][2] = BISHOP;
+    g->board[0][3] = QUEEN;
+    g->board[0][4] = KING;
+    g->board[0][5] = BISHOP;
+    g->board[0][6] = KNIGHT;
+    g->board[0][7] = ROOK;
 
     for (i = 0; i < 8; ++i) {
-        g->board[1][i] = 'P';
-        g->board[6][i] = 'p';
-        g->board[7][i] = (char) tolower(g->board[0][i]);
+        g->board[1][i] = PAWN;
+        g->board[6][i] = TO_BLACK(PAWN);
+        g->board[7][i] = TO_BLACK(g->board[0][i]);
     }
-    // now we check who's to move
-    // "w KQkq - 0 1"
-    // TODO
     print_board(g);
-
-    regfree(&reg);
     return 0;
 }
 
 char* generate_fen(struct game* g) {
-    // TODO
-    int rank;
-    int file;
-    int empty;
-    char square[2] = {0};
-    char buf[BUFSIZ] = {0};
-    char* fen;
+    int rank; // the rank on the board
+    int file; // the file on the board
+    int empty; // an empty file counter
 
+    char buf[BUFSIZ] = {0}; // a buffer for the fen
+    char* fen; // the fen string that is later returned
+    char square[2] = {0}; // a buffer for a single square
+    char lm[3] = {0}; // a buffer for last move (for en passant)
+    char castles[5] = {0}; // a buffer for the castles
+
+    if (!g) {
+        return NULL;
+    }
+
+    // the first part is the board, starting with black from top
     for (rank = 7; rank >= 0; --rank) {
         for (empty = 0, file = 0; file < 8; ++file) {
             square[0] = g->board[rank][file];
@@ -314,14 +269,14 @@ char* generate_fen(struct game* g) {
 
             if (empty != 0) {
                 // append the num of empty squares to the buf
-                sprintf(buf, "%s%d", buf, empty);
+                snprintf(buf, BUFSIZ, "%s%d", buf, empty);
             }
             strcat(buf, square);
             empty = 0;
         }
         if (empty != 0) {
             // append the num of empty squares to the buf
-            sprintf(buf, "%s%d", buf, empty);
+            snprintf(buf, BUFSIZ, "%s%d", buf, empty);
         }
         // don't add the / at the end
         if (rank != 0) {
@@ -336,18 +291,38 @@ char* generate_fen(struct game* g) {
 
     // TODO add castles check
     strcat(buf, " ");
-    strcat(buf, "KQkq");
+    if (g->castles == 0) {
+        strcat(buf, "-");
+    } else {
+        if (g->castles & CASTLES_WHITE_KINGSIDE) {
+            strcat(buf, "K");
+        }
+        if (g->castles & CASTLES_WHITE_QUEENSIDE) {
+            strcat(buf, "Q");
+        }
+        if (g->castles & CASTLES_BLACK_KINGSIDE) {
+            strcat(buf, "k");
+        }
+        if (g->castles & CASTLES_BLACK_QUEENSIDE) {
+            strcat(buf, "q");
+        }
+    }
     // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq
 
     strcat(buf, " ");
-    if (strcmp(g->lm, "") != 0) {
-        strcat(buf, g->lm);
-    } else {
+
+
+    // the last move is not set
+    if (!g->lm) {
         strcat(buf, "-");
+    } else {
+        lm[0] = UINT_TO_FILE(g->lm->file);
+        lm[1] = UINT_TO_RANK(g->lm->rank);
+        strncat(buf, lm, 3);
     }
     // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -
 
-    sprintf(buf, "%s %d %d", buf, g->halfmove_clock, g->fullmove_count);
+    snprintf(buf, BUFSIZ, "%s %d %d", buf, g->halfmove_clock, g->fullmove_count);
     // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 
     fen = malloc(sizeof(char) * (strlen(buf) + 1));
@@ -418,6 +393,8 @@ bool is_players_piece(bool white, char piece) {
 int move_piece(struct game* g, struct player* p, struct move* m) {
     char pce_from;
     bool white;
+    int ret;
+    struct square* lm;
     unsigned int rank_from, file_from, rank_to, file_to;
 
     rank_from = m->from->rank;
@@ -457,6 +434,22 @@ int move_piece(struct game* g, struct player* p, struct move* m) {
         g->halfmove_clock = 0;
     } else {
         g->halfmove_clock++;
+    }
+
+    // temporarily store the last move
+    //lm = g->lm;
+    // remove it before
+    //g->lm = NULL;
+    ret = move(pce_from, g, m);
+    if (ret == MOVE_INVALID) {
+        //g->lm = lm;
+        printf("Invalid move (%c%c-%c%c) for piece %c\n",
+               UINT_TO_FILE(m->from->file),
+               UINT_TO_RANK(m->from->rank),
+               UINT_TO_FILE(m->to->file),
+               UINT_TO_RANK(m->to->rank),
+               pce_from);
+        return 1;
     }
     PIECE_SQ(g->board, m->to) = pce_from;
     PIECE_SQ(g->board, m->from) = EMPTY_SQUARE;

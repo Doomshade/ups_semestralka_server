@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <sys/socket.h>
+#include "player_mngr.h"
 
 /**
  * The default g FEN string
@@ -16,11 +17,20 @@
 #define WIN_BY_RESIGNATION 1 << 2
 #define WIN_BY_TIME 1 << 3
 
+#define CASTLES_BLACK_QUEENSIDE 1
+#define CASTLES_BLACK_KINGSIDE 1 << 1
+#define CASTLES_WHITE_QUEENSIDE 1 << 2
+#define CASTLES_WHITE_KINGSIDE 1 << 3
+
 // transforms A-F -> 0-7
 #define FILE_TO_UINT(file) (file - 'A')
 
-// transforms 1-8 -> 0-7
+#define UINT_TO_FILE(file) (file + 'A')
+
+// transforms 1-8 (ASCII) -> 0-7
 #define RANK_TO_UINT(rank) (rank - '1')
+#define UINT_TO_RANK(rank) (rank + '1')
+
 
 #define INGAME(g, p) (g->white == p || g->black == p)
 #define OPPONENT(g, p) (g->white == p ? g->black : g->white)
@@ -39,7 +49,9 @@ struct square {
  * A move in-game
  */
 struct move {
+    // the originating square of the move
     struct square* from;
+    // the target square
     struct square* to;
 };
 
@@ -50,13 +62,22 @@ struct game {
     struct player* white;
     struct player* black;
 
+    // the castle flags
+    // the flags are:
+    // CASTLES_WHITE_KINGSIDE
+    // CASTLES_WHITE_QUEENSIDE
+    // CASTLES_BLACK_KINGSIDE
+    // CASTLES_BLACK_QUEENSIDE
+    // 0b1111 means both players can castle both ways whereas
+    // 0b0000 means neither player can castle
+    int castles;
 
     // board represented by chars of pieces - "rnbqkpRNBQKP" (r = rook, n = knight, ...).
     // first index is the rank (1-8) and the second is the file (A-F) both represented as 0-7.
     char board[8][8];
 
     // The last pawn move (because of en passant and FEN string)
-    char lm[2];
+    struct square* lm;
 
     // the number of halfmoves since the last capture or pawn advance, used for the fifty-move rule
     int halfmove_clock;
@@ -110,7 +131,7 @@ int inform_disconnect(struct player* p);
  * @param fen the fen string
  * @return 0 if everything went alright
  */
-int setup_game(struct game* g, char* fen);
+int setup_game(struct game* g);
 
 /**
  * Creates a new game for the players,

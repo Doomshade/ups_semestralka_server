@@ -49,8 +49,8 @@ int send_raw(struct player* p, char* buf, unsigned long* len) {
 
 void free_packet(struct packet* pc) {
     if (pc) {
-        //free(pc->data);
-        //free(pc);
+        free(pc->data);
+        free(pc);
     }
 }
 
@@ -64,7 +64,6 @@ int send_packet(struct player* pl, struct packet* pc) {
     ret = send_raw(pl, s, &len);
     free(s);
     free_packet(pc);
-    //sscanf(s, PACKET_MAGIC_HEADER, pc->id, pc->len, pc->data);
     return ret;
 }
 
