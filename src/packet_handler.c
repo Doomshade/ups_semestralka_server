@@ -11,6 +11,11 @@ int handle_packet(struct player* pl, struct packet* pckt) {
     }
 
     printf("Handling packet - ID: %d, size: %d, data: %s\n", pckt->id, pckt->len, pckt->data);
+
+    if (pl->fd < 0) {
+        printf("Player %s is currently disconnected, could not send the packet\n", pl->name);
+        return -1;
+    }
     handle_func = get_handler(pckt->id, pl->ps, &erc);
 
     // the handle func exists and the error code is 0 -> call and

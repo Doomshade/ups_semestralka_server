@@ -56,9 +56,17 @@ void free_packet(struct packet* pc) {
 
 int send_packet(struct player* pl, struct packet* pc) {
     int ret;
-    char* s = malloc(PACKET_HEADER_SIZE + strlen(pc->data) + 1); // the data we send
+    char* s; // the data we send
     unsigned long len; // the length of the data
+    if (!pl || !pc) {
+        return -1;
+    }
+    if (pl->fd < 0) {
+        printf("Failed to send packet. Reason: player %s is disconnected\n", pl->name);
+        return -2;
+    }
 
+    s = malloc(PACKET_HEADER_SIZE + strlen(pc->data) + 1);
     sprintf(s, PACKET_HEADER_FORMAT, PACKET_MAGIC_HEADER, pc->id, pc->len, pc->data);
     len = strlen(s);
     ret = send_raw(pl, s, &len);

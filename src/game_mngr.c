@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <math.h>
 
 #define FEN_PATTERN "((([rnbqkpRNBQKP1-8]+)\\/){7}([rnbqkpRNBQKP1-8]+)) ([wb]) (K?Q?k?q?|\\-) (([a-h][0-7])|\\-) (\\d+) (\\d+)"
 #define PLAYER_RECON_MESSAGE "Player %s has reconnected to the game"
@@ -15,7 +16,6 @@ struct game** games = NULL;
 int free_game_index = 0;
 
 void free_game(struct game* g) {
-    free(g->board);
     free(g);
 }
 
@@ -61,13 +61,12 @@ void remove_game_by_idx(int idx) {
     }
 }
 
-char* int2bin(int a, char* buffer, int buf_size) {
+char* int2bin(int a, char* buffer, unsigned int buf_size) {
+    int i;
     buffer += (buf_size - 1);
 
-    for (int i = 31; i >= 0; i--) {
-        *buffer-- = (a & 1) + '0';
-
-        a >>= 1;
+    for (i = 31; i >= 0 && buf_size > 0; i--, a >>= 1, buffer--, buf_size--) {
+        *buffer = (a & 1) + '0';
     }
 
     return buffer;
@@ -81,15 +80,16 @@ int finish_game(struct game* g, int winner) {
                       WIN_BY_MATE |
                       WIN_BY_RESIGNATION |
                       WIN_BY_TIME;
-    char msg[flags + 1];
+    const unsigned int len = (unsigned int) log2(flags);
+    char msg[len + 1];
     struct packet* pckt;
     int ret;
 
     if (!g || !games) {
         return 1;
     }
-    msg[flags] = '\0';
-    int2bin(winner, msg, flags);
+    msg[len] = '\0';
+    int2bin(winner, msg, len);
 
     for (i = 0; i < MAX_GAME_COUNT; ++i) {
         if (!games[i] || g != games[i]) {
@@ -357,7 +357,7 @@ int reconnect_to_game(struct player* pl, struct game* g) {
     printf("Sending %s that %s has reconnected...\n", op->name, pl->name);
     ret = send_packet(op, pc);
     if (ret == -1) {
-        printf("Could not send the packet because the enemy player was disconnected.\n");
+        printf("Could not send the packet because the enemy player is disconnected.\n");
     }
     return ret;
 }
@@ -380,7 +380,7 @@ int inform_disconnect(struct player* p) {
     sprintf(buf, PLAYER_DISCON_MESSAGE, p->name);
     // TODO make a unique packet for this
     pc = create_packet(MESSAGE_OUT, strlen(buf), buf);
-    ret = send_packet(p, pc);
+    ret = send_packet(op, pc);
     if (ret) {
         printf("Failed to send a disconnect packet...\n");
     }

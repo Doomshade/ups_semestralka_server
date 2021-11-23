@@ -162,6 +162,7 @@ int handle_disconnection(struct player* p) {
     for (i = 0; i < MAX_DISCONNECTED_COUNT; ++i) {
         if (dc_players[i] == NULL) {
             printf("Storing %s under %d in the disconnected list\n", p->name, i);
+            p->fd = -1;
             dc_players[i] = p;
             inform_disconnect(p);
             return 0;

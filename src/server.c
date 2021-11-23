@@ -285,4 +285,5 @@ void disconnect(struct player* p, fd_set* client_socks) {
     close(fd);
     FD_CLR(fd, client_socks);
     printf("%s has disconnected\n", p->name);
+    printf("--------------------%s--------------------\n\n", p->name);
 }
