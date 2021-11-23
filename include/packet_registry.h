@@ -126,7 +126,7 @@ int send_packet(struct player* pl, struct packet* pc);
  * @param data the data
  * @return
  */
-struct packet* create_packet(unsigned int id, unsigned int len, const char* data);
+struct packet* create_packet(unsigned int id, const char* data);
 
 /**
  * Gets the packet handler based on the packet ID

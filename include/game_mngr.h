@@ -95,6 +95,8 @@ struct game {
  */
 struct move* create_move(struct square* from, struct square* to);
 
+void free_move(struct move** m);
+
 /**
  * Creates a square
  * @param file

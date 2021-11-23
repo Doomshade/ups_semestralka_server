@@ -84,14 +84,6 @@ ctype.h
 math.h
 -
 
-/home/doomshade/CLionProjects/semestralka/src/main.c
-stdlib.h
--
-argp.h
--
-../include/server.h
-/home/doomshade/CLionProjects/semestralka/include/server.h
-
 /home/doomshade/CLionProjects/semestralka/src/packet.c
 stdlib.h
 -

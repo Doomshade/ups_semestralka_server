@@ -161,7 +161,8 @@ struct packet* parse_packet(char** packet, int* erc, struct player* pl) {
     // in a while loop
     p_data_copy = malloc(sizeof(char) * (p_data_len + 1));
     strcpy(p_data_copy, pdata);
-    p = create_packet(p_id, p_data_len, p_data_copy);
+    p = create_packet(p_id, p_data_copy);
+    free(p_data_copy);
 
     // free the buffers
     free_buffers(fd);

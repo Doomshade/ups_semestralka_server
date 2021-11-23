@@ -195,6 +195,9 @@ int pawn_handle(struct game* g, struct move* m) {
             return MOVE_INVALID;
         }
         // because the pawn moved by two squares, update the last move
+        if (g->lm) {
+            free(g->lm);
+        }
         g->lm = create_square(m->from->file, m->from->rank + 1);
         return MOVE_VALID;
     }
@@ -205,6 +208,9 @@ int pawn_handle(struct game* g, struct move* m) {
             return MOVE_INVALID;
         }
         // because the pawn moved by two squares, update the last move
+        if (g->lm) {
+            free(g->lm);
+        }
         g->lm = create_square(m->from->file, m->from->rank - 1);
         return MOVE_VALID;
     }

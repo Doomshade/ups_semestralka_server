@@ -15,7 +15,7 @@ bool registered = false;
  * Frees the packet from the memory
  * @param pc the packet
  */
-void free_packet(struct packet* pc);
+void free_packet(struct packet** pc);
 
 void init_preg() {
     if (registered) {
@@ -47,10 +47,11 @@ int send_raw(struct player* p, char* buf, unsigned long* len) {
     return n == -1 ? -1 : 0; // return -1 on failure, 0 on success
 }
 
-void free_packet(struct packet* pc) {
-    if (pc) {
-        free(pc->data);
-        free(pc);
+void free_packet(struct packet** pc) {
+    if (pc && *pc) {
+        free((*pc)->data);
+        free(*pc);
+        *pc == NULL;
     }
 }
 
@@ -63,6 +64,7 @@ int send_packet(struct player* pl, struct packet* pc) {
     }
     if (pl->fd < 0) {
         printf("Failed to send packet. Reason: player %s is disconnected\n", pl->name);
+        free_packet(&pc);
         return -2;
     }
 
@@ -71,17 +73,17 @@ int send_packet(struct player* pl, struct packet* pc) {
     len = strlen(s);
     ret = send_raw(pl, s, &len);
     free(s);
-    free_packet(pc);
+    free_packet(&pc);
     return ret;
 }
 
-struct packet* create_packet(unsigned int id, unsigned int len, const char* data) {
+struct packet* create_packet(unsigned int id, const char* data) {
     struct packet* p = malloc(sizeof(struct packet));
     if (p == NULL) {
         return NULL;
     }
     p->id = id;
-    p->len = len;
+    p->len = strlen(data);
     p->data = malloc(sizeof(char) * (strlen(data) + 1));
     strcpy(p->data, data);
     return p;

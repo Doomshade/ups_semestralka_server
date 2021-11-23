@@ -15,7 +15,7 @@
 struct game** games = NULL;
 int free_game_index = 0;
 
-void free_game(struct game* g) {
+void free_game(struct game** g) {
     free(g);
 }
 
@@ -56,7 +56,7 @@ void remove_game_by_idx(int idx) {
     }
 
     if (games[idx]) {
-        free_game(games[idx]);
+        free_game(&games[idx]);
         games[idx] = NULL;
     }
 }
@@ -96,7 +96,7 @@ int finish_game(struct game* g, int winner) {
             continue;
         }
 
-        pckt = create_packet(GAME_FINISH_OUT, strlen(msg), msg);
+        pckt = create_packet(GAME_FINISH_OUT, msg);
         if (!pckt) {
             return -1;
         }
@@ -150,7 +150,6 @@ struct game* create_game(struct player* white, struct player* black, bool white_
 
 int game_create(struct player* white, struct player* black) {
     struct game* g;
-    char* fen;
     if (!white || !black || !games) {
         return 1;
     }
@@ -163,8 +162,6 @@ int game_create(struct player* white, struct player* black) {
     change_state(white, PLAY);
     change_state(black, PLAY);
 
-    fen = malloc(sizeof(char) * (strlen(START_FEN) + 1));
-    strcpy(fen, START_FEN);
     setup_game(g);
 
     return add_game(g);
@@ -343,7 +340,7 @@ int reconnect_to_game(struct player* pl, struct game* g) {
 
     // send the reconnecting player the game state
     fen = generate_fen(g);
-    pc = create_packet(GAME_START_OUT, strlen(fen), fen);
+    pc = create_packet(GAME_START_OUT, fen);
     printf("Sending %s game start packet...\n", pl->name);
     ret = send_packet(pl, pc);
 
@@ -353,7 +350,7 @@ int reconnect_to_game(struct player* pl, struct game* g) {
     op = OPPONENT(g, pl);
     sprintf(buf, PLAYER_RECON_MESSAGE, pl->name);
 
-    pc = create_packet(MESSAGE_OUT, strlen(buf), buf);
+    pc = create_packet(MESSAGE_OUT, buf);
     printf("Sending %s that %s has reconnected...\n", op->name, pl->name);
     ret = send_packet(op, pc);
     if (ret == -1) {
@@ -379,7 +376,7 @@ int inform_disconnect(struct player* p) {
     op = OPPONENT(g, p);
     sprintf(buf, PLAYER_DISCON_MESSAGE, p->name);
     // TODO make a unique packet for this
-    pc = create_packet(MESSAGE_OUT, strlen(buf), buf);
+    pc = create_packet(MESSAGE_OUT, buf);
     ret = send_packet(op, pc);
     if (ret) {
         printf("Failed to send a disconnect packet...\n");
@@ -478,6 +475,13 @@ struct move* create_move(struct square* from, struct square* to) {
     m->from = from;
     m->to = to;
     return m;
+}
+
+void free_move(struct move** m){
+    free((*m)->from);
+    free((*m)->to);
+    free((*m));
+    *m = NULL;
 }
 
 struct square* create_square(unsigned int file, unsigned int rank) {

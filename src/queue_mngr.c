@@ -38,14 +38,17 @@ int send_queue_out_pc(struct player* p, bool white, char* op) {
     strcpy(buf, white ? "0" : "1");
     strcat(buf, op);
 
-    pc = create_packet(GAME_START_OUT, strlen(buf), buf);
+    pc = create_packet(GAME_START_OUT, buf);
     if (!pc) {
+        free(buf);
         return 1;
     }
     ret = send_packet(p, pc);
     if (ret) {
+        free(buf);
         return ret;
     }
+    free(buf);
     // TODO
     // pc = create_packet(OPPONENT_NAME_OUT, strlen());
     return ret;
@@ -68,7 +71,7 @@ int add_to_queue(struct player* p) {
             printf("Adding %s to the queue...\n", p->name);
             queue[fd] = IS_IN_QUEUE;
 
-            pc = create_packet(QUEUE_OUT, strlen("0"), "0");
+            pc = create_packet(QUEUE_OUT, "0");
             if (!pc) {
                 return 1;
             }
@@ -137,7 +140,7 @@ int remove_from_queue(struct player* p) {
         case IS_IN_QUEUE:
             printf("Removing %s from the queue\n", p->name);
             queue[fd] = NOT_IN_QUEUE;
-            pc = create_packet(QUEUE_OUT, strlen("1"), "1");
+            pc = create_packet(QUEUE_OUT, "1");
             if (!pc) {
                 return 1;
             }
