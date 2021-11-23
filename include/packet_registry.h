@@ -117,7 +117,13 @@ typedef int packet_handle(struct player* fd, char* data);
  * @param pc the packet
  * @return 0 if everything went alright
  */
-int send_packet(struct player* pl, struct packet* pc);
+int send_packet(struct player* pl, unsigned int id, char* data);
+
+/**
+ * Frees the packet from the memory
+ * @param pc the packet
+ */
+void free_packet(struct packet** pc);
 
 /**
  * Creates a packet

@@ -96,12 +96,8 @@ int finish_game(struct game* g, int winner) {
             continue;
         }
 
-        pckt = create_packet(GAME_FINISH_OUT, msg);
-        if (!pckt) {
-            return -1;
-        }
-        if ((ret = send_packet(g->white, pckt)) ||
-            (ret = send_packet(g->black, pckt))) {
+        if ((ret = send_packet(g->white, GAME_FINISH_OUT, msg)) ||
+            (ret = send_packet(g->black, GAME_FINISH_OUT, msg))) {
             return ret;
         }
         remove_game_by_idx(i);
@@ -340,9 +336,8 @@ int reconnect_to_game(struct player* pl, struct game* g) {
 
     // send the reconnecting player the game state
     fen = generate_fen(g);
-    pc = create_packet(GAME_START_OUT, fen);
     printf("Sending %s game start packet...\n", pl->name);
-    ret = send_packet(pl, pc);
+    ret = send_packet(pl, GAME_START_OUT, fen);
 
     // send the information to the opponent about the
     // reconnection of the disconnected player
@@ -350,9 +345,8 @@ int reconnect_to_game(struct player* pl, struct game* g) {
     op = OPPONENT(g, pl);
     sprintf(buf, PLAYER_RECON_MESSAGE, pl->name);
 
-    pc = create_packet(MESSAGE_OUT, buf);
     printf("Sending %s that %s has reconnected...\n", op->name, pl->name);
-    ret = send_packet(op, pc);
+    ret = send_packet(op, MESSAGE_OUT, buf);
     if (ret == -1) {
         printf("Could not send the packet because the enemy player is disconnected.\n");
     }
@@ -376,8 +370,7 @@ int inform_disconnect(struct player* p) {
     op = OPPONENT(g, p);
     sprintf(buf, PLAYER_DISCON_MESSAGE, p->name);
     // TODO make a unique packet for this
-    pc = create_packet(MESSAGE_OUT, buf);
-    ret = send_packet(op, pc);
+    ret = send_packet(op, MESSAGE_OUT, buf);
     if (ret) {
         printf("Failed to send a disconnect packet...\n");
     }
@@ -477,7 +470,7 @@ struct move* create_move(struct square* from, struct square* to) {
     return m;
 }
 
-void free_move(struct move** m){
+void free_move(struct move** m) {
     free((*m)->from);
     free((*m)->to);
     free((*m));

@@ -38,19 +38,9 @@ int send_queue_out_pc(struct player* p, bool white, char* op) {
     strcpy(buf, white ? "0" : "1");
     strcat(buf, op);
 
-    pc = create_packet(GAME_START_OUT, buf);
-    if (!pc) {
-        free(buf);
-        return 1;
-    }
-    ret = send_packet(p, pc);
-    if (ret) {
-        free(buf);
-        return ret;
-    }
+    ret = send_packet(p, GAME_START_OUT, buf);
     free(buf);
     // TODO
-    // pc = create_packet(OPPONENT_NAME_OUT, strlen());
     return ret;
 }
 
@@ -71,11 +61,7 @@ int add_to_queue(struct player* p) {
             printf("Adding %s to the queue...\n", p->name);
             queue[fd] = IS_IN_QUEUE;
 
-            pc = create_packet(QUEUE_OUT, "0");
-            if (!pc) {
-                return 1;
-            }
-            if (send_packet(p, pc)) {
+            if (send_packet(p, QUEUE_OUT, "0")) {
                 return 1;
             }
             change_state(p, QUEUE);
@@ -126,7 +112,6 @@ int add_to_queue(struct player* p) {
 
 int remove_from_queue(struct player* p) {
     int q_state;
-    struct packet* pc;
     int ret;
     int fd;
 
@@ -140,12 +125,7 @@ int remove_from_queue(struct player* p) {
         case IS_IN_QUEUE:
             printf("Removing %s from the queue\n", p->name);
             queue[fd] = NOT_IN_QUEUE;
-            pc = create_packet(QUEUE_OUT, "1");
-            if (!pc) {
-                return 1;
-            }
-
-            if ((ret = send_packet(p, pc))) {
+            if ((ret = send_packet(p, QUEUE_OUT, "1"))) {
                 return ret;
             }
             change_state(p, LOGGED_IN);

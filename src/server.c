@@ -192,7 +192,8 @@ int start_listening(int server_socket) {
                 goto FREE;
             }
 
-            rval = handle_packet(player, pckt); // the packet format is valid, handle it
+            rval = handle_packet(player, pckt->id, pckt->data); // the packet format is valid, handle it
+            free_packet(&pckt);
             switch (rval) {
                 case 0:
                     break;

@@ -9,7 +9,7 @@
 #define VALIDATE_PARAMS(p, data) VALIDATE_PARAM(p) VALIDATE_PARAM(data)
 
 #ifdef __DEBUG_MODE
-#define RESPONSE_VALID "Hi %s!"
+#define RESPONSE_VALID "OK"
 #define RESPONSE_INVALID "Name exists!"
 #else
 #define RESPONSE_VALID "0"
@@ -33,17 +33,13 @@ int p_hello(struct player* pl, char* data) {
     if (!ret) {
         buf = malloc(sizeof(char) * (strlen(RESPONSE_INVALID)));
         strcpy(buf, RESPONSE_INVALID);
-        pc = create_packet(HELLO_OUT, buf);
         if (e_pl) {
             printf("A player with the name %s (%d) already exists!\n", e_pl->name, e_pl->fd);
         } else {
             printf("A player with name %s already exists!\n", data);
         }
-        if (!pc) {
-            printf("Failed to create a packet!\n");
-            return 1;
-        }
-        ret = send_packet(pl, pc);
+        ret = send_packet(pl, HELLO_OUT, buf);
+        free(buf);
         if (ret) {
             printf("Failed to send packet!\n");
         }
@@ -59,13 +55,12 @@ int p_hello(struct player* pl, char* data) {
 
     // the OUT packet data
 #ifdef __DEBUG_MODE
-    buf = malloc(sizeof(char) * (strlen(RESPONSE_VALID) + strlen(pl->name) + 1));
-    sprintf(buf, RESPONSE_VALID, pl->name);
-    pc = create_packet(HELLO_OUT, buf);
+    buf = malloc(sizeof(char) * (strlen("Hi %s!") + strlen(pl->name) + 1));
+    sprintf(buf, "Hi %s!", pl->name);
+    ret = send_packet(pl, HELLO_OUT, buf);
 #else
-    pc = create_packet(HELLO_OUT, strlen(RESPONSE_VALID), RESPONSE_VALID);
+    ret = send_packet(pl, HELLO_OUT, RESPONSE_VALID);
 #endif
-    ret = send_packet(pl, pc);
 
 #ifdef __DEBUG_MODE
     free(buf);
@@ -137,12 +132,7 @@ int p_movepc(struct player* p, char* data) {
     if (strlen(data) != 4) {
         printf("Incorrect format received\n");
         msg = "INVALID";
-        pc = create_packet(MOVE_OUT, msg);
-        if (!pc) {
-            return 1;
-        }
-
-        send_packet(p, pc);
+        send_packet(p, MOVE_OUT, msg);
         return 1;
     }
     file_from = FILE_TO_UINT(data[0]);
@@ -154,11 +144,7 @@ int p_movepc(struct player* p, char* data) {
     max_bound = rank_from | rank_to | file_from | file_to;
     if (max_bound >= 8) {
         msg = "INVALID";
-        pc = create_packet(MOVE_OUT, msg);
-        if (!pc) {
-            return 1;
-        }
-        send_packet(p, pc);
+        send_packet(p, MOVE_OUT, msg);
         return 1;
     }
 
@@ -172,11 +158,8 @@ int p_movepc(struct player* p, char* data) {
         return 0; // perhaps the client miscalculated, don't dc the player
     }
     free_move(&m);
-    pc = create_packet(MOVE_OUT, data);
-    send_packet(g->white, pc);
-
-    pc = create_packet(MOVE_OUT, data);
-    send_packet(g->black, pc);
+    send_packet(g->white, MOVE_OUT, data);
+    send_packet(g->black, MOVE_OUT, data);
 
     return 0;
 }
@@ -195,9 +178,7 @@ int p_offdraw(struct player* p, char* data) {
         return 1;
     }
 
-    pc = create_packet(DRAW_OFFER_OUT, PAYLOAD);
-    ret = send_packet(g->white == p ? g->black : g->white,
-                      pc);
+    ret = send_packet(g->white == p ? g->black : g->white, DRAW_OFFER_OUT, PAYLOAD);
     return ret;
 }
 
@@ -242,7 +223,6 @@ int p_message(struct player* p, char* packet) {
         return 1;
     }
     op = OPPONENT(g, p);
-    pc = create_packet(MESSAGE_OUT, buf);
-    send_packet(op, pc);
+    send_packet(op, MESSAGE_OUT, buf);
     return 0;
 }

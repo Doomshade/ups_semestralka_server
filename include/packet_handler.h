@@ -10,6 +10,6 @@
  * @param pckt the packet
  * @return 0 if everything went alright
  */
-int handle_packet(struct player* pl, struct packet* pckt);
+int handle_packet(struct player* pl, unsigned int id, char* data);
 
 #endif //SEMESTRALKA_PACKET_HANDLER_H

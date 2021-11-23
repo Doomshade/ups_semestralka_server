@@ -11,11 +11,6 @@
 packet_handle* packet_handlers[STATE_COUNT][PACKET_COUNT] = {0};
 bool registered = false;
 
-/**
- * Frees the packet from the memory
- * @param pc the packet
- */
-void free_packet(struct packet** pc);
 
 void init_preg() {
     if (registered) {
@@ -55,25 +50,23 @@ void free_packet(struct packet** pc) {
     }
 }
 
-int send_packet(struct player* pl, struct packet* pc) {
+int send_packet(struct player* pl, unsigned int id, char* data) {
     int ret;
     char* s; // the data we send
     unsigned long len; // the length of the data
-    if (!pl || !pc) {
+    if (!pl) {
         return -1;
     }
     if (pl->fd < 0) {
         printf("Failed to send packet. Reason: player %s is disconnected\n", pl->name);
-        free_packet(&pc);
         return -2;
     }
 
-    s = malloc(PACKET_HEADER_SIZE + strlen(pc->data) + 1);
-    sprintf(s, PACKET_HEADER_FORMAT, PACKET_MAGIC_HEADER, pc->id, pc->len, pc->data);
+    s = malloc(PACKET_HEADER_SIZE + strlen(data) + 1);
+    sprintf(s, PACKET_HEADER_FORMAT, PACKET_MAGIC_HEADER, id, strlen(data), data);
     len = strlen(s);
     ret = send_raw(pl, s, &len);
     free(s);
-    free_packet(&pc);
     return ret;
 }
 
