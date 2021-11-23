@@ -6,7 +6,7 @@
 // e. g. this transposes [4, 0] to 32, [2, 1] to 17
 // this allows us to check the board matrix by offsetting it
 #define SQUARE_TO_INT(rank, file) (rank * 8 + file)
-#define IN_BOUNDS(a) (a < 8 && a > 0)
+#define IN_BOUNDS(num) (num <= 7 && num >= 0)
 #define VALIDATE_PARAMS(g, m) if (!g || !m) return MOVE_INVALID;
 
 typedef int move_handle(struct game* g, struct move* m);
@@ -72,9 +72,13 @@ unsigned long long int gen_pos_moves(struct game* g, struct square* from, int di
 
 
         for (rank = from->rank + vx, file = from->file + vy, a = amount; // start at the offset, and reset the amount
-             IN_BOUNDS(rank) && IN_BOUNDS(file) && a > 0; // check for the amount, and whether we are in bounds
+                ; // check for the amount, and whether we are in bounds
              rank += vx, file += vy, --a) // iterate in the direction, and reduce the amount by 1
         {
+            if (!(IN_BOUNDS(rank) && IN_BOUNDS(file) && a > 0)) {
+                printf("%d %d %d\n", IN_BOUNDS(rank), IN_BOUNDS(file), a);
+                break;
+            }
             piece = PIECE(g->board, rank, file);
 
             // empty square is ok

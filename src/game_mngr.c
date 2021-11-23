@@ -251,7 +251,6 @@ char* generate_fen(struct game* g) {
     char* fen; // the fen string that is later returned
     char square[2] = {0}; // a buffer for a single square
     char lm[3] = {0}; // a buffer for last move (for en passant)
-    char castles[5] = {0}; // a buffer for the castles
 
     if (!g) {
         return NULL;
@@ -269,14 +268,14 @@ char* generate_fen(struct game* g) {
 
             if (empty != 0) {
                 // append the num of empty squares to the buf
-                snprintf(buf, BUFSIZ, "%s%d", buf, empty);
+                sprintf(buf, "%s%d", buf, empty);
             }
             strcat(buf, square);
             empty = 0;
         }
         if (empty != 0) {
             // append the num of empty squares to the buf
-            snprintf(buf, BUFSIZ, "%s%d", buf, empty);
+            sprintf(buf, "%s%d", buf, empty);
         }
         // don't add the / at the end
         if (rank != 0) {
@@ -318,11 +317,11 @@ char* generate_fen(struct game* g) {
     } else {
         lm[0] = UINT_TO_FILE(g->lm->file);
         lm[1] = UINT_TO_RANK(g->lm->rank);
-        strncat(buf, lm, 3);
+        strcat(buf, lm);
     }
     // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -
 
-    snprintf(buf, BUFSIZ, "%s %d %d", buf, g->halfmove_clock, g->fullmove_count);
+    sprintf(buf, "%s %d %d", buf, g->halfmove_clock, g->fullmove_count);
     // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 
     fen = malloc(sizeof(char) * (strlen(buf) + 1));
@@ -357,6 +356,9 @@ int reconnect_to_game(struct player* pl, struct game* g) {
     pc = create_packet(MESSAGE_OUT, strlen(buf), buf);
     printf("Sending %s that %s has reconnected...\n", op->name, pl->name);
     ret = send_packet(op, pc);
+    if (ret == -1) {
+        printf("Could not send the packet because the enemy player was disconnected.\n");
+    }
     return ret;
 }
 

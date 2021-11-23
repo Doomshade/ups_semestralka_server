@@ -4,6 +4,7 @@
 CMakeFiles/semestralka.dir/src/chesspiece.c.o: \
  ../include/chesspiece.h \
  ../include/game_mngr.h \
+ ../include/player_mngr.h \
  ../src/chesspiece.c
 CMakeFiles/semestralka.dir/src/game_mngr.c.o: \
  ../include/chesspiece.h \
