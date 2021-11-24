@@ -11,9 +11,105 @@
 #define FEN_PATTERN "((([rnbqkpRNBQKP1-8]+)\\/){7}([rnbqkpRNBQKP1-8]+)) ([wb]) (K?Q?k?q?|\\-) (([a-h][0-7])|\\-) (\\d+) (\\d+)"
 #define PLAYER_RECON_MESSAGE "Player %s has reconnected to the game"
 #define PLAYER_DISCON_MESSAGE "Player %s has disconnected"
+#define PRINT(buf, str, ...) printf(str, __VA_ARGS__); strcat(buf, str);
 
 struct game** games = NULL;
 int free_game_index = 0;
+
+#ifdef __DEBUG_MODE__
+
+void print_hline(char* buf) {
+    int i;
+    printf("  -");
+    strcat(buf, "  -");
+    for (i = 0; i < 8; ++i) {
+        printf("----");
+        strcat(buf, "----");
+    }
+    strcat(buf, "\n");
+    printf("\n");
+}
+
+void print_files(char* buf) {
+    int i;
+
+    printf("    ");
+    strcat(buf, "    ");
+    for (i = 'A'; i < 'A' + 8; ++i) {
+        printf("%c   ", (char) i);
+        sprintf(buf, "%s%c   ", buf, (char) i);
+    }
+    printf("\n");
+    strcat(buf, "\n");
+}
+
+void print_board(struct game* g, char* buf) {
+    int i, j;
+
+    if (!g) {
+        return;
+    }
+
+    printf("\n");
+    strcat(buf, "\n");
+
+    print_files(buf);
+    print_hline(buf);
+    for (i = 7; i >= 0; --i) {
+        printf("%d | ", (i + 1));
+        sprintf(buf, "%s%d | ", buf, (i + 1));
+        for (j = 0; j < 8; ++j) {
+            printf("%c | ", g->board[i][j]);
+            sprintf(buf, "%s%c | ", buf, g->board[i][j]);
+        }
+        printf("%d\n", (i + 1));
+        sprintf(buf, "%s%d\n", buf, (i + 1));
+        print_hline(buf);
+    }
+    print_files(buf);
+}
+
+#else
+void print_hline() {
+    int i;
+    printf("  -");
+    for (i = 0; i < 8; ++i) {
+        printf("----");
+    }
+    printf("\n");
+}
+void print_files() {
+    int i;
+
+    printf("    ");
+    for (i = 'A'; i < 'A' + 8; ++i) {
+        printf("%c   ", (char) i);
+    }
+    printf("\n");
+}
+
+void print_board(struct game* g) {
+    int i, j;
+
+    if (!g) {
+        return;
+    }
+
+    printf("\n");
+
+    print_files();
+    print_hline(NULL);
+    for (i = 7; i >= 0; --i) {
+        printf("%d | ", (i + 1));
+        for (j = 0; j < 8; ++j) {
+            printf("%c | ", g->board[i][j]);
+        }
+        printf("%d\n", (i + 1));
+        print_hline(NULL);
+    }
+    print_files();
+}
+#endif
 
 void free_game(struct game** g) {
     free(g);
@@ -163,49 +259,10 @@ int game_create(struct player* white, struct player* black) {
     return add_game(g);
 }
 
-void print_hline() {
-    int i;
-    printf("  -");
-    for (i = 0; i < 8; ++i) {
-        printf("----");
-    }
-    printf("\n");
-}
-
-void print_files() {
-    int i;
-
-    printf("    ");
-    for (i = 'A'; i < 'A' + 8; ++i) {
-        printf("%c   ", (char) i);
-    }
-    printf("\n");
-}
-
-void print_board(struct game* g) {
-    int i, j;
-
-    if (!g) {
-        return;
-    }
-
-    printf("\n");
-
-    print_files();
-    print_hline();
-    for (i = 7; i >= 0; --i) {
-        printf("%d | ", (i + 1));
-        for (j = 0; j < 8; ++j) {
-            printf("%c | ", g->board[i][j]);
-        }
-        printf("%d\n", (i + 1));
-        print_hline();
-    }
-    print_files();
-}
 
 int setup_game(struct game* g) {
     int i, j;
+    char buf[BUFSIZ] = {0};
 
     if (!g || !games) {
         return 1;
@@ -231,7 +288,11 @@ int setup_game(struct game* g) {
         g->board[6][i] = TO_BLACK(PAWN);
         g->board[7][i] = TO_BLACK(g->board[0][i]);
     }
+#ifdef __DEBUG_MODE__
+    print_board(g, buf);
+#else
     print_board(g);
+#endif
     return 0;
 }
 
@@ -388,6 +449,7 @@ int move_piece(struct game* g, struct player* p, struct move* m) {
     int ret;
     struct square* lm;
     unsigned int rank_from, file_from, rank_to, file_to;
+    char buf[BUFSIZ] = {0};
 
     rank_from = m->from->rank;
     file_from = m->from->file;
@@ -450,7 +512,14 @@ int move_piece(struct game* g, struct player* p, struct move* m) {
         g->fullmove_count++;
     }
     g->white_to_move = !g->white_to_move;
+#ifdef __DEBUG_MODE__
+    strcat(buf, "\n");
+    print_board(g, buf);
+    send_packet(p, MESSAGE_OUT, buf);
+    send_packet(OPPONENT(g, p), MESSAGE_OUT, buf);
+#else
     print_board(g);
+#endif
     return 0;
 }
 

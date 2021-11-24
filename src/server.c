@@ -160,19 +160,19 @@ int start_listening(int server_socket) {
             // read the packet
             p_ptr_copy = p_ptr;
             recv(fd, p_ptr, a2read, 0);
-#ifdef __DEBUG_MODE
+#ifdef __DEBUG_MODE__
             printf("Received %s (%lu) from %d\n", p_ptr, strlen(p_ptr), fd);
 #endif
 
             HANDLE_PACKET:
-#ifdef __DEBUG_MODE
+#ifdef __DEBUG_MODE__
             printf("Parsing %s...\n", p_ptr);
 #endif
             pckt = parse_packet(&p_ptr, &erc, player);
             // the packet has not yet been fully buffered,
             // we still need to wait for the rest of the packet
             if (erc == PACKET_NOT_YET_FULLY_BUFFERED) {
-#ifdef __DEBUG_MODE
+#ifdef __DEBUG_MODE__
                 printf("Not yet fully buffered...\n");
 #endif
                 goto FREE;
@@ -184,7 +184,7 @@ int start_listening(int server_socket) {
                 printf("Failed to parse packet: %d\n", erc);
 
 // don't disconnect the player if the packet format is incorrect
-#ifdef __DEBUG_MODE
+#ifdef __DEBUG_MODE__
                 free_buffers(fd);
 #else
                 disconnect(player, &client_socks);
@@ -200,7 +200,7 @@ int start_listening(int server_socket) {
                 case PACKET_ERR_INVALID_ID:
                     printf("A client sent a packet with invalid ID\n");
 // don't disconnect if the packet data is invalid either
-#ifdef __DEBUG_MODE
+#ifdef __DEBUG_MODE__
                     free_buffers(fd);
 #else
                     disconnect(player, &client_socks);
@@ -209,7 +209,7 @@ int start_listening(int server_socket) {
                 case PACKET_ERR_STATE_OUT_OF_BOUNDS:
                     printf("A client sent a packet in a state that was out of bounds\n");
                     printf("This should not happen! Contact the authors for fix\n");
-#ifdef __DEBUG_MODE
+#ifdef __DEBUG_MODE__
                     free_buffers(fd);
 #else
                     disconnect(player, &client_socks);
@@ -217,7 +217,7 @@ int start_listening(int server_socket) {
                     goto FREE;
                 case PACKER_ERR_INVALID_CLIENT_STATE:
                     printf("A client sent a packet in an invalid state\n");
-#ifdef __DEBUG_MODE
+#ifdef __DEBUG_MODE__
                     free_buffers(fd);
 #else
                     disconnect(player, &client_socks);

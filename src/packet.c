@@ -8,7 +8,7 @@
 #define VALIDATE_PARAM(p) if (!p) return 1;
 #define VALIDATE_PARAMS(p, data) VALIDATE_PARAM(p) VALIDATE_PARAM(data)
 
-#ifdef __DEBUG_MODE
+#ifdef __DEBUG_MODE__
 #define RESPONSE_VALID "OK"
 #define RESPONSE_INVALID "Name exists!"
 #else
@@ -20,7 +20,7 @@
 int p_hello(struct player* pl, char* data) {
     struct game* g;
     int ret;
-#ifdef __DEBUG_MODE
+#ifdef __DEBUG_MODE__
     char* buf; // the packet data we send
 #endif
     struct packet* pc;
@@ -54,7 +54,7 @@ int p_hello(struct player* pl, char* data) {
     }
 
     // the OUT packet data
-#ifdef __DEBUG_MODE
+#ifdef __DEBUG_MODE__
     buf = malloc(sizeof(char) * (strlen("Hi %s!") + strlen(pl->name) + 1));
     sprintf(buf, "Hi %s!", pl->name);
     ret = send_packet(pl, HELLO_OUT, buf);
@@ -62,7 +62,7 @@ int p_hello(struct player* pl, char* data) {
     ret = send_packet(pl, HELLO_OUT, RESPONSE_VALID);
 #endif
 
-#ifdef __DEBUG_MODE
+#ifdef __DEBUG_MODE__
     free(buf);
 #endif
     if (ret) {

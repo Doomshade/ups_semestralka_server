@@ -146,7 +146,7 @@ int handle_disconnection(struct player* p) {
 
     players[p->fd] = NULL;
 
-#ifdef __DEBUG_MODE
+#ifdef __DEBUG_MODE__
     if (!lookup_player_by_fd(p->fd, NULL)) {
         printf("Player is still in memory somehow...\n");
     }

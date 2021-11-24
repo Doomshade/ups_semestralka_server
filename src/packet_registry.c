@@ -4,10 +4,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-// the amount of IN packets = (0-PACKET_OUT_OFFSET)
+// the amount of IN packets = (0 -- PACKET_OUT_OFFSET)
 #define PACKET_COUNT PACKET_OUT_OFFSET
 #define STATE_COUNT 4
-// I don't calloc this because callocing matrices is hard
+// I don't calloc this because callocing matrices is hard :((
 packet_handle* packet_handlers[STATE_COUNT][PACKET_COUNT] = {0};
 bool registered = false;
 
@@ -16,7 +16,6 @@ void init_preg() {
     if (registered) {
         return;
     }
-    //[STATE_COUNT][PACKET_COUNT]
     printf("Initializing packet registry...\n");
     packet_handlers[JUST_CONNECTED][HELLO_IN] = p_hello;
     packet_handlers[LOGGED_IN][QUEUE_IN] = p_queue;
