@@ -6,18 +6,6 @@
 
 #IncludeRegexTransform: 
 
-/home/doomshade/CLionProjects/semestralka/include/chesspiece.h
-stdbool.h
--
-stdlib.h
--
-sys/socket.h
--
-ctype.h
--
-game_mngr.h
-/home/doomshade/CLionProjects/semestralka/include/game_mngr.h
-
 /home/doomshade/CLionProjects/semestralka/include/game_mngr.h
 stdbool.h
 -
@@ -27,6 +15,12 @@ sys/socket.h
 -
 player_mngr.h
 /home/doomshade/CLionProjects/semestralka/include/player_mngr.h
+
+/home/doomshade/CLionProjects/semestralka/include/packet.h
+player_mngr.h
+/home/doomshade/CLionProjects/semestralka/include/player_mngr.h
+packet_registry.h
+/home/doomshade/CLionProjects/semestralka/include/packet_registry.h
 
 /home/doomshade/CLionProjects/semestralka/include/packet_registry.h
 game_mngr.h
@@ -34,27 +28,31 @@ game_mngr.h
 player_mngr.h
 /home/doomshade/CLionProjects/semestralka/include/player_mngr.h
 
-/home/doomshade/CLionProjects/semestralka/include/player_mngr.h
-
-/home/doomshade/CLionProjects/semestralka/include/server.h
-
-/home/doomshade/CLionProjects/semestralka/src/game_mngr.c
-../include/game_mngr.h
-/home/doomshade/CLionProjects/semestralka/include/game_mngr.h
-../include/server.h
-/home/doomshade/CLionProjects/semestralka/include/server.h
+/home/doomshade/CLionProjects/semestralka/include/packet_validator.h
 string.h
 -
-../include/packet_registry.h
+packet_registry.h
 /home/doomshade/CLionProjects/semestralka/include/packet_registry.h
-../include/chesspiece.h
-/home/doomshade/CLionProjects/semestralka/include/chesspiece.h
-stdio.h
--
+
+/home/doomshade/CLionProjects/semestralka/include/player_mngr.h
+
+/home/doomshade/CLionProjects/semestralka/include/queue_mngr.h
+player_mngr.h
+/home/doomshade/CLionProjects/semestralka/include/player_mngr.h
+
+/home/doomshade/CLionProjects/semestralka/include/server.h
+
+/home/doomshade/CLionProjects/semestralka/src/packet.c
 stdlib.h
 -
-ctype.h
+stdio.h
 -
-math.h
--
+../include/packet.h
+/home/doomshade/CLionProjects/semestralka/include/packet.h
+../include/packet_validator.h
+/home/doomshade/CLionProjects/semestralka/include/packet_validator.h
+../include/queue_mngr.h
+/home/doomshade/CLionProjects/semestralka/include/queue_mngr.h
+../include/server.h
+/home/doomshade/CLionProjects/semestralka/include/server.h
 

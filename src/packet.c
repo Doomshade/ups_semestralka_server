@@ -20,10 +20,7 @@
 int p_hello(struct player* pl, char* data) {
     struct game* g;
     int ret;
-#ifdef __DEBUG_MODE__
     char* buf; // the packet data we send
-#endif
-    struct packet* pc;
     struct player* e_pl = NULL; // existing player
 
     VALIDATE_PARAMS(pl, data)

@@ -176,16 +176,13 @@ int finish_game(struct game* g, int winner) {
                       WIN_BY_MATE |
                       WIN_BY_RESIGNATION |
                       WIN_BY_TIME;
-    const unsigned int len = (unsigned int) log2(flags);
-    char msg[len + 1];
-    struct packet* pckt;
+    char msg[sizeof(int) + 1] = {0};
     int ret;
 
     if (!g || !games) {
         return 1;
     }
-    msg[len] = '\0';
-    int2bin(winner, msg, len);
+    sprintf(msg, "%d", flags);
 
     for (i = 0; i < MAX_GAME_COUNT; ++i) {
         if (!games[i] || g != games[i]) {

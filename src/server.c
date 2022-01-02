@@ -160,6 +160,8 @@ int start_listening(int server_socket) {
             // read the packet
             p_ptr_copy = p_ptr;
             recv(fd, p_ptr, a2read, 0);
+            p_ptr[strcspn(p_ptr, "\n")] = 0;
+
 #ifdef __DEBUG_MODE__
             printf("Received %s (%lu) from %d\n", p_ptr, strlen(p_ptr), fd);
 #endif
