@@ -98,14 +98,14 @@ void print_board(struct game* g) {
     printf("\n");
 
     print_files();
-    print_hline(NULL);
+    print_hline();
     for (i = 7; i >= 0; --i) {
         printf("%d | ", (i + 1));
         for (j = 0; j < 8; ++j) {
             printf("%c | ", g->board[i][j]);
         }
         printf("%d\n", (i + 1));
-        print_hline(NULL);
+        print_hline();
     }
     print_files();
 }
@@ -382,7 +382,6 @@ char* generate_fen(struct game* g) {
 
 int reconnect_to_game(struct player* pl, struct game* g) {
     struct player* op;
-    struct packet* pc;
     int ret;
     char* fen;
     char buf[BUFSIZ];
@@ -414,7 +413,6 @@ int reconnect_to_game(struct player* pl, struct game* g) {
 int inform_disconnect(struct player* p) {
     struct game* g;
     struct player* op;
-    struct packet* pc;
     char buf[BUFSIZ];
     int ret;
 

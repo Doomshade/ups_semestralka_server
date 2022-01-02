@@ -88,6 +88,7 @@ unsigned long long int gen_pos_moves(struct game* g, struct square* from, int di
                 continue;
             }
 
+            // an enemy piece is on the square, add it as well
             if (IS_WHITE(piece) != curr_white) {
                 bitmap |= (1ULL << offset);
             }
@@ -150,6 +151,7 @@ int knight_handle(struct game* g, struct move* m) {
         af = (i & 0b10 ? -1 : +1) + file;
         ar = (i & 0b01 ? -2 : +2) + rank;
 
+        // TODO check if the piece was an enemy piece if there's something there!!!
         if (IN_BOUNDS(af) && IN_BOUNDS(ar) &&
             m->to->rank == ar && m->to->file == af) {
             return MOVE_VALID;
@@ -175,8 +177,9 @@ int king_handle(struct game* g, struct move* m) {
 }
 
 int pawn_handle(struct game* g, struct move* m) {
-    int direction;
-    unsigned int i;
+    int capturing_direction;
+    int moving_direction;
+    char piece;
     bool white;
     VALIDATE_PARAMS(g, m)
     white = IS_WHITE((unsigned char) PIECE_SQ(g->board, m->from));
@@ -215,9 +218,22 @@ int pawn_handle(struct game* g, struct move* m) {
         return MOVE_VALID;
     }
 
-    // these are the one square moves for the pawns
-    direction = white ? 0b111000000 : 0b000000111;
-    return handle_simple_piece(g, m, direction, 1);
+    // first handle the attacking moves
+    // these are the one square taking moves for the pawns
+    capturing_direction = white ? 0b101000000 : 0b000000101;
+    moving_direction = white ? 0b010000000 : 0b000000010;
+    piece = PIECE(g->board, m->to->rank, m->to->file);
+
+    // check if the move was captures and there was an ENEMY piece
+    if (handle_simple_piece(g, m, capturing_direction, 1) == MOVE_VALID && piece != EMPTY_SQUARE && IS_WHITE(piece) != white) {
+        return MOVE_VALID;
+    }
+
+    // check if the move was by one square and the square was empty
+    if (handle_simple_piece(g, m, moving_direction, 1) == MOVE_VALID && piece == EMPTY_SQUARE) {
+        return MOVE_VALID;
+    }
+    return MOVE_INVALID;
 }
 
 int rook_handle(struct game* g, struct move* m) {

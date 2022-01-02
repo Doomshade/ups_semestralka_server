@@ -282,8 +282,10 @@ void disconnect(struct player* p, fd_set* client_socks) {
 
     fd = p->fd;
     free_buffers(fd); // cleanup in the packet_validator (due to potential buffered header/data)
-    remove_from_queue(p); // remove the player from the queue
     handle_disconnection(p); // cleanup in player_mngr and store the state
+    // don't remove the player from the queue after storing him in the disconnected list
+    // the player will be ignored and marked as NOT_IN_QUEUE once a match is found in the queue manager,
+    // thus removing him from the queue
 
     close(fd);
     FD_CLR(fd, client_socks);

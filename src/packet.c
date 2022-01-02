@@ -72,7 +72,7 @@ int p_hello(struct player* pl, char* data) {
     // the player previously disconnected
     if (!ret) {
         switch (pl->ps) {
-            case PLAY: // the play was in-game, inform the players
+            case PLAY: // the player was in-game, inform the players
                 g = lookup_game(pl);
                 if (!g) {
                     printf("The player %s was in state PLAY, but the game was not found!\n", pl->name);
@@ -80,6 +80,8 @@ int p_hello(struct player* pl, char* data) {
                     return 0;
                 }
                 return reconnect_to_game(pl, g);
+            case QUEUE: // the player was in queue, put him back to queue
+                return add_to_queue(pl);
             default:
                 break;
         }

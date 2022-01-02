@@ -7,7 +7,7 @@
 
 #define NOT_IN_QUEUE 0
 #define IS_IN_QUEUE 1
-#define VALIDATE_QUEUE(p) if(!queue || p->fd >= MAX_PLAYER_COUNT) return 1;
+#define VALIDATE_QUEUE(p) if(!p || !queue || p->fd >= MAX_PLAYER_COUNT) return 1;
 
 // TODO make this an actual queue someday maybe?
 int* queue = NULL;
@@ -24,7 +24,6 @@ void init_qman() {
 int send_queue_out_pc(struct player* p, bool white, char* op) {
     char* buf;
     size_t siz;
-    struct packet* pc;
     int ret;
 
     if (!p || !op) {
@@ -49,7 +48,6 @@ int add_to_queue(struct player* p) {
     int q_state; // the state of the player in queue
     int ret;
     int fd;
-    struct packet* pc;
     struct player* op; // opponent
 
     VALIDATE_QUEUE(p)
@@ -74,31 +72,38 @@ int add_to_queue(struct player* p) {
                 }
 
                 // TODO perhaps do a better matchmaking, but for UPS this is enough ig
-                // found a match
-                if (queue[i] == IS_IN_QUEUE) {
-                    lookup_player_by_fd(i, &op);
-                    if (!op) {
-                        return 1;
-                    }
-
-                    // yes this is perhaps utterly retarded, but basically
-                    // if the first packet fails, we don't even send the
-                    // second one and immediately remove both from queue
-                    if ((ret = send_queue_out_pc(p, true, op->name)) ||
-                        (ret = send_queue_out_pc(op, false, p->name)));
-
-                    remove_from_queue(p);
-                    remove_from_queue(op);
-
-                    if (!ret) {
-                        printf("Creating a new game...\n");
-                        ret = game_create(p, op);
-                        if (ret) {
-                            printf("Failed to create a new game! (%d)\n", ret);
-                        }
-                    }
-                    return ret;
+                if (queue[i] != IS_IN_QUEUE) {
+                    continue;
                 }
+                // found a match
+                lookup_player_by_fd(i, &op);
+
+                // the player is disconnected however, set the state to NOT_IN_QUEUE, so he doesn't get checked again
+                if (!op) {
+                    queue[i] = NOT_IN_QUEUE;
+                    continue;
+                }
+
+                // yes this is perhaps utterly retarded, but basically
+                // if the first packet fails, we don't even send the
+                // second one and immediately remove both from queue
+                if ((ret = send_queue_out_pc(p, true, op->name)) ||
+                    (ret = send_queue_out_pc(op, false, p->name)));
+
+                remove_from_queue(p);
+                remove_from_queue(op);
+
+                // the last packet was sent successfully, create a new game
+                if (!ret) {
+                    printf("Creating a new game...\n");
+                    ret = game_create(p, op);
+
+                    // could not create a game
+                    if (ret) {
+                        printf("Failed to create a new game! (%d)\n", ret);
+                    }
+                }
+                return ret;
             }
             return 0;
         case IS_IN_QUEUE:

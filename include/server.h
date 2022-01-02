@@ -2,7 +2,6 @@
 #define SEMESTRALKA_SERVER_H
 
 #define __DEBUG_MODE__ 0
-#undef __DEBUG_MODE__
 
 /**
  * Total maximum players active at once
