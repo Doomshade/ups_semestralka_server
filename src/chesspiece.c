@@ -121,12 +121,27 @@ int is_pos_move(unsigned long long int pos_moves, struct square* sq) {
     return MOVE_INVALID;
 }
 
+// this macro checks whether the "f" file and "r" rank can be played
+// with the knight move "m" in game "g"
+#define RETURN_IF_VALID(f, r, m, g) \
+if (IN_BOUNDS((r)) && IN_BOUNDS((r)) &&\
+(m)->to->rank == ((r)) && (m)->to->file == (f)) {\
+if (PIECE_SQ((g)->board, (m)->to) == EMPTY_SQUARE) {\
+return MOVE_VALID;\
+}\
+if (IS_WHITE(PIECE_SQ((g)->board, (m)->to)) !=\
+IS_WHITE(PIECE_SQ((g)->board, (m)->from))) {\
+return MOVE_VALID;\
+}\
+}
+
+
 int knight_handle(struct game* g, struct move* m) {
     int i;
     unsigned int file;
     unsigned int rank;
-    unsigned int af; // the file with offset value
-    unsigned int ar; // the rank with offset value
+    unsigned int file_off; // the file with offset value
+    unsigned int rank_off; // the rank with offset value
     VALIDATE_PARAMS(g, m)
 
     file = m->from->file;
@@ -136,26 +151,19 @@ int knight_handle(struct game* g, struct move* m) {
         // [-2 +1]
         // [+2 -1]
         // [+2 +1]
-        af = (i & 0b10 ? -2 : +2) + file;
-        ar = (i & 0b01 ? -1 : +1) + rank;
+        file_off = (i & 0b10 ? -2 : +2) + file;
+        rank_off = (i & 0b01 ? -1 : +1) + rank;
 
-        if (IN_BOUNDS(af) && IN_BOUNDS(ar) &&
-            m->to->rank == ar && m->to->file == af) {
-            return MOVE_VALID;
-        }
+        RETURN_IF_VALID(file_off, rank_off, m, g)
 
         // [-1 -2]
         // [-1 +2]
         // [+1 -2]
         // [+1 +2]
-        af = (i & 0b10 ? -1 : +1) + file;
-        ar = (i & 0b01 ? -2 : +2) + rank;
+        file_off = (i & 0b10 ? -1 : +1) + file;
+        rank_off = (i & 0b01 ? -2 : +2) + rank;
 
-        // TODO check if the piece was an enemy piece if there's something there!!!
-        if (IN_BOUNDS(af) && IN_BOUNDS(ar) &&
-            m->to->rank == ar && m->to->file == af) {
-            return MOVE_VALID;
-        }
+        RETURN_IF_VALID(file_off, rank_off, m, g)
     }
     return MOVE_INVALID;
 }
@@ -225,7 +233,8 @@ int pawn_handle(struct game* g, struct move* m) {
     piece = PIECE(g->board, m->to->rank, m->to->file);
 
     // check if the move was captures and there was an ENEMY piece
-    if (handle_simple_piece(g, m, capturing_direction, 1) == MOVE_VALID && piece != EMPTY_SQUARE && IS_WHITE(piece) != white) {
+    if (handle_simple_piece(g, m, capturing_direction, 1) == MOVE_VALID && piece != EMPTY_SQUARE &&
+        IS_WHITE(piece) != white) {
         return MOVE_VALID;
     }
 
