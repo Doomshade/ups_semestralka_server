@@ -6,6 +6,7 @@
 
 #define MAX_MESSAGE_SIZE 50 // we don't want to let the players' messages to be too long
 
+
 /**
  * The first packet that should be sent by the client, meaning
  * the client should be in the JUST_CONNECTED state. Pushes the

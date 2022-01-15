@@ -19,6 +19,9 @@
 // IN: 96-127 0x(60-7F) OUT: 224-255 0x(E0-FF)
 #define PLAY_P_OFFSET 0x60
 
+#define RESPONSE_VALID "OK"
+#define RESPONSE_INVALID "REJECTED"
+
 /**
  * The packet
  */

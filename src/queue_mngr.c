@@ -59,7 +59,7 @@ int add_to_queue(struct player* p) {
             printf("Adding %s to the queue...\n", p->name);
             queue[fd] = IS_IN_QUEUE;
 
-            if (send_packet(p, QUEUE_OUT, "0")) {
+            if (send_packet(p, QUEUE_OUT, RESPONSE_VALID)) {
                 return 1;
             }
             change_state(p, QUEUE);

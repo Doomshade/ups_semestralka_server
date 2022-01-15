@@ -8,19 +8,11 @@
 #define VALIDATE_PARAM(p) if (!p) return 1;
 #define VALIDATE_PARAMS(p, data) VALIDATE_PARAM(p) VALIDATE_PARAM(data)
 
-#ifdef __DEBUG_MODE__
-#define RESPONSE_VALID "OK"
-#define RESPONSE_INVALID "Name exists!"
-#else
-#define RESPONSE_VALID "0"
-#define RESPONSE_INVALID "1"
-#endif
 
 
 int p_hello(struct player* pl, char* data) {
     struct game* g;
     int ret;
-    char* buf; // the packet data we send
     struct player* e_pl = NULL; // existing player
 
     VALIDATE_PARAMS(pl, data)
@@ -28,15 +20,12 @@ int p_hello(struct player* pl, char* data) {
     ret = lookup_player_by_name(data, &e_pl);
     // the player exists
     if (!ret) {
-        buf = malloc(sizeof(char) * (strlen(RESPONSE_INVALID)));
-        strcpy(buf, RESPONSE_INVALID);
         if (e_pl) {
             printf("A player with the name %s (%d) already exists!\n", e_pl->name, e_pl->fd);
         } else {
             printf("A player with name %s already exists!\n", data);
         }
-        ret = send_packet(pl, HELLO_OUT, buf);
-        free(buf);
+        ret = send_packet(pl, HELLO_OUT, RESPONSE_INVALID);
         if (ret) {
             printf("Failed to send packet!\n");
         }
@@ -51,17 +40,8 @@ int p_hello(struct player* pl, char* data) {
     }
 
     // the OUT packet data
-#ifdef __DEBUG_MODE__
-    buf = malloc(sizeof(char) * (strlen("Hi %s!") + strlen(pl->name) + 1));
-    sprintf(buf, "Hi %s!", pl->name);
-    ret = send_packet(pl, HELLO_OUT, buf);
-#else
     ret = send_packet(pl, HELLO_OUT, RESPONSE_VALID);
-#endif
 
-#ifdef __DEBUG_MODE__
-    free(buf);
-#endif
     if (ret) {
         printf("Failed to send the packet!\n");
         return 1;
@@ -117,7 +97,6 @@ int p_movepc(struct player* p, char* data) {
     struct move* m;
 
     struct game* g;
-    struct packet* pc;
     char* msg;
 
     VALIDATE_PARAMS(p, data)
@@ -166,7 +145,6 @@ int p_movepc(struct player* p, char* data) {
 int p_offdraw(struct player* p, char* data) {
     struct game* g;
     char* PAYLOAD = "";
-    struct packet* pc;
     int ret;
 
     VALIDATE_PARAM(p)
@@ -204,7 +182,6 @@ int p_resign(struct player* p, char* data) {
 int p_message(struct player* p, char* packet) {
     struct game* g;
     struct player* op;
-    struct packet* pc;
     char buf[BUFSIZ];
 
     VALIDATE_PARAMS(p, packet)
