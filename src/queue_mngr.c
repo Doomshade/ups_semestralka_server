@@ -130,7 +130,7 @@ int remove_from_queue(struct player* p) {
         case IS_IN_QUEUE:
             printf("Removing %s from the queue\n", p->name);
             queue[fd] = NOT_IN_QUEUE;
-            if ((ret = send_packet(p, QUEUE_OUT, "1"))) {
+            if ((ret = send_packet(p, LEAVE_QUEUE_OUT, RESPONSE_VALID))) {
                 return ret;
             }
             change_state(p, LOGGED_IN);

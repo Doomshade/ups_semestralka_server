@@ -65,7 +65,10 @@ enum queue_p {
     // Sent to a player to inform him
     // that an opponent was found and
     // is put to a game
-    GAME_START_OUT = PACKET_OUT(PACKET_IN(QUEUE_P_OFFSET, 0))
+    GAME_START_OUT = PACKET_OUT(PACKET_IN(QUEUE_P_OFFSET, 0)),
+
+    LEAVE_QUEUE_IN = PACKET_IN(QUEUE_P_OFFSET, 0),
+    LEAVE_QUEUE_OUT = PACKET_OUT(LEAVE_QUEUE_IN)
 };
 
 /**

@@ -9,7 +9,6 @@
 #define VALIDATE_PARAMS(p, data) VALIDATE_PARAM(p) VALIDATE_PARAM(data)
 
 
-
 int p_hello(struct player* pl, char* data) {
     struct game* g;
     int ret;
@@ -72,18 +71,15 @@ int p_hello(struct player* pl, char* data) {
     return 0;
 }
 
-int p_queue(struct player* p, char* data) {
+int p_leave_queue(struct player* p, char* data) {
     VALIDATE_PARAM(p)
 
-    // check for the state and do things based on that
-    switch (p->ps) {
-        case LOGGED_IN: // the player wants to join the queue
-            return add_to_queue(p);
-        case QUEUE: // the player wants to leave the queue
-            return remove_from_queue(p);
-        default:
-            return 1;
-    }
+    return remove_from_queue(p);
+}
+
+int p_queue(struct player* p, char* data) {
+    VALIDATE_PARAM(p)
+    return add_to_queue(p);
 }
 
 int p_movepc(struct player* p, char* data) {

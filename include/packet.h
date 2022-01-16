@@ -31,6 +31,8 @@ int p_hello(struct player* pl, char* packet);
  */
 int p_queue(struct player* p, char* data);
 
+int p_leave_queue(struct player* p, char* data);
+
 /**
  * The player wants to move a piece on the g. The client should
  * be in the PLAY state. The data should always be of length 4 and

@@ -19,7 +19,7 @@ void init_preg() {
     printf("Initializing packet registry...\n");
     packet_handlers[JUST_CONNECTED][HELLO_IN] = p_hello;
     packet_handlers[LOGGED_IN][QUEUE_IN] = p_queue;
-    packet_handlers[QUEUE][QUEUE_IN] = p_queue;
+    packet_handlers[QUEUE][LEAVE_QUEUE_IN] = p_leave_queue;
     packet_handlers[PLAY][MOVE_IN] = p_movepc;
     packet_handlers[PLAY][DRAW_OFFER_IN] = p_offdraw;
     packet_handlers[PLAY][RESIGN_IN] = p_resign;
