@@ -62,13 +62,14 @@ enum logged_in_p {
  * Valid packets in the QUEUE state
  */
 enum queue_p {
+
+    LEAVE_QUEUE_IN = PACKET_IN(QUEUE_P_OFFSET, 0),
+    LEAVE_QUEUE_OUT = PACKET_OUT(LEAVE_QUEUE_IN),
+
     // Sent to a player to inform him
     // that an opponent was found and
     // is put to a game
-    GAME_START_OUT = PACKET_OUT(PACKET_IN(QUEUE_P_OFFSET, 0)),
-
-    LEAVE_QUEUE_IN = PACKET_IN(QUEUE_P_OFFSET, 0),
-    LEAVE_QUEUE_OUT = PACKET_OUT(LEAVE_QUEUE_IN)
+    GAME_START_OUT = PACKET_OUT(PACKET_IN(QUEUE_P_OFFSET, 1))
 };
 
 /**
@@ -95,19 +96,24 @@ enum play_p {
     RESIGN_IN = PACKET_IN(PLAY_P_OFFSET, 2),
 
     // A game is finished, sent to both players
-    GAME_FINISH_OUT = PACKET_OUT(PACKET_IN(PLAY_P_OFFSET, 3)),
+    GAME_FINISH_OUT = PACKET_OUT(RESIGN_IN),
 
     // A message sent by a player
-    MESSAGE_IN = PACKET_IN(PLAY_P_OFFSET, 4),
+    MESSAGE_IN = PACKET_IN(PLAY_P_OFFSET, 3),
 
     // A message sent to a player
     MESSAGE_OUT = PACKET_OUT(MESSAGE_IN),
 
+    // The opponent's name is not included in the game start packet,
+    // so we need to inform the client of the opponent's username
+    OPPONENT_NAME_OUT = PACKET_OUT(PACKET_IN(PLAY_P_OFFSET, 4)),
+
+    MOVE_RESPONSE = PACKET_OUT(PACKET_IN(PLAY_P_OFFSET, 5)),
+
     // A keep alive packet to check whether the player
     // is still connected
-    KEEP_ALIVE_OUT = PACKET_OUT(PACKET_IN(PLAY_P_OFFSET, 5)),
+    KEEP_ALIVE_OUT = PACKET_OUT(PACKET_IN(PLAY_P_OFFSET, 0x1F))
 
-    OPPONENT_NAME_OUT = PACKET_OUT(PACKET_IN(PLAY_P_OFFSET, 6))
 };
 
 /**

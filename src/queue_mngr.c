@@ -33,14 +33,18 @@ int send_queue_out_pc(struct player* p, bool white, char* op) {
     }
 
     // +2 because of the "white" tag at the start
-    siz = sizeof(char) * (strlen(op) + 2);
+    siz = sizeof(char) * (strlen(START_FEN) + 2);
     buf = malloc(siz);
     memset(buf, 0, siz);
-    strcpy(buf, white ? "0" : "1");
-    strcat(buf, op);
+    strcpy(buf, white ? "1" : "0");
+    strcat(buf, START_FEN);
 
     ret = send_packet(p, GAME_START_OUT, buf);
     free(buf);
+    if (ret){
+        return ret;
+    }
+    ret = send_packet(p, OPPONENT_NAME_OUT, op);
     // TODO
     return ret;
 }
@@ -129,15 +133,17 @@ int add_to_queue(struct player* p) {
                     continue;
                 }
 
+
+                // remove both players from the queue
+                queue[id] = NOT_IN_QUEUE;
+                queue[i] = NOT_IN_QUEUE;
+
                 // yes this is perhaps utterly retarded, but basically
                 // if the first packet fails, we don't even send the
                 // second one and immediately remove both from queue
                 if ((ret = send_queue_out_pc(p, true, op->name)) ||
                     (ret = send_queue_out_pc(op, false, p->name)));
 
-                // remove both players from the queue
-                remove_from_queue(p);
-                remove_from_queue(op);
 
                 // create a new game
                 if (!ret) {

@@ -112,7 +112,8 @@ void print_board(struct game* g) {
 #endif
 
 void free_game(struct game** g) {
-    free(g);
+    free(*g);
+    *g = NULL;
 }
 
 void init_gman() {
@@ -176,13 +177,13 @@ int finish_game(struct game* g, int winner) {
                       WIN_BY_MATE |
                       WIN_BY_RESIGNATION |
                       WIN_BY_TIME;
-    char msg[sizeof(int) + 1] = {0};
+    char msg[3 + 1] = {0};
     int ret;
 
     if (!g || !games) {
         return 1;
     }
-    sprintf(msg, "%d", flags);
+    sprintf(msg, "%03d", winner);
 
     for (i = 0; i < MAX_GAME_COUNT; ++i) {
         if (!games[i] || g != games[i]) {
@@ -193,6 +194,8 @@ int finish_game(struct game* g, int winner) {
             (ret = send_packet(g->black, GAME_FINISH_OUT, msg))) {
             return ret;
         }
+        change_state(g->white, LOGGED_IN);
+        change_state(g->black, LOGGED_IN);
         remove_game_by_idx(i);
         return 0;
     }
@@ -508,10 +511,10 @@ int move_piece(struct game* g, struct player* p, struct move* m) {
     }
     g->white_to_move = !g->white_to_move;
 #ifdef __DEBUG_MODE__
-    strcat(buf, "\n");
-    print_board(g, buf);
-    send_packet(p, MESSAGE_OUT, buf);
-    send_packet(OPPONENT(g, p), MESSAGE_OUT, buf);
+    //strcat(buf, "\n");
+    //print_board(g, buf);
+    //send_packet(p, MESSAGE_OUT, buf);
+    //send_packet(OPPONENT(g, p), MESSAGE_OUT, buf);
 #else
     print_board(g);
 #endif

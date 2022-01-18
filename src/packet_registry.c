@@ -64,6 +64,7 @@ int send_packet(struct player* pl, unsigned int id, char* data) {
     s = malloc(PACKET_HEADER_SIZE + strlen(data) + 1);
     sprintf(s, PACKET_HEADER_FORMAT, PACKET_MAGIC_HEADER, id, strlen(data), data);
     len = strlen(s);
+    printf("Sending packet %s to %s\n", s, pl->name);
     ret = send_raw(pl, s, &len);
     free(s);
     return ret;
