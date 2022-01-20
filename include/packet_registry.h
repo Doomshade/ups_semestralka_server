@@ -55,7 +55,9 @@ enum logged_in_p {
 
     // Sent to a player to inform him
     // that he was/was not put to the queue
-    QUEUE_OUT = PACKET_OUT(QUEUE_IN)
+    QUEUE_OUT = PACKET_OUT(QUEUE_IN),
+
+    RECONNECT_OUT = PACKET_OUT(PACKET_IN(LOGGED_IN_P_OFFSET, 1))
 };
 
 /**
@@ -110,6 +112,7 @@ enum play_p {
 
     MOVE_RESPONSE = PACKET_OUT(PACKET_IN(PLAY_P_OFFSET, 5)),
 
+    KEEP_ALIVE_IN = PACKET_IN(PLAY_P_OFFSET, 0x1F),
     // A keep alive packet to check whether the player
     // is still connected
     KEEP_ALIVE_OUT = PACKET_OUT(PACKET_IN(PLAY_P_OFFSET, 0x1F))

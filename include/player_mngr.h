@@ -1,6 +1,7 @@
 #ifndef SEMESTRALKA_PLAYER_MNGR_H
 #define SEMESTRALKA_PLAYER_MNGR_H
 #define MAX_PLAYER_NAME_LENGTH 64
+#include <sys/time.h>
 
 /**
  * The player's state
@@ -10,7 +11,7 @@ enum player_state {
     /**
      * The initial state -- when the player connects to the server
      */
-    JUST_CONNECTED,
+    JUST_CONNECTED = 0,
 
     /**
      * The player has logged in (he has sent his name)
@@ -47,6 +48,10 @@ struct player {
      * The name of this player
      */
     char name[MAX_PLAYER_NAME_LENGTH + 1];
+
+    time_t last_keepalive;
+
+    int started_keepalive;
 };
 
 /**
@@ -100,6 +105,11 @@ void change_state(struct player* p, enum player_state ps);
  * @param p the client's file descriptor
  * @return
  */
-int handle_disconnection(struct player* p);
+int pman_handle_dc(struct player* p);
 
+/**
+ * Starts checking for keepalive packets.
+ * @param p the player
+ */
+void start_keepalive(struct player* p, unsigned keepalive_retry);
 #endif //SEMESTRALKA_PLAYER_MNGR_H

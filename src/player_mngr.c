@@ -3,13 +3,18 @@
 #include "../include/player_mngr.h"
 #include "../include/server.h"
 #include "../include/game_mngr.h"
+#include "../include/packet_handler.h"
+#include <time.h>
+#include <pthread.h>
+#include <unistd.h>
 
 #define MAX_DISCONNECTED_COUNT MAX_PLAYER_COUNT * 5
 
+#define KEEPALIVE_INTERVAL_RETRY 30
 #define VALIDATE_FD(fd, ret) if (fd >= MAX_PLAYER_COUNT) return ret;
 
-struct player* players[MAX_PLAYER_COUNT] = {0};
-struct player* dc_players[MAX_DISCONNECTED_COUNT] = {0};
+static struct player* players[MAX_PLAYER_COUNT] = {0};
+static struct player* dc_players[MAX_DISCONNECTED_COUNT] = {0};
 
 int lookup_player_by_fd(int fd, struct player** p) {
     struct player* _p;
@@ -80,9 +85,67 @@ struct player* create_player(int fd) {
         return NULL;
     }
     p->fd = fd;
+    p->started_keepalive = 0;
+
+    p->last_keepalive = 0;
     change_player_name(p, "New Player");
     change_state(p, JUST_CONNECTED);
     return p;
+}
+
+struct thr_args {
+    struct player* p;
+    unsigned keepalive_retry;
+};
+
+void* keepalive(void* _p) {
+    time_t t;
+    struct thr_args* p_args = (struct thr_args*) _p;
+    struct player* p = p_args->p;
+    unsigned interval = p_args->keepalive_retry;
+    double diff;
+
+    while (1) {
+        // update the current time
+        time(&t);
+
+        // get the difference in seconds between the last keep alive packets
+        diff = difftime(t, p->last_keepalive);
+
+        // set the last time to the current time
+        p->last_keepalive = t;
+
+        // if everything is okay, we only sleep
+        if (diff < interval) {
+            // sleep for one second before checking again
+            // reduces overhead
+            sleep(1);
+            continue;
+        }
+
+        // TODO dc the player
+        handle_dc(p);
+        pthread_exit(NULL);
+        return NULL;
+
+
+    }
+    return NULL;
+}
+
+void start_keepalive(struct player* p, unsigned keepalive_retry) {
+    struct thr_args args;
+    pthread_t thread;
+
+    if (p->started_keepalive) {
+        return;
+    }
+    args.p = p;
+    args.keepalive_retry = keepalive_retry;
+
+    printf("Starting keepalive for %s...\n", p->name);
+    p->started_keepalive = 1;
+    pthread_create(&thread, NULL, keepalive, &args);
 }
 
 int change_player_name(struct player* p, char* name) {
@@ -135,9 +198,8 @@ void change_state(struct player* p, enum player_state ps) {
     printf("Changed %s's state to: %s\n", p->name, ps_str);
 }
 
-int handle_disconnection(struct player* p) {
+int pman_handle_dc(struct player* p) {
     int i;
-    int ret;
 
     if (!p) {
         return 1;
@@ -146,7 +208,7 @@ int handle_disconnection(struct player* p) {
 
     players[p->fd] = NULL;
 
-#ifdef __DEBUG_MODE__
+#ifdef SERVER_DEBUG_MODE
     if (!lookup_player_by_fd(p->fd, NULL)) {
         printf("Player is still in memory somehow...\n");
     }
@@ -158,13 +220,13 @@ int handle_disconnection(struct player* p) {
     // a client connects with an FD of 4,
     // joins a game, disconnects,
     // a different client joins and is given
-    // the FD 4 and that client would be reconnected!
+    // the FD 4 and that client would be reconnected!|
     for (i = 0; i < MAX_DISCONNECTED_COUNT; ++i) {
         if (dc_players[i] == NULL) {
             printf("Storing %s under %d in the disconnected list\n", p->name, i);
             p->fd = -1;
+            p->started_keepalive = 0;
             dc_players[i] = p;
-            inform_disconnect(p);
             return 0;
         }
     }

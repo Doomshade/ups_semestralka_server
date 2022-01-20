@@ -1,9 +1,7 @@
 #include <stdio.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <netinet/tcp.h>
@@ -15,6 +13,8 @@
 #include "../include/packet_validator.h"
 #include "../include/queue_mngr.h"
 #include "../include/chesspiece.h"
+#include <sys/time.h>
+#include <signal.h>
 
 #define check(eval) if(!(eval)) printf("setsockopt error\n");
 
@@ -24,7 +24,7 @@
  * @param peer_addr
  * @return
  */
-int start_listening(int server_socket);
+int start_listening(int server_socket, unsigned keepalive_retry);
 
 /**
  * Disconnects the player from the server
@@ -58,9 +58,8 @@ void enable_keepalive(int sock) {
             sock, IPPROTO_TCP, TCP_KEEPCNT, &maxpkt, sizeof(int)) != -1);
 }
 
-int start_server(unsigned port) {
+int start_server(struct arguments* args) {
     int server_socket, rval;
-    char ip[64]; // buffer to output IP:port
     struct sockaddr_in my_addr;
     int param = 1;
 
@@ -72,11 +71,10 @@ int start_server(unsigned port) {
     memset(&my_addr, 0, sizeof(struct sockaddr_in));
 
     my_addr.sin_family = AF_INET;
-    my_addr.sin_port = htons(port);
-    my_addr.sin_addr.s_addr = INADDR_ANY;
+    my_addr.sin_port = htons(args->port);
+    inet_pton(AF_INET, args->ip, &(my_addr.sin_addr));
 
-    inet_ntop(AF_INET, &my_addr.sin_addr, ip, sizeof(ip));
-    printf("Starting server on %s:%d\n", ip, port);
+    printf("Starting server on %s:%d\n", args->ip, args->port);
     rval = bind(server_socket, (struct sockaddr*) &my_addr, sizeof(struct sockaddr_in));
     if (!rval) {
         printf("Successfully bound the socket\n");
@@ -90,10 +88,13 @@ int start_server(unsigned port) {
         printf("Failed to start listening\n");
         return rval;
     }
-    return start_listening(server_socket);
+
+    // ignore SIGPIPE
+    sigaction(SIGPIPE, &(struct sigaction) {SIG_IGN}, NULL);
+    return start_listening(server_socket, args->keepalive_retry);
 }
 
-int start_listening(int server_socket) {
+int start_listening(int server_socket, unsigned keepalive_retry) {
     struct sockaddr_in peer_addr;
     int fd, rval, a2read;
     char* p_ptr = NULL;
@@ -134,14 +135,15 @@ int start_listening(int server_socket) {
                 //tst(server_socket, &peer_addr, &len_addr, &client_socks);
                 continue;
             }
-            lookup_player_by_fd(fd, &player); // look for the connected player
 
+            lookup_player_by_fd(fd, &player);
             // this should NOT return NULL as we handled the new connection
             if (!player) {
                 printf("An error occurred during the creation of client (FD=%d)...\n", fd);
                 continue;
             }
             printf("--------------------%s--------------------\n", player->name);
+
 
             // nope, a client sent some data
             ioctl(fd, FIONREAD, &a2read);
@@ -162,19 +164,19 @@ int start_listening(int server_socket) {
             recv(fd, p_ptr, a2read, 0);
             p_ptr[strcspn(p_ptr, "\n")] = 0;
 
-#ifdef __DEBUG_MODE__
+#ifdef SERVER_DEBUG_MODE
             printf("Received %s (%lu) from %d\n", p_ptr, strlen(p_ptr), fd);
 #endif
 
             HANDLE_PACKET:
-#ifdef __DEBUG_MODE__
+#ifdef SERVER_DEBUG_MODE
             printf("Parsing %s...\n", p_ptr);
 #endif
             pckt = parse_packet(&p_ptr, &erc, player);
             // the packet has not yet been fully buffered,
             // we still need to wait for the rest of the packet
             if (erc == PACKET_NOT_YET_FULLY_BUFFERED) {
-#ifdef __DEBUG_MODE__
+#ifdef SERVER_DEBUG_MODE
                 printf("Not yet fully buffered...\n");
 #endif
                 goto FREE;
@@ -186,10 +188,11 @@ int start_listening(int server_socket) {
                 printf("Failed to parse packet: %d\n", erc);
 
 // don't disconnect the player if the packet format is incorrect
-#ifdef __DEBUG_MODE__
+#ifdef SERVER_DEBUG_MODE
                 free_buffers(fd);
 #else
-                disconnect(player, &client_socks);
+                free_buffers(fd);
+                //disconnect(player, &client_socks);
 #endif
                 goto FREE;
             }
@@ -202,7 +205,7 @@ int start_listening(int server_socket) {
                 case PACKET_ERR_INVALID_ID:
                     printf("A client sent a packet with invalid ID\n");
 // don't disconnect if the packet data is invalid either
-#ifdef __DEBUG_MODE__
+#ifdef SERVER_DEBUG_MODE
                     free_buffers(fd);
 #else
                     disconnect(player, &client_socks);
@@ -211,7 +214,7 @@ int start_listening(int server_socket) {
                 case PACKET_ERR_STATE_OUT_OF_BOUNDS:
                     printf("A client sent a packet in a state that was out of bounds\n");
                     printf("This should not happen! Contact the authors for fix\n");
-#ifdef __DEBUG_MODE__
+#ifdef SERVER_DEBUG_MODE
                     free_buffers(fd);
 #else
                     disconnect(player, &client_socks);
@@ -219,7 +222,7 @@ int start_listening(int server_socket) {
                     goto FREE;
                 case PACKER_ERR_INVALID_CLIENT_STATE:
                     printf("A client sent a packet in an invalid state\n");
-#ifdef __DEBUG_MODE__
+#ifdef SERVER_DEBUG_MODE
                     free_buffers(fd);
 #else
                     disconnect(player, &client_socks);
@@ -274,21 +277,29 @@ void init_server() {
     init_cpce(); // chess pieces
 }
 
-void disconnect(struct player* p, fd_set* client_socks) {
+int handle_dc(struct player* p) {
     int fd;
-    if (!p || !client_socks) {
-        return;
+    if (!p) {
+        return 1;
     }
 
     fd = p->fd;
     free_buffers(fd); // cleanup in the packet_validator (due to potential buffered header/data)
-    handle_disconnection(p); // cleanup in player_mngr and store the state
-    // don't remove the player from the queue after storing him in the disconnected list
-    // the player will be ignored and marked as NOT_IN_QUEUE once a match is found in the queue manager,
-    // thus removing him from the queue
+    pman_handle_dc(p); // cleanup in player_mngr and store the state
+    qman_handle_dc(p); // removing from queue changes the state of the player ONLY if the packet is successfully sent
+    // in our case the packet cannot be sent as the player has disconnected -> the player's state will remain the same
+    gman_handle_dc(p);
 
     close(fd);
-    FD_CLR(fd, client_socks);
     printf("%s has disconnected\n", p->name);
     printf("--------------------%s--------------------\n\n", p->name);
+    return 0;
+}
+
+void disconnect(struct player* p, fd_set* client_socks) {
+    if (!p || !client_socks) {
+        return;
+    }
+    FD_CLR(p->fd, client_socks);
+    handle_dc(p);
 }

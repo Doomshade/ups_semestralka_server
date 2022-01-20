@@ -35,8 +35,14 @@ player_mngr.h
 /home/doomshade/CLionProjects/semestralka/include/player_mngr.h
 
 /home/doomshade/CLionProjects/semestralka/include/player_mngr.h
+sys/time.h
+-
 
 /home/doomshade/CLionProjects/semestralka/include/server.h
+netinet/in.h
+-
+player_mngr.h
+/home/doomshade/CLionProjects/semestralka/include/player_mngr.h
 
 /home/doomshade/CLionProjects/semestralka/src/game_mngr.c
 ../include/game_mngr.h

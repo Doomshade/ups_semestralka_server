@@ -1,18 +1,18 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 #include "../include/packet.h"
 #include "../include/packet_validator.h"
 #include "../include/queue_mngr.h"
-#include "../include//server.h"
 
 #define VALIDATE_PARAM(p) if (!p) return 1;
 #define VALIDATE_PARAMS(p, data) VALIDATE_PARAM(p) VALIDATE_PARAM(data)
-
 
 int p_hello(struct player* pl, char* data) {
     struct game* g;
     int ret;
     struct player* e_pl = NULL; // existing player
+    const int keepalive_retry = 30; // TODO make this a var
 
     VALIDATE_PARAMS(pl, data)
 
@@ -38,16 +38,16 @@ int p_hello(struct player* pl, char* data) {
         return 0;
     }
 
-    // the OUT packet data
+    // the name is valid
     ret = send_packet(pl, HELLO_OUT, RESPONSE_VALID);
 
     if (ret) {
         printf("Failed to send the packet!\n");
         return 1;
     }
+    //start_keepalive(pl, keepalive_retry);
 
     ret = lookup_dc_player(pl->name, &pl);
-
     // the player previously disconnected
     if (!ret) {
         switch (pl->ps) {
@@ -209,4 +209,9 @@ int p_message(struct player* p, char* packet) {
     op = OPPONENT(g, p);
     send_packet(op, MESSAGE_OUT, buf);
     return 0;
+}
+
+int p_keepalive(struct player* p, char* packet) {
+    p->last_keepalive = time(NULL);
+    return send_packet(p, KEEP_ALIVE_OUT, "");
 }

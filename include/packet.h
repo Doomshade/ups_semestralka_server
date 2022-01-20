@@ -73,5 +73,13 @@ int p_resign(struct player* p, char* packet);
  */
 int p_message(struct player* p, char* packet);
 
+/**
+ * The player sent a keepalive packet, save it
+ * @param p
+ * @param packet
+ * @return
+ */
+int p_keepalive(struct player* p, char* packet);
+
 
 #endif //SEMESTRALKA_PACKET_H

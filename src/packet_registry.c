@@ -13,9 +13,11 @@ bool registered = false;
 
 
 void init_preg() {
+    int i;
     if (registered) {
         return;
     }
+
     printf("Initializing packet registry...\n");
     packet_handlers[JUST_CONNECTED][HELLO_IN] = p_hello;
     packet_handlers[LOGGED_IN][QUEUE_IN] = p_queue;
@@ -24,6 +26,12 @@ void init_preg() {
     packet_handlers[PLAY][DRAW_OFFER_IN] = p_offdraw;
     packet_handlers[PLAY][RESIGN_IN] = p_resign;
     packet_handlers[PLAY][MESSAGE_IN] = p_message;
+
+    // register keep alive packet in all but just connected states
+    for(i = LOGGED_IN; i <= PLAY; ++i){
+        packet_handlers[i][KEEP_ALIVE_IN] = p_keepalive;
+    }
+
     registered = true;
 }
 

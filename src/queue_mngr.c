@@ -41,7 +41,7 @@ int send_queue_out_pc(struct player* p, bool white, char* op) {
 
     ret = send_packet(p, GAME_START_OUT, buf);
     free(buf);
-    if (ret){
+    if (ret) {
         return ret;
     }
     ret = send_packet(p, OPPONENT_NAME_OUT, op);
@@ -166,6 +166,11 @@ int add_to_queue(struct player* p) {
             return -3;
     }
 }
+
+int qman_handle_dc(struct player* p) {
+    return remove_from_queue(p);
+}
+
 
 int remove_from_queue(struct player* p) {
     int q_state;

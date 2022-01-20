@@ -126,7 +126,7 @@ char* generate_fen(struct game* g);
  * @param p the player to inform
  * @return 0 if everything went alright
  */
-int inform_disconnect(struct player* p);
+int gman_handle_dc(struct player* p);
 
 /**
  * Sets up the game from the fen string

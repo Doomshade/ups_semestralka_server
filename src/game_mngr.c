@@ -16,7 +16,7 @@
 struct game** games = NULL;
 int free_game_index = 0;
 
-#ifdef __DEBUG_MODE__
+#ifdef SERVER_DEBUG_MODE
 
 void print_hline(char* buf) {
     int i;
@@ -288,7 +288,7 @@ int setup_game(struct game* g) {
         g->board[6][i] = TO_BLACK(PAWN);
         g->board[7][i] = TO_BLACK(g->board[0][i]);
     }
-#ifdef __DEBUG_MODE__
+#ifdef SERVER_DEBUG_MODE
     print_board(g, buf);
 #else
     print_board(g);
@@ -387,6 +387,7 @@ int reconnect_to_game(struct player* pl, struct game* g) {
     struct player* op;
     int ret;
     char* fen;
+    char* start_message;
     char buf[BUFSIZ];
 
     if (!INGAME(g, pl)) {
@@ -396,13 +397,19 @@ int reconnect_to_game(struct player* pl, struct game* g) {
 
     // send the reconnecting player the game state
     fen = generate_fen(g);
+    start_message = malloc(strlen(fen) + 2);
+    strcpy(start_message, g->white == pl ? "1" : "0");
+    strcat(start_message, fen);
+    free(fen);
     printf("Sending %s game start packet...\n", pl->name);
-    ret = send_packet(pl, GAME_START_OUT, fen);
+    op = OPPONENT(g, pl);
+    ret = send_packet(pl, RECONNECT_OUT, "");
+    ret = send_packet(pl, GAME_START_OUT, start_message);
+    ret = send_packet(pl, OPPONENT_NAME_OUT, op->name);
 
     // send the information to the opponent about the
     // reconnection of the disconnected player
     // TODO create a new packet ID for this
-    op = OPPONENT(g, pl);
     sprintf(buf, PLAYER_RECON_MESSAGE, pl->name);
 
     printf("Sending %s that %s has reconnected...\n", op->name, pl->name);
@@ -413,7 +420,7 @@ int reconnect_to_game(struct player* pl, struct game* g) {
     return ret;
 }
 
-int inform_disconnect(struct player* p) {
+int gman_handle_dc(struct player* p) {
     struct game* g;
     struct player* op;
     char buf[BUFSIZ];
@@ -510,7 +517,7 @@ int move_piece(struct game* g, struct player* p, struct move* m) {
         g->fullmove_count++;
     }
     g->white_to_move = !g->white_to_move;
-#ifdef __DEBUG_MODE__
+#ifdef SERVER_DEBUG_MODE
     //strcat(buf, "\n");
     //print_board(g, buf);
     //send_packet(p, MESSAGE_OUT, buf);

@@ -22,4 +22,6 @@ int add_to_queue(struct player* p);
  */
 int remove_from_queue(struct player* p);
 
+int qman_handle_dc(struct player* p);
+
 #endif //SEMESTRALKA_QUEUE_MNGR_H
