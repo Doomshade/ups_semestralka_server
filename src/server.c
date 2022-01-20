@@ -115,6 +115,8 @@ int start_listening(int server_socket, struct arguments* args) {
     struct packet* pckt;
     struct player* player = NULL;
 
+    char buf[BUFSIZ];
+
     memset(&peer_addr, 0, sizeof(struct sockaddr_in));
     // initialize things
     init_server();
@@ -217,15 +219,9 @@ int start_listening(int server_socket, struct arguments* args) {
                         printf("The player %s sent too many invalid packets!\n", player->name);
                         goto _DC;
                     }
+                    send_packet(player, INVALID_DATA_OUT, p_ptr_copy);
 #endif
                     break;
-                case PACKET_ERR_INVALID_ID:
-                    printf("A client sent a packet with invalid ID\n");
-                    goto _DC;
-                case PACKET_ERR_STATE_OUT_OF_BOUNDS:
-                    printf("A client sent a packet in a state that was out of bounds\n");
-                    printf("This should not happen! Contact the authors for fix\n");
-                    goto _DC;
                 default:
                     printf("An error occurred when handling the packet (%d)\n", rval);
                     goto _DC;

@@ -227,6 +227,7 @@ int pman_handle_dc(struct player* p) {
             printf("Storing %s under %d in the disconnected list\n", p->name, i);
             p->fd = -1;
             p->started_keepalive = 0;
+            p->invalid_sends = 0;
             dc_players[i] = p;
             return 0;
         }

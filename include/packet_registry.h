@@ -14,10 +14,6 @@
 #define PACKET_RESP_ERR_INVALID_DATA 0xA1
 // the packet was not recvd
 #define PACKET_RESP_ERR_NOT_RECVD 0xA2
-// the packet had an invalid ID
-#define PACKET_ERR_INVALID_ID 0xA3
-// an invalid state was passed somehow
-#define PACKET_ERR_STATE_OUT_OF_BOUNDS 0xA4
 // -- PACKET RETURN CODES --
 
 // ++ PACKET OFFSETS ++
@@ -32,6 +28,9 @@
 #define QUEUE_P_OFFSET 0x40
 // IN: 96-127 0x(60-7F) OUT: 224-255 0x(E0-FF)
 #define PLAY_P_OFFSET 0x60
+// these packets grow from the end
+// IN: 127-96 0x(7F-60) OUT: 255-244 0x(FF-E0)
+#define ALL_P_OFFSET 0x80
 // -- PACKET OFFSETS --
 
 // ++ PACKET RESPONSES ++
@@ -129,13 +128,17 @@ enum play_p {
 
     MOVE_RESPONSE = PACKET_OUT(PACKET_IN(PLAY_P_OFFSET, 5)),
 
-    DISCONNECT_OUT = PACKET_OUT(PACKET_IN(PLAY_P_OFFSET, 0x1E)),
+};
 
-    KEEP_ALIVE_IN = PACKET_IN(PLAY_P_OFFSET, 0x1F),
-    // A keep alive packet to check whether the player
-    // is still connected
-    KEEP_ALIVE_OUT = PACKET_OUT(KEEP_ALIVE_IN)
+enum state_all {
 
+    KEEP_ALIVE_IN = PACKET_IN(PLAY_P_OFFSET, -0x01),
+
+    KEEP_ALIVE_OUT = PACKET_OUT(KEEP_ALIVE_IN),
+
+    DISCONNECT_OUT = PACKET_OUT(PACKET_IN(ALL_P_OFFSET, -0x02)),
+
+    INVALID_DATA_OUT = PACKET_OUT(PACKET_IN(ALL_P_OFFSET, -0x03))
 };
 
 /**
@@ -173,7 +176,7 @@ struct packet* create_packet(unsigned int id, const char* data);
  * @param id the packet ID
  * @return the handle or NULL
  */
-packet_handle* get_handler(unsigned int id, enum player_state pstate, int* erc);
+packet_handle* get_handler(unsigned int id, enum player_state pstate);
 
 /**
  * Registers the packets in the memory

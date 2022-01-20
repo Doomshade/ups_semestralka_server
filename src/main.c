@@ -38,9 +38,7 @@ static error_t parse_opt(int key, char* arg, struct argp_state* state) {
             arguments->keepalive_retry = strtoul(arg, &end, 10);
             break;
         case 'D':
-#ifndef SERVER_DEBUG_MODE
-#define SERVER_DEBUG_MODE
-#endif
+            arguments->debug_mode = 1;
             break;
         case 'i':
             strncpy(arguments->ip, arg, sizeof(arguments->ip));
@@ -67,6 +65,8 @@ int main(int argc, char** argv) {
     arguments.port = 10000;
     strcpy(arguments.ip, "0.0.0.0");
     arguments.keepalive_retry = 30;
+    arguments.max_inval_pc = 3;
+    arguments.debug_mode = 0;
 
     // parse our arguments; every option seen by parse_opt will
     // be reflected in arguments

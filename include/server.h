@@ -17,6 +17,7 @@ struct arguments {
     unsigned port;
     unsigned keepalive_retry;
     unsigned max_inval_pc;
+    unsigned debug_mode;
 };
 
 /**

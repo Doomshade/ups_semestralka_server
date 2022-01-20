@@ -53,7 +53,7 @@ void free_packet(struct packet** pc) {
     if (pc && *pc) {
         free((*pc)->data);
         free(*pc);
-        *pc == NULL;
+        *pc = NULL;
     }
 }
 
@@ -90,24 +90,20 @@ struct packet* create_packet(unsigned int id, const char* data) {
     return p;
 }
 
-packet_handle* get_handler(unsigned int id, enum player_state pstate, int* erc) {
+packet_handle* get_handler(unsigned int id, enum player_state pstate) {
     packet_handle* handle;
     if (id >= PACKET_COUNT) {
-        *erc = PACKET_ERR_INVALID_ID;
         return NULL;
     }
 
     // check if the state count is even right
     if (pstate >= STATE_COUNT) {
         printf("Reached a state that does not exist!\n");
-        *erc = PACKET_ERR_STATE_OUT_OF_BOUNDS;
         return NULL;
     }
     handle = packet_handlers[pstate][id];
     if (!handle) {
-        *erc = PACKET_ERR_INVALID_ID;
         return NULL;
     }
-    *erc = 0;
     return handle;
 }
