@@ -175,7 +175,7 @@ int start_listening(int server_socket, unsigned keepalive_retry) {
             pckt = parse_packet(&p_ptr, &erc, player);
             // the packet has not yet been fully buffered,
             // we still need to wait for the rest of the packet
-            if (erc == PACKET_NOT_YET_FULLY_BUFFERED) {
+            if (erc == PVAL_PACKET_NOT_YET_FULLY_BUFFERED) {
 #ifdef SERVER_DEBUG_MODE
                 printf("Not yet fully buffered...\n");
 #endif
@@ -214,14 +214,6 @@ int start_listening(int server_socket, unsigned keepalive_retry) {
                 case PACKET_ERR_STATE_OUT_OF_BOUNDS:
                     printf("A client sent a packet in a state that was out of bounds\n");
                     printf("This should not happen! Contact the authors for fix\n");
-#ifdef SERVER_DEBUG_MODE
-                    free_buffers(fd);
-#else
-                    disconnect(player, &client_socks);
-#endif
-                    goto FREE;
-                case PACKER_ERR_INVALID_CLIENT_STATE:
-                    printf("A client sent a packet in an invalid state\n");
 #ifdef SERVER_DEBUG_MODE
                     free_buffers(fd);
 #else

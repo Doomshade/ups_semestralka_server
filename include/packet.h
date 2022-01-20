@@ -4,7 +4,7 @@
 #include "player_mngr.h"
 #include "packet_registry.h"
 
-#define MAX_MESSAGE_SIZE 50 // we don't want to let the players' messages to be too long
+#define MAX_MESSAGE_SIZE 50 // we don't want to let the player messages to be too long
 
 
 /**

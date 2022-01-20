@@ -46,7 +46,7 @@ int send_raw(struct player* p, char* buf, unsigned long* len) {
         bytesleft -= n;
     }
     *len = total; // return number actually sent here
-    return n == -1 ? -1 : 0; // return -1 on failure, 0 on success
+    return n == -1 ? PACKET_RESP_ERR_NOT_RECVD : PACKET_RESP_OK; // return -1 on failure, 0 on success
 }
 
 void free_packet(struct packet** pc) {
@@ -66,7 +66,7 @@ int send_packet(struct player* pl, unsigned int id, char* data) {
     }
     if (pl->fd < 0) {
         printf("Failed to send packet. Reason: player %s is disconnected\n", pl->name);
-        return -2;
+        return PACKET_RESP_ERR_NOT_RECVD;
     }
 
     s = malloc(PACKET_HEADER_SIZE + strlen(data) + 1);

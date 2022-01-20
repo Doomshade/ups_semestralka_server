@@ -24,26 +24,20 @@ int p_hello(struct player* pl, char* data) {
         } else {
             printf("A player with name %s already exists!\n", data);
         }
-        ret = send_packet(pl, HELLO_OUT, RESPONSE_INVALID);
-        if (ret) {
-            printf("Failed to send packet!\n");
-        }
-        return 0;
+        return !send_packet(pl, HELLO_OUT, RESPONSE_INVALID) ? PACKET_RESP_OK_INVALID_DATA : PACKET_RESP_ERR_NOT_RECVD;
     }
 
-    // handle the packet
+    // the name is too long
     ret = change_player_name(pl, data);
     if (ret) {
         printf("Player name too long! Max size is %d\n", MAX_PLAYER_NAME_LENGTH);
-        return 0;
+        return !send_packet(pl, HELLO_OUT, RESPONSE_INVALID) ? PACKET_RESP_OK_INVALID_DATA : PACKET_RESP_ERR_NOT_RECVD;
     }
 
-    // the name is valid
-    ret = send_packet(pl, HELLO_OUT, RESPONSE_VALID);
-
-    if (ret) {
+    // the name is valid, send a resposne
+    if (send_packet(pl, HELLO_OUT, RESPONSE_VALID)) {
         printf("Failed to send the packet!\n");
-        return 1;
+        return PACKET_RESP_ERR_NOT_RECVD;
     }
     //start_keepalive(pl, keepalive_retry);
 
@@ -56,11 +50,11 @@ int p_hello(struct player* pl, char* data) {
                 if (!g) {
                     printf("The player %s was in state PLAY, but the game was not found!\n", pl->name);
                     change_state(pl, LOGGED_IN);
-                    return 0;
+                    return PACKET_RESP_OK;
                 }
-                return reconnect_to_game(pl, g);
+                return reconnect_to_game(pl, g) == 0 ? PACKET_RESP_OK : PACKET_RESP_OK_INVALID_DATA;
             case QUEUE: // the player was in queue, put him back to queue
-                return add_to_queue(pl);
+                return add_to_queue(pl) == 0 ? PACKET_RESP_OK : PACKET_RESP_OK_INVALID_DATA;
             default:
                 break;
         }
@@ -68,18 +62,18 @@ int p_hello(struct player* pl, char* data) {
     change_state(pl, LOGGED_IN);
 
     // ret |= handle_possible_reconnection(&pl);
-    return 0;
+    return PACKET_RESP_OK;
 }
 
 int p_leave_queue(struct player* p, char* data) {
     VALIDATE_PARAM(p)
 
-    return remove_from_queue(p);
+    return !remove_from_queue(p) ? PACKET_RESP_OK : PACKET_RESP_ERR_INVALID_DATA;
 }
 
 int p_queue(struct player* p, char* data) {
     VALIDATE_PARAM(p)
-    return add_to_queue(p);
+    return !add_to_queue(p) ? PACKET_RESP_OK : PACKET_RESP_ERR_INVALID_DATA;
 }
 
 int p_movepc(struct player* p, char* data) {
@@ -103,7 +97,7 @@ int p_movepc(struct player* p, char* data) {
 
     g = lookup_game(p);
     if (!g) {
-        return 1;
+        return PACKET_RESP_ERR_INVALID_DATA;
     }
 
     // the packet should be in "123A2A4" format
@@ -111,7 +105,7 @@ int p_movepc(struct player* p, char* data) {
         sprintf(response_invalid, RESPONSE_FORMAT, 0, RESPONSE_INVALID);
         printf("Incorrect format received\n");
         //send_packet(p, MOVE_RESPONSE, response_invalid);
-        return 1;
+        return PACKET_RESP_ERR_INVALID_DATA;
     }
     // TODO check if the num is right
     strncpy(move_id_buffer, data, 3);
@@ -127,7 +121,7 @@ int p_movepc(struct player* p, char* data) {
     max_bound = rank_from | rank_to | file_from | file_to;
     if (max_bound >= 8) {
         //send_packet(p, MOVE_RESPONSE, response_invalid);
-        return 1;
+        return PACKET_RESP_ERR_INVALID_DATA;
     }
 
     from = create_square(file_from, rank_from);
@@ -138,33 +132,31 @@ int p_movepc(struct player* p, char* data) {
         printf("Invalid move!\n");
         free_move(&m);
         //send_packet(p, MOVE_RESPONSE, response_invalid);
-        return 0; // perhaps the client miscalculated, don't dc the player
+        return PACKET_RESP_OK_INVALID_DATA; // perhaps the client miscalculated, don't dc the player
     }
 
     sprintf(response_valid, RESPONSE_FORMAT, move_id, RESPONSE_VALID);
     //send_packet(p, MOVE_RESPONSE, response_valid);
     free_move(&m);
-    send_packet(p, MOVE_OUT, data + 3);
-    send_packet(OPPONENT(g, p), MOVE_OUT, data + 3);
 
-    return 0;
+    return !send_packet(p, MOVE_OUT, data + 3) &&
+           !send_packet(OPPONENT(g, p), MOVE_OUT, data + 3) ? PACKET_RESP_OK : PACKET_RESP_ERR_NOT_RECVD;
 }
 
 int p_offdraw(struct player* p, char* data) {
     struct game* g;
     char* PAYLOAD = "";
-    int ret;
 
     VALIDATE_PARAM(p)
 
     // TODO add a timeout for the draw offer
     g = lookup_game(p);
     if (!g) {
-        return 1;
+        return PACKET_RESP_ERR_INVALID_DATA;
     }
 
-    ret = send_packet(g->white == p ? g->black : g->white, DRAW_OFFER_OUT, PAYLOAD);
-    return ret;
+    return !send_packet(g->white == p ? g->black : g->white, DRAW_OFFER_OUT, PAYLOAD) ? PACKET_RESP_OK
+                                                                                      : PACKET_RESP_ERR_NOT_RECVD;
 }
 
 int p_resign(struct player* p, char* data) {
@@ -175,7 +167,7 @@ int p_resign(struct player* p, char* data) {
 
     g = lookup_game(p);
     if (!g) {
-        return 1;
+        return PACKET_RESP_ERR_INVALID_DATA;
     }
     if (g->white == p) {
         winner = BLACK_WINNER;
@@ -184,7 +176,7 @@ int p_resign(struct player* p, char* data) {
     }
 
     winner |= WIN_BY_RESIGNATION;
-    return finish_game(g, winner);
+    return !finish_game(g, winner) ? PACKET_RESP_OK : PACKET_RESP_ERR_NOT_RECVD;
 }
 
 int p_message(struct player* p, char* packet) {
@@ -204,14 +196,13 @@ int p_message(struct player* p, char* packet) {
 
     g = lookup_game(p);
     if (!g) {
-        return 1;
+        return PACKET_RESP_ERR_INVALID_DATA;
     }
     op = OPPONENT(g, p);
-    send_packet(op, MESSAGE_OUT, buf);
-    return 0;
+    return !send_packet(op, MESSAGE_OUT, buf) ? PACKET_RESP_OK : PACKET_RESP_ERR_NOT_RECVD;
 }
 
 int p_keepalive(struct player* p, char* packet) {
     p->last_keepalive = time(NULL);
-    return send_packet(p, KEEP_ALIVE_OUT, "");
+    return !send_packet(p, KEEP_ALIVE_OUT, "") ? PACKET_RESP_OK : PACKET_RESP_ERR_NOT_RECVD;
 }

@@ -29,10 +29,10 @@ int validate_header(char* header, unsigned int* p_id, unsigned int* p_siz) {
         return -1;
     }
     if (strlen(header) != PACKET_HEADER_SIZE) {
-        return PACKET_INVALID_HEADER_LENGTH;
+        return PVAL_PACKET_INVALID_HEADER_LENGTH;
     }
     if (strncmp(header, PACKET_MAGIC_HEADER, strlen(PACKET_MAGIC_HEADER)) != 0) {
-        return PACKET_INVALID_HEADER_MAGIC;
+        return PVAL_PACKET_INVALID_HEADER_MAGIC;
     }
 
     // CHESS01004
@@ -47,7 +47,7 @@ int validate_header(char* header, unsigned int* p_id, unsigned int* p_siz) {
 
     *p_id = strtol(s_id, &end, 16);
     if (strcmp(end, "") != 0) {
-        return PACKET_INVALID_HEADER_ID;
+        return PVAL_PACKET_INVALID_HEADER_ID;
     }
 
     // 004
@@ -58,9 +58,9 @@ int validate_header(char* header, unsigned int* p_id, unsigned int* p_siz) {
 
     *p_siz = strtol(s_siz, &end, 10);
     if (strcmp(end, "") != 0) {
-        return PACKET_INVALID_HEADER_PACKET_SIZE;
+        return PVAL_PACKET_INVALID_HEADER_PACKET_SIZE;
     }
-    return PACKET_OK;
+    return PVAL_PACKET_OK;
 }
 
 struct packet* parse_packet(char** packet, int* erc, struct player* pl) {
@@ -89,7 +89,7 @@ struct packet* parse_packet(char** packet, int* erc, struct player* pl) {
         return NULL;
     }
     if (!packet || !*packet || !pl) {
-        *erc = PACKET_INVALID_DATA;
+        *erc = PVAL_PACKET_INVALID_DATA;
         return NULL;
     }
 
@@ -98,7 +98,7 @@ struct packet* parse_packet(char** packet, int* erc, struct player* pl) {
         *erc = -2;
         return NULL;
     }
-    *erc = PACKET_OK;
+    *erc = PVAL_PACKET_OK;
     fd = pl->fd;
 
     // concatenate it to the buffer
@@ -123,7 +123,7 @@ struct packet* parse_packet(char** packet, int* erc, struct player* pl) {
     if (strlen(pheader) < PACKET_HEADER_SIZE) {
         printf("Header '%s' not yet fully buffered, %lu bytes remaining...\n", pheader,
                PACKET_HEADER_SIZE - strlen(pheader));
-        *erc = PACKET_NOT_YET_FULLY_BUFFERED;
+        *erc = PVAL_PACKET_NOT_YET_FULLY_BUFFERED;
         return NULL;
     }
 
@@ -154,7 +154,7 @@ struct packet* parse_packet(char** packet, int* erc, struct player* pl) {
     // the data is not yet full
     if (strlen(pdata) < p_data_len) {
         printf("Data %s not yet fully buffered, %lu bytes remaining...\n", pdata, p_data_len - strlen(pdata));
-        *erc = PACKET_NOT_YET_FULLY_BUFFERED;
+        *erc = PVAL_PACKET_NOT_YET_FULLY_BUFFERED;
         return NULL;
     }
     // we now have the packet, the leftover data should be handled again

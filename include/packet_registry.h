@@ -4,9 +4,16 @@
 #include "game_mngr.h"
 #include "player_mngr.h"
 
-#define PACKET_ERR_INVALID_ID 0x11
-#define PACKET_ERR_STATE_OUT_OF_BOUNDS 0x12
+// ++ PACKET RETURN CODES ++
+#define PACKET_RESP_OK 0x00
+#define PACKET_RESP_OK_INVALID_DATA 0xA0
+#define PACKET_RESP_ERR_INVALID_DATA 0xA1
+#define PACKET_RESP_ERR_NOT_RECVD 0xA2
+#define PACKET_ERR_INVALID_ID 0xA3
+#define PACKET_ERR_STATE_OUT_OF_BOUNDS 0xA4
+// -- PACKET RETURN CODES --
 
+// ++ PACKET OFFSETS ++
 #define PACKET_OUT_OFFSET 0x80
 #define PACKET_OUT(packet_in) packet_in + PACKET_OUT_OFFSET
 #define PACKET_IN(offset, id) offset + id
@@ -18,9 +25,12 @@
 #define QUEUE_P_OFFSET 0x40
 // IN: 96-127 0x(60-7F) OUT: 224-255 0x(E0-FF)
 #define PLAY_P_OFFSET 0x60
+// -- PACKET OFFSETS --
 
+// ++ PACKET RESPONSES ++
 #define RESPONSE_VALID "OK"
 #define RESPONSE_INVALID "REJECTED"
+// -- PACKET RESPONSES --
 
 /**
  * The packet
