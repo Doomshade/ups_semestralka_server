@@ -16,6 +16,7 @@ struct arguments {
     char ip[INET_ADDRSTRLEN];
     unsigned port;
     unsigned keepalive_retry;
+    unsigned max_inval_pc;
 };
 
 /**

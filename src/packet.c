@@ -170,9 +170,9 @@ int p_resign(struct player* p, char* data) {
         return PACKET_RESP_ERR_INVALID_DATA;
     }
     if (g->white == p) {
-        winner = BLACK_WINNER;
+        winner = BLACK;
     } else {
-        winner = WHITE_WINNER;
+        winner = WHITE;
     }
 
     winner |= WIN_BY_RESIGNATION;

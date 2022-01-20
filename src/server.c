@@ -19,26 +19,36 @@
 #define check(eval) if(!(eval)) printf("setsockopt error\n");
 
 /**
- * Starts listening to
- * @param server_socket
- * @param peer_addr
+ * Starts listening
+ * @param server_socket the server socket fd
+ * @param args the arguments passed to the main function
  * @return
  */
-int start_listening(int server_socket, unsigned keepalive_retry);
+static int start_listening(int server_socket, struct arguments* args);
 
 /**
  * Disconnects the player from the server
  * @param p the player
- * @param client_socks
+ * @param client_socks the fd set of clients
  */
-void disconnect(struct player* p, fd_set* client_socks);
+static void disconnect(struct player* p, fd_set* client_socks, const char* reason);
 
-void init_server();
+/**
+ * Initializes the server
+ */
+static void init_server();
 
-void handle_new_client(int server_socket,
-                       struct sockaddr_in* peer_addr,
-                       unsigned int* len_addr,
-                       fd_set* client_socks);
+/**
+ * Handles a new client
+ * @param server_socket the server socket fd
+ * @param peer_addr the peer address
+ * @param len_addr the ptr to the length of the address
+ * @param client_socks the fd set of clients
+ */
+static void handle_new_client(int server_socket,
+                              struct sockaddr_in* peer_addr,
+                              unsigned int* len_addr,
+                              fd_set* client_socks);
 
 void enable_keepalive(int sock) {
     int yes = 1;
@@ -91,10 +101,10 @@ int start_server(struct arguments* args) {
 
     // ignore SIGPIPE
     sigaction(SIGPIPE, &(struct sigaction) {SIG_IGN}, NULL);
-    return start_listening(server_socket, args->keepalive_retry);
+    return start_listening(server_socket, args);
 }
 
-int start_listening(int server_socket, unsigned keepalive_retry) {
+int start_listening(int server_socket, struct arguments* args) {
     struct sockaddr_in peer_addr;
     int fd, rval, a2read;
     char* p_ptr = NULL;
@@ -150,7 +160,7 @@ int start_listening(int server_socket, unsigned keepalive_retry) {
 
             // something happened on the client side
             if (a2read <= 0) {
-                disconnect(player, &client_socks);
+                disconnect(player, &client_socks, NULL);
                 continue;
             }
 
@@ -176,9 +186,6 @@ int start_listening(int server_socket, unsigned keepalive_retry) {
             // the packet has not yet been fully buffered,
             // we still need to wait for the rest of the packet
             if (erc == PVAL_PACKET_NOT_YET_FULLY_BUFFERED) {
-#ifdef SERVER_DEBUG_MODE
-                printf("Not yet fully buffered...\n");
-#endif
                 goto FREE;
             }
 
@@ -186,50 +193,53 @@ int start_listening(int server_socket, unsigned keepalive_retry) {
             // any error leads to a NULL pointer
             if (!pckt) {
                 printf("Failed to parse packet: %d\n", erc);
-
-// don't disconnect the player if the packet format is incorrect
-#ifdef SERVER_DEBUG_MODE
-                free_buffers(fd);
-#else
-                free_buffers(fd);
-                //disconnect(player, &client_socks);
-#endif
+                disconnect(player, &client_socks, "Invalid packet format!");
                 goto FREE;
             }
 
-            rval = handle_packet(player, pckt->id, pckt->data); // the packet format is valid, handle it
+            // the packet format is valid, handle it
+            rval = handle_packet(player, pckt->id, pckt->data);
             free_packet(&pckt);
+
+            // check the return value of the handled packet
             switch (rval) {
-                case 0:
+                case PACKET_RESP_OK:
+                case PACKET_RESP_OK_INVALID_DATA:
+                    break;
+                case PACKET_RESP_ERR_NOT_RECVD:
+                    printf("The player %s did not receive the packet (%d, %s)\n", player->name, pckt->id, pckt->data);
+                    break;
+                case PACKET_RESP_ERR_INVALID_DATA:
+                    printf("The player %s sent invalid data\n", player->name);
+#ifndef SERVER_DEBUG_MODE
+                    player->invalid_sends++;
+                    if (player->invalid_sends >= args->max_inval_pc) {
+                        printf("The player %s sent too many invalid packets!\n", player->name);
+                        goto _DC;
+                    }
+#endif
                     break;
                 case PACKET_ERR_INVALID_ID:
                     printf("A client sent a packet with invalid ID\n");
-// don't disconnect if the packet data is invalid either
-#ifdef SERVER_DEBUG_MODE
-                    free_buffers(fd);
-#else
-                    disconnect(player, &client_socks);
-#endif
-                    goto FREE;
+                    goto _DC;
                 case PACKET_ERR_STATE_OUT_OF_BOUNDS:
                     printf("A client sent a packet in a state that was out of bounds\n");
                     printf("This should not happen! Contact the authors for fix\n");
-#ifdef SERVER_DEBUG_MODE
-                    free_buffers(fd);
-#else
-                    disconnect(player, &client_socks);
-#endif
-                    goto FREE;
+                    goto _DC;
                 default:
                     printf("An error occurred when handling the packet (%d)\n", rval);
-                    free_buffers(fd);
-                    goto FREE;
+                    goto _DC;
             }
 
             // there could still be some leftover data in the buffer,
             // handle the rest of the data
             if (strlen(p_ptr) != 0) {
                 goto HANDLE_PACKET;
+            }
+
+            if (0) {
+                _DC:
+                disconnect(player, &client_socks, "Invalid packet data!");
             }
 
             // no more data, free the malloced packet data
@@ -251,7 +261,7 @@ void handle_new_client(int server_socket,
 
     client_socket = accept(server_socket, (struct sockaddr*) peer_addr, len_addr);
     FD_SET(client_socket, client_socks);
-    enable_keepalive(client_socket);
+    //enable_keepalive(client_socket);
     printf("A client has connected and was assigned FD #%d\n", client_socket);
     // this adds the client to the player array
     rval = handle_new_player(client_socket);
@@ -276,11 +286,11 @@ int handle_dc(struct player* p) {
     }
 
     fd = p->fd;
-    free_buffers(fd); // cleanup in the packet_validator (due to potential buffered header/data)
-    pman_handle_dc(p); // cleanup in player_mngr and store the state
+    free_buffers(fd); // cleanup in the packet validator (due to potential buffered header/data)
+    pman_handle_dc(p); // cleanup in player manager and store the state
     qman_handle_dc(p); // removing from queue changes the state of the player ONLY if the packet is successfully sent
     // in our case the packet cannot be sent as the player has disconnected -> the player's state will remain the same
-    gman_handle_dc(p);
+    gman_handle_dc(p); // inform the opponent that the player has DC'd
 
     close(fd);
     printf("%s has disconnected\n", p->name);
@@ -288,9 +298,19 @@ int handle_dc(struct player* p) {
     return 0;
 }
 
-void disconnect(struct player* p, fd_set* client_socks) {
+void disconnect(struct player* p, fd_set* client_socks, const char* reason) {
+    char buf[512];
+    struct game* g;
     if (!p || !client_socks) {
         return;
+    }
+    if (reason) {
+        send_packet(p, DISCONNECT_OUT, reason);
+        g = lookup_game(p);
+        if (g) {
+            sprintf(buf, "%d", (g->white == p ? BLACK : WHITE) | WIN_BY_RESIGNATION);
+            send_packet(OPPONENT(g, p), GAME_FINISH_OUT, buf);
+        }
     }
     FD_CLR(p->fd, client_socks);
     handle_dc(p);

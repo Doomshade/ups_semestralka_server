@@ -34,24 +34,23 @@ enum player_state {
  */
 struct player {
 
-    /**
-     * The file descriptor of this player
-     */
+    // The file descriptor of this player
     int fd;
 
-    /**
-     * The current state of the player
-     */
+    // The current state of the player
     enum player_state ps;
 
-    /**
-     * The name of this player
-     */
+    // The name of this player
     char name[MAX_PLAYER_NAME_LENGTH + 1];
 
+    // the time of last keepalive packet received
     time_t last_keepalive;
 
+    // whether the keepalive has started
     int started_keepalive;
+
+    // the amount of invalid packets sent
+    unsigned invalid_sends;
 };
 
 /**

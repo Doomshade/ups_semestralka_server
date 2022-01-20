@@ -172,8 +172,8 @@ char* int2bin(int a, char* buffer, unsigned int buf_size) {
 
 int finish_game(struct game* g, int winner) {
     int i;
-    const int flags = WHITE_WINNER |
-                      BLACK_WINNER |
+    const int flags = WHITE |
+                      BLACK |
                       WIN_BY_MATE |
                       WIN_BY_RESIGNATION |
                       WIN_BY_TIME;

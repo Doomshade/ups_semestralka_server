@@ -28,14 +28,14 @@ void init_preg() {
     packet_handlers[PLAY][MESSAGE_IN] = p_message;
 
     // register keep alive packet in all but just connected states
-    for(i = LOGGED_IN; i <= PLAY; ++i){
+    for (i = LOGGED_IN; i <= PLAY; ++i) {
         packet_handlers[i][KEEP_ALIVE_IN] = p_keepalive;
     }
 
     registered = true;
 }
 
-int send_raw(struct player* p, char* buf, unsigned long* len) {
+static int send_raw(struct player* p, char* buf, unsigned long* len) {
     unsigned long total = 0; // how many bytes we've sent
     unsigned long bytesleft = *len; // how many we have left to send
     long n;
@@ -57,12 +57,12 @@ void free_packet(struct packet** pc) {
     }
 }
 
-int send_packet(struct player* pl, unsigned int id, char* data) {
+int send_packet(struct player* pl, unsigned int id, const char* data) {
     int ret;
     char* s; // the data we send
     unsigned long len; // the length of the data
     if (!pl) {
-        return -1;
+        return PACKET_RESP_ERR_NOT_RECVD;
     }
     if (pl->fd < 0) {
         printf("Failed to send packet. Reason: player %s is disconnected\n", pl->name);

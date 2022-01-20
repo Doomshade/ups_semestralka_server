@@ -5,11 +5,18 @@
 #include "player_mngr.h"
 
 // ++ PACKET RETURN CODES ++
+
+// the packet was ok
 #define PACKET_RESP_OK 0x00
+// the packet contained invalid data, but we ignore that
 #define PACKET_RESP_OK_INVALID_DATA 0xA0
+// the packet contained invalid data, and we disconnect the player (later on)
 #define PACKET_RESP_ERR_INVALID_DATA 0xA1
+// the packet was not recvd
 #define PACKET_RESP_ERR_NOT_RECVD 0xA2
+// the packet had an invalid ID
 #define PACKET_ERR_INVALID_ID 0xA3
+// an invalid state was passed somehow
 #define PACKET_ERR_STATE_OUT_OF_BOUNDS 0xA4
 // -- PACKET RETURN CODES --
 
@@ -122,10 +129,12 @@ enum play_p {
 
     MOVE_RESPONSE = PACKET_OUT(PACKET_IN(PLAY_P_OFFSET, 5)),
 
+    DISCONNECT_OUT = PACKET_OUT(PACKET_IN(PLAY_P_OFFSET, 0x1E)),
+
     KEEP_ALIVE_IN = PACKET_IN(PLAY_P_OFFSET, 0x1F),
     // A keep alive packet to check whether the player
     // is still connected
-    KEEP_ALIVE_OUT = PACKET_OUT(PACKET_IN(PLAY_P_OFFSET, 0x1F))
+    KEEP_ALIVE_OUT = PACKET_OUT(KEEP_ALIVE_IN)
 
 };
 
@@ -142,7 +151,7 @@ typedef int packet_handle(struct player* fd, char* data);
  * @param pc the packet
  * @return 0 if everything went alright
  */
-int send_packet(struct player* pl, unsigned int id, char* data);
+int send_packet(struct player* pl, unsigned int id, const char* data);
 
 /**
  * Frees the packet from the memory

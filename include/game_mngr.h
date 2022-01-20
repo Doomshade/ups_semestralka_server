@@ -10,14 +10,14 @@
  * The default g FEN string
  */
 #define START_FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-#define DRAW 1 << 3
-#define WHITE_WINNER 0
-#define BLACK_WINNER 1
+#define BLACK 0 << 0
+#define WHITE 1 << 0
 #define WIN_BY_MATE 1 << 1
 #define WIN_BY_RESIGNATION 1 << 2
 #define WIN_BY_TIME 1 << 3
+#define DRAW 0
 
-#define CASTLES_BLACK_QUEENSIDE 1
+#define CASTLES_BLACK_QUEENSIDE 1 << 0
 #define CASTLES_BLACK_KINGSIDE 1 << 1
 #define CASTLES_WHITE_QUEENSIDE 1 << 2
 #define CASTLES_WHITE_KINGSIDE 1 << 3

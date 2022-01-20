@@ -14,10 +14,11 @@ static char args_doc[] = "ARG1";
 
 // the options we understand.
 static struct argp_option options[] = {
-        {"port",       'p', "10000",   0, "The port"},
-        {"ip",         'i', "0.0.0.0", 0, "The IP"},
-        {"keep alive", 'K', "30",      0, "The keepalive retry in seconds"},
-        {"debug mode", 'D', NULL,   0, "Whether to set the server in a debug mode"},
+        {"port",         'p', "10000",   0, "The port"},
+        {"ip",           'i', "0.0.0.0", 0, "The IP"},
+        {"keep-alive",   'K', "30",      0, "The keepalive retry in seconds"},
+        {"debug-mode",   'D', NULL,      0, "Whether to set the server in a debug mode"},
+        {"max-inval-pc", 'I', "3",       0, "The maximum invalid packets sent by a player until he's disconnected"},
         {0}
 };
 
@@ -30,8 +31,11 @@ static error_t parse_opt(int key, char* arg, struct argp_state* state) {
 
     char* end;
     switch (key) {
+        case 'I':
+            arguments->max_inval_pc = strtoul(arg, &end, 10);
+            break;
         case 'K':
-            arguments->keepalive_retry = strtol(arg, &end, 10);
+            arguments->keepalive_retry = strtoul(arg, &end, 10);
             break;
         case 'D':
 #ifndef SERVER_DEBUG_MODE
@@ -42,7 +46,7 @@ static error_t parse_opt(int key, char* arg, struct argp_state* state) {
             strncpy(arguments->ip, arg, sizeof(arguments->ip));
             break;
         case 'p':
-            arguments->port = strtol(arg, &end, 10);
+            arguments->port = strtoul(arg, &end, 10);
             break;
         case ARGP_KEY_ARG:
         case ARGP_KEY_END:

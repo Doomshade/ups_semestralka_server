@@ -84,10 +84,11 @@ struct player* create_player(int fd) {
     if (!p) {
         return NULL;
     }
+    memset(p, 0, sizeof(struct player));
     p->fd = fd;
     p->started_keepalive = 0;
-
     p->last_keepalive = 0;
+    p->invalid_sends = 0;
     change_player_name(p, "New Player");
     change_state(p, JUST_CONNECTED);
     return p;
