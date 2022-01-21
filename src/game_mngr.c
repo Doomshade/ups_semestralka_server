@@ -11,65 +11,10 @@
 #define FEN_PATTERN "((([rnbqkpRNBQKP1-8]+)\\/){7}([rnbqkpRNBQKP1-8]+)) ([wb]) (K?Q?k?q?|\\-) (([a-h][0-7])|\\-) (\\d+) (\\d+)"
 #define PLAYER_RECON_MESSAGE "Player %s has reconnected to the game"
 #define PLAYER_DISCON_MESSAGE "Player %s has disconnected"
-#define PRINT(buf, str, ...) printf(str, __VA_ARGS__); strcat(buf, str);
 
 struct game** games = NULL;
 int free_game_index = 0;
 
-#ifdef SERVER_DEBUG_MODE
-
-void print_hline(char* buf) {
-    int i;
-    printf("  -");
-    strcat(buf, "  -");
-    for (i = 0; i < 8; ++i) {
-        printf("----");
-        strcat(buf, "----");
-    }
-    strcat(buf, "\n");
-    printf("\n");
-}
-
-void print_files(char* buf) {
-    int i;
-
-    printf("    ");
-    strcat(buf, "    ");
-    for (i = 'A'; i < 'A' + 8; ++i) {
-        printf("%c   ", (char) i);
-        sprintf(buf, "%s%c   ", buf, (char) i);
-    }
-    printf("\n");
-    strcat(buf, "\n");
-}
-
-void print_board(struct game* g, char* buf) {
-    int i, j;
-
-    if (!g) {
-        return;
-    }
-
-    printf("\n");
-    strcat(buf, "\n");
-
-    print_files(buf);
-    print_hline(buf);
-    for (i = 7; i >= 0; --i) {
-        printf("%d | ", (i + 1));
-        sprintf(buf, "%s%d | ", buf, (i + 1));
-        for (j = 0; j < 8; ++j) {
-            printf("%c | ", g->board[i][j]);
-            sprintf(buf, "%s%c | ", buf, g->board[i][j]);
-        }
-        printf("%d\n", (i + 1));
-        sprintf(buf, "%s%d\n", buf, (i + 1));
-        print_hline(buf);
-    }
-    print_files(buf);
-}
-
-#else
 void print_hline() {
     int i;
     printf("  -");
@@ -78,6 +23,7 @@ void print_hline() {
     }
     printf("\n");
 }
+
 void print_files() {
     int i;
 
@@ -109,7 +55,6 @@ void print_board(struct game* g) {
     }
     print_files();
 }
-#endif
 
 void free_game(struct game** g) {
     free(*g);
@@ -158,25 +103,9 @@ void remove_game_by_idx(int idx) {
     }
 }
 
-char* int2bin(int a, char* buffer, unsigned int buf_size) {
-    int i;
-    buffer += (buf_size - 1);
-
-    for (i = 31; i >= 0 && buf_size > 0; i--, a >>= 1, buffer--, buf_size--) {
-        *buffer = (a & 1) + '0';
-    }
-
-    return buffer;
-}
-
 
 int finish_game(struct game* g, int winner) {
     int i;
-    const int flags = WHITE |
-                      BLACK |
-                      WIN_BY_MATE |
-                      WIN_BY_RESIGNATION |
-                      WIN_BY_TIME;
     char msg[3 + 1] = {0};
     int ret;
 
@@ -262,7 +191,6 @@ int game_create(struct player* white, struct player* black) {
 
 int setup_game(struct game* g) {
     int i, j;
-    char buf[BUFSIZ] = {0};
 
     if (!g || !games) {
         return 1;
@@ -288,11 +216,7 @@ int setup_game(struct game* g) {
         g->board[6][i] = TO_BLACK(PAWN);
         g->board[7][i] = TO_BLACK(g->board[0][i]);
     }
-#ifdef SERVER_DEBUG_MODE
-    print_board(g, buf);
-#else
     print_board(g);
-#endif
     return 0;
 }
 
@@ -364,7 +288,6 @@ char* generate_fen(struct game* g) {
 
     strcat(buf, " ");
 
-
     // the last move is not set
     if (!g->lm) {
         strcat(buf, "-");
@@ -403,9 +326,12 @@ int reconnect_to_game(struct player* pl, struct game* g) {
     free(fen);
     printf("Sending %s game start packet...\n", pl->name);
     op = OPPONENT(g, pl);
-    ret = send_packet(pl, RECONNECT_OUT, "");
-    ret = send_packet(pl, GAME_START_OUT, start_message);
-    ret = send_packet(pl, OPPONENT_NAME_OUT, op->name);
+    if (send_packet(pl, RECONNECT_OUT, "")
+        || send_packet(pl, GAME_START_OUT, start_message)
+        || send_packet(pl, OPPONENT_NAME_OUT, op->name)) {
+        printf("Could not reconnect the player!\n");
+        return 1;
+    }
 
     // send the information to the opponent about the
     // reconnection of the disconnected player
@@ -414,7 +340,7 @@ int reconnect_to_game(struct player* pl, struct game* g) {
 
     printf("Sending %s that %s has reconnected...\n", op->name, pl->name);
     ret = send_packet(op, MESSAGE_OUT, buf);
-    if (ret == -1) {
+    if (ret == PACKET_RESP_ERR_NOT_RECVD) {
         printf("Could not send the packet because the enemy player is disconnected.\n");
     }
     return ret;
@@ -424,20 +350,20 @@ int gman_handle_dc(struct player* p) {
     struct game* g;
     struct player* op;
     char buf[BUFSIZ];
-    int ret;
 
     if (!p) {
         return 1;
     }
+    VALIDATE_FD(p->fd, 1)
     g = lookup_game(p);
     if (!g) {
         return 0;
     }
     op = OPPONENT(g, p);
     sprintf(buf, PLAYER_DISCON_MESSAGE, p->name);
+
     // TODO make a unique packet for this
-    ret = send_packet(op, MESSAGE_OUT, buf);
-    if (ret) {
+    if (send_packet(op, OPPONENT_DISCONNECT_OUT, "") || send_packet(op, MESSAGE_OUT, buf)) {
         printf("Failed to send a disconnect packet...\n");
     }
     return 0;
@@ -505,16 +431,25 @@ int move_piece(struct game* g, struct player* p, struct move* m) {
                UINT_TO_RANK(m->to->rank),
                pce_from);
         return ret;
-    } else if(ret == MOVE_VALID) {
-        PIECE_SQ(g->board, m->to) = pce_from;
-        PIECE_SQ(g->board, m->from) = EMPTY_SQUARE;
-    } else if (ret & MOVE_CASTLES){
-        PIECE_SQ(g->board, m->to) = pce_from;
-        PIECE_SQ(g->board, m->from) = EMPTY_SQUARE;
+    }
 
+    // the move is valid, we can move it now
+    PIECE_SQ(g->board, m->to) = pce_from;
+    PIECE_SQ(g->board, m->from) = EMPTY_SQUARE;
+
+    if (ret & MOVE_CASTLES) {
         // move the rook to its place
-        PIECE(g->board, m->from->rank, ret & MOVE_LONG_CASTLES ? 3 : 5) = PIECE(g->board, m->from->rank, ret & MOVE_LONG_CASTLES ? 0 : 7);
+        PIECE(g->board, m->from->rank, ret & MOVE_LONG_CASTLES ? 3 : 5) = PIECE(g->board, m->from->rank,
+                                                                                ret & MOVE_LONG_CASTLES ? 0 : 7);
         PIECE(g->board, m->from->rank, ret & MOVE_LONG_CASTLES ? 0 : 7) = EMPTY_SQUARE;
+    } else if (ret == MOVE_EN_PASSANT) {
+        lm = g->lm;
+        if (IS_WHITE(PIECE_SQ(g->board, m->from))) {
+            lm->rank--;
+        } else {
+            lm->rank++;
+        }
+        PIECE_SQ(g->board, lm) = EMPTY_SQUARE;
     }
 
     // we are taking a piece or moving a pawn, reset the halfmove

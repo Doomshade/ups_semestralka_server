@@ -123,10 +123,9 @@ int add_to_queue(struct player* p) {
                 // found a match!! get the opponent, remove them from the queue, and create a game
 
                 // lookup the opponent
-                lookup_player_by_name(queueKey[i], &op);
 
                 // the player has disconnected, set the state to NOT_IN_QUEUE, so he doesn't get checked again
-                if (!op) {
+                if (lookup_player_by_name(queueKey[i], &op) || !op) {
                     free(queueKey[i]);
                     queueKey[i] = NULL;
                     queue[i] = NOT_IN_QUEUE;
@@ -168,6 +167,10 @@ int add_to_queue(struct player* p) {
 }
 
 int qman_handle_dc(struct player* p) {
+    if (!p) {
+        return 1;
+    }
+    VALIDATE_FD(p->fd, 1)
     return remove_from_queue(p);
 }
 
@@ -178,7 +181,6 @@ int remove_from_queue(struct player* p) {
     int id;
 
     VALIDATE_QUEUE(p)
-
 
     id = find_player_in_queue(p);
     q_state = queue[id];

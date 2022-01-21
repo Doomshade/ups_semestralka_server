@@ -32,6 +32,7 @@
 #define MOVE_CASTLES 1 << 1
 #define MOVE_WHITE_CASTLES 1 << 2
 #define MOVE_LONG_CASTLES 1 << 3
+#define MOVE_EN_PASSANT 1 << 4
 #define MOVE_INVALID -1
 
 #define PIECE(board, rank, file) board[rank][file]

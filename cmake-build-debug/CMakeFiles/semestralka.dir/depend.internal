@@ -18,6 +18,7 @@ CMakeFiles/semestralka.dir/src/main.c.o
  /home/doomshade/CLionProjects/semestralka/include/server.h
  /home/doomshade/CLionProjects/semestralka/src/main.c
 CMakeFiles/semestralka.dir/src/packet.c.o
+ /home/doomshade/CLionProjects/semestralka/include/chesspiece.h
  /home/doomshade/CLionProjects/semestralka/include/game_mngr.h
  /home/doomshade/CLionProjects/semestralka/include/packet.h
  /home/doomshade/CLionProjects/semestralka/include/packet_registry.h

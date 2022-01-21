@@ -8,6 +8,7 @@
 
 #define VALIDATE_PARAM(p) if (!p) return 1;
 #define VALIDATE_PARAMS(p, data) VALIDATE_PARAM(p) VALIDATE_PARAM(data)
+#define MESSAGE_FORMAT "[%s]:\t%.*s"
 
 int p_hello(struct player* pl, char* data) {
     struct game* g;
@@ -40,9 +41,11 @@ int p_hello(struct player* pl, char* data) {
         printf("Failed to send the packet!\n");
         return PACKET_RESP_ERR_NOT_RECVD;
     }
-    //start_keepalive(pl, keepalive_retry);
 
     ret = lookup_dc_player(pl->name, &pl);
+    if (!pl->started_keepalive) {
+        start_keepalive(pl->fd, keepalive_retry);
+    }
     // the player previously disconnected
     if (!ret) {
         switch (pl->ps) {
@@ -88,7 +91,7 @@ int p_movepc(struct player* p, char* data) {
     struct square* to;
     struct move* m;
     unsigned int move_id;
-    char castles_buf[3];
+    char buf[3];
     char move_id_buf[4];
     char response_valid_buf[3 + strlen(RESPONSE_VALID) + 1];
     char response_invalid_buf[3 + strlen(RESPONSE_INVALID) + 1];
@@ -135,7 +138,7 @@ int p_movepc(struct player* p, char* data) {
     if (ret == MOVE_INVALID) {
         printf("Invalid move!\n");
         free_move(&m);
-        //send_packet(p, MOVE_RESPONSE, response_invalid);
+        send_packet(p, MOVE_RESPONSE_OUT, response_invalid_buf);
         return PACKET_RESP_OK_INVALID_DATA; // perhaps the client miscalculated, don't dc the player
     }
 
@@ -145,9 +148,17 @@ int p_movepc(struct player* p, char* data) {
 
     // the move is castles, send a special packet
     if (ret & MOVE_CASTLES) {
-        sprintf(castles_buf, "%1d%1d", ret & MOVE_WHITE_CASTLES ? 1 : 0, ret & MOVE_LONG_CASTLES ? 1 : 0);
-        return !send_packet(p, MOVE_CASTLES_OUT, castles_buf) &&
-               !send_packet(OPPONENT(g, p), MOVE_CASTLES_OUT, castles_buf) ? PACKET_RESP_OK : PACKET_RESP_ERR_NOT_RECVD;
+        sprintf(buf, "%1d%1d", ret & MOVE_WHITE_CASTLES ? 1 : 0, ret & MOVE_LONG_CASTLES ? 1 : 0);
+        return !send_packet(p, MOVE_CASTLES_OUT, buf) &&
+               !send_packet(OPPONENT(g, p), MOVE_CASTLES_OUT, buf) ? PACKET_RESP_OK : PACKET_RESP_ERR_NOT_RECVD;
+    }
+
+    if (ret == MOVE_EN_PASSANT) {
+        sprintf(buf, "%1c%1c", UINT_TO_FILE(g->lm->file), UINT_TO_RANK(g->lm->rank));
+        if (send_packet(p, MOVE_EN_PASSANT_OUT, buf) ||
+            send_packet(OPPONENT(g, p), MOVE_EN_PASSANT_OUT, buf)) {
+            return PACKET_RESP_ERR_NOT_RECVD;
+        }
     }
 
     // the move is a regular move
@@ -198,23 +209,25 @@ int p_message(struct player* p, char* packet) {
 
     VALIDATE_PARAMS(p, packet)
 
-    sprintf(buf, "%.*s", MAX_MESSAGE_SIZE, packet);
-    printf("[%s]: %s", p->name, buf);
-
-    if (strlen(packet) > MAX_MESSAGE_SIZE) {
-        printf(" (...)");
-    }
-    printf("\n");
-
     g = lookup_game(p);
     if (!g) {
         return PACKET_RESP_ERR_INVALID_DATA;
     }
     op = OPPONENT(g, p);
+
+    sprintf(buf, MESSAGE_FORMAT, p->name, MAX_MESSAGE_SIZE, packet);
+    printf("%s", buf);
+
+    if (strlen(packet) > MAX_MESSAGE_SIZE) {
+        printf(" (...)");
+    }
+    printf("\n");
     return !send_packet(op, MESSAGE_OUT, buf) ? PACKET_RESP_OK : PACKET_RESP_ERR_NOT_RECVD;
 }
 
 int p_keepalive(struct player* p, char* packet) {
-    p->last_keepalive = time(NULL);
+    time_t t;
+    time(&t);
+    p->last_keepalive = t;
     return !send_packet(p, KEEP_ALIVE_OUT, "") ? PACKET_RESP_OK : PACKET_RESP_ERR_NOT_RECVD;
 }

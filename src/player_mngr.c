@@ -11,7 +11,6 @@
 #define MAX_DISCONNECTED_COUNT MAX_PLAYER_COUNT * 5
 
 #define KEEPALIVE_INTERVAL_RETRY 30
-#define VALIDATE_FD(fd, ret) if (fd >= MAX_PLAYER_COUNT) return ret;
 
 static struct player* players[MAX_PLAYER_COUNT] = {0};
 static struct player* dc_players[MAX_DISCONNECTED_COUNT] = {0};
@@ -95,58 +94,64 @@ struct player* create_player(int fd) {
 }
 
 struct thr_args {
-    struct player* p;
+    int fd;
     unsigned keepalive_retry;
 };
 
 void* keepalive(void* _p) {
     time_t t;
     struct thr_args* p_args = (struct thr_args*) _p;
-    struct player* p = p_args->p;
+    int fd = p_args->fd;
+    struct player* p = NULL;
     unsigned interval = p_args->keepalive_retry;
     double diff;
 
-    while (1) {
+    printf("Keepalive started!\n");
+    if (lookup_player_by_fd(fd, &p)) {
+        printf("Failed to lookup player by FD (fd = %d)\n", fd);
+        goto end;
+    }
+
+    p->started_keepalive = 1;
+
+    time(&t);
+    p->last_keepalive = t;
+
+    while (!lookup_player_by_fd(fd, &p) && p->started_keepalive) {
         // update the current time
         time(&t);
 
         // get the difference in seconds between the last keep alive packets
         diff = difftime(t, p->last_keepalive);
 
-        // set the last time to the current time
-        p->last_keepalive = t;
-
-        // if everything is okay, we only sleep
-        if (diff < interval) {
-            // sleep for one second before checking again
-            // reduces overhead
-            sleep(1);
-            continue;
+        // the difference is too large, we disconnect the player
+        if (diff >= interval) {
+            break;
         }
 
-        // TODO dc the player
-        handle_dc(p);
-        pthread_exit(NULL);
-        return NULL;
-
-
+        // sleep for one second before checking again
+        // reduces overhead
+        sleep(1);
+    }
+    end:
+    if (p != NULL) {
+        disconnect(p, NULL);
     }
     return NULL;
 }
 
-void start_keepalive(struct player* p, unsigned keepalive_retry) {
-    struct thr_args args;
+void start_keepalive(int fd, unsigned keepalive_retry) {
     pthread_t thread;
+    struct thr_args* args;
 
-    if (p->started_keepalive) {
-        return;
+    args = malloc(sizeof(struct thr_args));
+    args->fd = fd;
+    args->keepalive_retry = keepalive_retry;
+
+    printf("Starting keepalive for %d...\n", args->fd);
+    if (pthread_create(&thread, NULL, keepalive, args)) {
+        fprintf(stderr, "Error creating thread\n");
     }
-    args.p = p;
-    args.keepalive_retry = keepalive_retry;
-
-    printf("Starting keepalive for %s...\n", p->name);
-    p->started_keepalive = 1;
-    pthread_create(&thread, NULL, keepalive, &args);
 }
 
 int change_player_name(struct player* p, char* name) {

@@ -27,13 +27,6 @@
 static int start_listening(int server_socket, struct arguments* args);
 
 /**
- * Disconnects the player from the server
- * @param p the player
- * @param client_socks the fd set of clients
- */
-static void disconnect(struct player* p, fd_set* client_socks, const char* reason);
-
-/**
  * Initializes the server
  */
 static void init_server();
@@ -49,6 +42,9 @@ static void handle_new_client(int server_socket,
                               struct sockaddr_in* peer_addr,
                               unsigned int* len_addr,
                               fd_set* client_socks);
+
+static int handle_dc(struct player* p);
+
 
 void enable_keepalive(int sock) {
     int yes = 1;
@@ -162,7 +158,8 @@ int start_listening(int server_socket, struct arguments* args) {
 
             // something happened on the client side
             if (a2read <= 0) {
-                disconnect(player, &client_socks, NULL);
+                FD_CLR(fd, &client_socks);
+                disconnect(player, NULL);
                 continue;
             }
 
@@ -195,8 +192,7 @@ int start_listening(int server_socket, struct arguments* args) {
             // any error leads to a NULL pointer
             if (!pckt) {
                 printf("Failed to parse packet: %d\n", erc);
-                disconnect(player, &client_socks, "Invalid packet format!");
-                goto FREE;
+                goto _DC;
             }
 
             // the packet format is valid, handle it
@@ -209,7 +205,7 @@ int start_listening(int server_socket, struct arguments* args) {
                 case PACKET_RESP_OK_INVALID_DATA:
                     break;
                 case PACKET_RESP_ERR_NOT_RECVD:
-                    printf("The player %s did not receive the packet (%d, %s)\n", player->name, pckt->id, pckt->data);
+                    printf("The player %s did not receive the packet\n", player->name);
                     break;
                 case PACKET_RESP_ERR_INVALID_DATA:
                     printf("The player %s sent invalid data\n", player->name);
@@ -235,7 +231,8 @@ int start_listening(int server_socket, struct arguments* args) {
 
             if (0) {
                 _DC:
-                disconnect(player, &client_socks, "Invalid packet data!");
+                FD_CLR(fd, &client_socks);
+                disconnect(player, "Invalid packet data!");
             }
 
             // no more data, free the malloced packet data
@@ -257,7 +254,6 @@ void handle_new_client(int server_socket,
 
     client_socket = accept(server_socket, (struct sockaddr*) peer_addr, len_addr);
     FD_SET(client_socket, client_socks);
-    //enable_keepalive(client_socket);
     printf("A client has connected and was assigned FD #%d\n", client_socket);
     // this adds the client to the player array
     rval = handle_new_player(client_socket);
@@ -275,31 +271,18 @@ void init_server() {
     init_cpce(); // chess pieces
 }
 
-int handle_dc(struct player* p) {
-    int fd;
-    if (!p) {
-        return 1;
-    }
-
-    fd = p->fd;
-    free_buffers(fd); // cleanup in the packet validator (due to potential buffered header/data)
-    pman_handle_dc(p); // cleanup in player manager and store the state
-    qman_handle_dc(p); // removing from queue changes the state of the player ONLY if the packet is successfully sent
-    // in our case the packet cannot be sent as the player has disconnected -> the player's state will remain the same
-    gman_handle_dc(p); // inform the opponent that the player has DC'd
-
-    close(fd);
-    printf("%s has disconnected\n", p->name);
-    printf("--------------------%s--------------------\n\n", p->name);
+static int handle_dc(struct player* p) {
     return 0;
 }
 
-void disconnect(struct player* p, fd_set* client_socks, const char* reason) {
-    char buf[512];
+void disconnect(struct player* p, const char* reason) {
+    char buf[BUFSIZ];
     struct game* g;
-    if (!p || !client_socks) {
+    int fd;
+    if (!p) {
         return;
     }
+    fd = p->fd;
     if (reason) {
         send_packet(p, DISCONNECT_OUT, reason);
         g = lookup_game(p);
@@ -308,6 +291,21 @@ void disconnect(struct player* p, fd_set* client_socks, const char* reason) {
             send_packet(OPPONENT(g, p), GAME_FINISH_OUT, buf);
         }
     }
-    FD_CLR(p->fd, client_socks);
-    handle_dc(p);
+    if (!p) {
+        return;
+    }
+
+    if (fd < 0) {
+        return;
+    }
+    free_buffers(fd); // cleanup in the packet validator (due to potential buffered header/data)
+    qman_handle_dc(p); // removing from queue changes the state of the player ONLY if the packet is successfully sent
+    // in our case the packet cannot be sent as the player has disconnected -> the player's state will remain the same
+    gman_handle_dc(p); // inform the opponent that the player has DC'd
+    pman_handle_dc(p); // cleanup in player manager and store the state
+
+    close(fd);
+    printf("%s has disconnected\n", p->name);
+    printf("--------------------%s--------------------\n\n", p->name);
+
 }

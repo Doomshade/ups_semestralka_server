@@ -2,6 +2,8 @@
 #define SEMESTRALKA_PLAYER_MNGR_H
 #define MAX_PLAYER_NAME_LENGTH 64
 #include <sys/time.h>
+#define VALIDATE_FD(fd, ret) if (fd < 0 || fd >= MAX_PLAYER_COUNT) return ret;
+
 
 /**
  * The player's state
@@ -110,5 +112,5 @@ int pman_handle_dc(struct player* p);
  * Starts checking for keepalive packets.
  * @param p the player
  */
-void start_keepalive(struct player* p, unsigned keepalive_retry);
+void start_keepalive(int fd, unsigned keepalive_retry);
 #endif //SEMESTRALKA_PLAYER_MNGR_H

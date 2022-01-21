@@ -28,6 +28,12 @@ struct arguments {
  */
 int start_server(struct arguments* args);
 
-int handle_dc(struct player* p);
+/**
+ * Disconnects the player from the server
+ * @param p the player
+ * @param client_socks the fd set of clients
+ */
+void disconnect(struct player* p, const char* reason);
+
 
 #endif //SEMESTRALKA_SERVER_H

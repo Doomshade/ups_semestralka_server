@@ -251,7 +251,7 @@ int pawn_handle(struct game* g, struct move* m) {
 
     // the move was en passant
     if (g->lm && m->to->rank == g->lm->rank && m->to->file == g->lm->file) {
-        return MOVE_VALID;
+        return MOVE_EN_PASSANT;
     }
 
     if (m->from->file == m->to->file) {
@@ -296,11 +296,19 @@ int pawn_handle(struct game* g, struct move* m) {
     // check if the move was captures and there was an ENEMY piece
     if (handle_simple_piece(g, m, capturing_direction, 1) == MOVE_VALID && piece != EMPTY_SQUARE &&
         IS_WHITE(piece) != white) {
+        if (g->lm) {
+            free(g->lm);
+            g->lm = NULL;
+        }
         return MOVE_VALID;
     }
 
     // check if the move was by one square and the square was empty
     if (handle_simple_piece(g, m, moving_direction, 1) == MOVE_VALID && piece == EMPTY_SQUARE) {
+        if (g->lm) {
+            free(g->lm);
+            g->lm = NULL;
+        }
         return MOVE_VALID;
     }
     return MOVE_INVALID;

@@ -18,6 +18,7 @@ CMakeFiles/semestralka.dir/src/main.c.o: \
  ../include/server.h \
  ../src/main.c
 CMakeFiles/semestralka.dir/src/packet.c.o: \
+ ../include/chesspiece.h \
  ../include/game_mngr.h \
  ../include/packet.h \
  ../include/packet_registry.h \
