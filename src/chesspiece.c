@@ -8,6 +8,7 @@
 #define SQUARE_TO_INT(rank, file) (rank * 8 + file)
 #define IN_BOUNDS(num) (num <= 7 && num >= 0)
 #define VALIDATE_PARAMS(g, m) if (!g || !m) return MOVE_INVALID;
+#define ABS(n) (signed) (n) < 0 ? -(n) : (n)
 
 typedef int move_handle(struct game* g, struct move* m);
 
@@ -177,10 +178,66 @@ int handle_simple_piece(struct game* g, struct move* m, int direction, int amoun
 }
 
 int king_handle(struct game* g, struct move* m) {
+    char king;
+    int white;
+    int ret = 0;
+    unsigned int diff;
 
     VALIDATE_PARAMS(g, m)
+    king = PIECE_SQ(g->board, m->from);
+    white = IS_WHITE(king);
 
-    // TODO add castles
+    // the move is castles as the king was on the E file, starting rank, and attempted to move by two files on the same rank
+    diff = ABS(m->from->file - m->to->file);
+    if (m->from->file == 4 && diff == 2 && m->from->rank == m->to->rank &&
+        (m->from->rank == 0 || m->from->rank == 7)) {
+        printf("Player wants to castle\n");
+        ret = MOVE_CASTLES;
+        // long castles
+        if (m->to->file == 2) {
+            if (!IS_EMPTY_SQUARE(g->board[m->from->rank][m->from->file - 1]) ||
+                !IS_EMPTY_SQUARE(g->board[m->from->rank][m->from->file - 2]) ||
+                !IS_EMPTY_SQUARE(g->board[m->from->rank][m->from->file - 3])) {
+                return MOVE_INVALID;
+            }
+            ret |= MOVE_LONG_CASTLES;
+            // white or black or neither
+            if (m->from->rank == 0 && white && g->castles & CASTLES_WHITE_QUEENSIDE) {
+                ret |= MOVE_WHITE_CASTLES;
+            } else if (m->from->rank == 7 && !white && g->castles & CASTLES_BLACK_QUEENSIDE) {
+            } else {
+                return MOVE_INVALID;
+            }
+        }
+
+            // short castles
+        else if (m->to->file == 6) {
+            if (!IS_EMPTY_SQUARE(g->board[m->from->rank][m->from->file + 1]) ||
+                !IS_EMPTY_SQUARE(g->board[m->from->rank][m->from->file + 2])) {
+                return MOVE_INVALID;
+            }
+            // white or black or neither
+            if (m->from->rank == 0 && white && g->castles & CASTLES_WHITE_QUEENSIDE) {
+                ret |= MOVE_WHITE_CASTLES;
+            } else if (m->from->rank == 7 && !white && g->castles & CASTLES_BLACK_QUEENSIDE) {
+            } else {
+                return MOVE_INVALID;
+            }
+        }
+            // this can't happen, but why not
+        else {
+            return MOVE_INVALID;
+        }
+    }
+    // modify castles privileges
+    // if the king is white, remove castles privileges from white,
+    // otherwise from black
+    g->castles &= ~(white ?
+                    CASTLES_WHITE_KINGSIDE | CASTLES_WHITE_QUEENSIDE :
+                    CASTLES_BLACK_KINGSIDE | CASTLES_BLACK_QUEENSIDE);
+    if (ret != 0) {
+        return ret;
+    }
     return handle_simple_piece(g, m, 0b111101111, 1);
 }
 
@@ -197,34 +254,38 @@ int pawn_handle(struct game* g, struct move* m) {
         return MOVE_VALID;
     }
 
-    // we check for two squares first as it's faster to compute
-    // check if the pawn is on the 2nd rank for white and the move is by two
-    if ((m->from->rank == 1 && white && m->to->rank == 3)) {
-        // check if there are two empty squares above
-        if (!IS_EMPTY_SQUARE(g->board[m->from->rank + 1][m->from->file]) ||
-            !IS_EMPTY_SQUARE(g->board[m->from->rank + 2][m->from->file])) {
-            return MOVE_INVALID;
+    if (m->from->file == m->to->file) {
+
+        // we check for two squares first as it's faster to compute
+        // check if the pawn is on the 2nd rank for white and the move is by two
+        if ((m->from->rank == 1 && white && m->to->rank == 3)) {
+            // check if there are two empty squares above
+            if (!IS_EMPTY_SQUARE(g->board[m->from->rank + 1][m->from->file]) ||
+                !IS_EMPTY_SQUARE(g->board[m->from->rank + 2][m->from->file])) {
+                return MOVE_INVALID;
+            }
+            // because the pawn moved by two squares, update the last move
+            if (g->lm) {
+                free(g->lm);
+            }
+            g->lm = create_square(m->from->file, m->from->rank + 1);
+            return MOVE_VALID;
         }
-        // because the pawn moved by two squares, update the last move
-        if (g->lm) {
-            free(g->lm);
+            // check if the pawn is on the 7th rank for black and the move is by two
+        else if (m->from->rank == 6 && !white && m->to->rank == 4) {
+            if (!IS_EMPTY_SQUARE(g->board[m->from->rank - 1][m->from->file]) ||
+                !IS_EMPTY_SQUARE(g->board[m->from->rank - 2][m->from->file])) {
+                return MOVE_INVALID;
+            }
+            // because the pawn moved by two squares, update the last move
+            if (g->lm) {
+                free(g->lm);
+            }
+            g->lm = create_square(m->from->file, m->from->rank - 1);
+            return MOVE_VALID;
         }
-        g->lm = create_square(m->from->file, m->from->rank + 1);
-        return MOVE_VALID;
     }
-        // check if the pawn is on the 7th rank for black and the move is by two
-    else if (m->from->rank == 6 && !white && m->to->rank == 4) {
-        if (!IS_EMPTY_SQUARE(g->board[m->from->rank - 1][m->from->file]) ||
-            !IS_EMPTY_SQUARE(g->board[m->from->rank - 2][m->from->file])) {
-            return MOVE_INVALID;
-        }
-        // because the pawn moved by two squares, update the last move
-        if (g->lm) {
-            free(g->lm);
-        }
-        g->lm = create_square(m->from->file, m->from->rank - 1);
-        return MOVE_VALID;
-    }
+
 
     // first handle the attacking moves
     // these are the one square taking moves for the pawns

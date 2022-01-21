@@ -29,9 +29,9 @@
 #define IS_QUEEN(square) (TO_WHITE(square) == QUEEN)
 
 #define MOVE_VALID 0
-#define MOVE_CAPTURES 1
-#define MOVE_SHORT_CASTLES 2
-#define MOVE_LONG_CASTLES 3
+#define MOVE_CASTLES 1 << 1
+#define MOVE_WHITE_CASTLES 1 << 2
+#define MOVE_LONG_CASTLES 1 << 3
 #define MOVE_INVALID -1
 
 #define PIECE(board, rank, file) board[rank][file]

@@ -28,7 +28,7 @@ void init_preg() {
     packet_handlers[PLAY][MESSAGE_IN] = p_message;
 
     // register keep alive packet in all but just connected states
-    for (i = LOGGED_IN; i <= PLAY; ++i) {
+    for (i = JUST_CONNECTED; i <= PLAY; ++i) {
         packet_handlers[i][KEEP_ALIVE_IN] = p_keepalive;
     }
 

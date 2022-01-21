@@ -4,6 +4,7 @@
 #include "../include/packet.h"
 #include "../include/packet_validator.h"
 #include "../include/queue_mngr.h"
+#include "../include/chesspiece.h"
 
 #define VALIDATE_PARAM(p) if (!p) return 1;
 #define VALIDATE_PARAMS(p, data) VALIDATE_PARAM(p) VALIDATE_PARAM(data)
@@ -82,13 +83,15 @@ int p_movepc(struct player* p, char* data) {
     unsigned int file_from; // A-H -> 0-7
     unsigned int file_to; // A-H -> 0-7
     unsigned int max_bound; // 0-7
+    int ret;
     struct square* from;
     struct square* to;
     struct move* m;
     unsigned int move_id;
-    char move_id_buffer[4];
-    char response_valid[3 + strlen(RESPONSE_VALID) + 1];
-    char response_invalid[3 + strlen(RESPONSE_INVALID) + 1];
+    char castles_buf[3];
+    char move_id_buf[4];
+    char response_valid_buf[3 + strlen(RESPONSE_VALID) + 1];
+    char response_invalid_buf[3 + strlen(RESPONSE_INVALID) + 1];
     char* ptr;
     struct game* g;
     const char* RESPONSE_FORMAT = "%03d%s";
@@ -102,15 +105,15 @@ int p_movepc(struct player* p, char* data) {
 
     // the packet should be in "123A2A4" format
     if (strlen(data) != 7) {
-        sprintf(response_invalid, RESPONSE_FORMAT, 0, RESPONSE_INVALID);
+        sprintf(response_invalid_buf, RESPONSE_FORMAT, 0, RESPONSE_INVALID);
         printf("Incorrect format received\n");
         //send_packet(p, MOVE_RESPONSE, response_invalid);
         return PACKET_RESP_ERR_INVALID_DATA;
     }
     // TODO check if the num is right
-    strncpy(move_id_buffer, data, 3);
-    move_id = strtoul(move_id_buffer, &ptr, 10);
-    sprintf(response_invalid, RESPONSE_FORMAT, move_id, RESPONSE_INVALID);
+    strncpy(move_id_buf, data, 3);
+    move_id = strtoul(move_id_buf, &ptr, 10);
+    sprintf(response_invalid_buf, RESPONSE_FORMAT, move_id, RESPONSE_INVALID);
 
     file_from = FILE_TO_UINT(data[3]);
     file_to = FILE_TO_UINT(data[5]);
@@ -128,17 +131,26 @@ int p_movepc(struct player* p, char* data) {
     to = create_square(file_to, rank_to);
     m = create_move(from, to);
 
-    if (move_piece(g, p, m)) {
+    ret = move_piece(g, p, m);
+    if (ret == MOVE_INVALID) {
         printf("Invalid move!\n");
         free_move(&m);
         //send_packet(p, MOVE_RESPONSE, response_invalid);
         return PACKET_RESP_OK_INVALID_DATA; // perhaps the client miscalculated, don't dc the player
     }
 
-    sprintf(response_valid, RESPONSE_FORMAT, move_id, RESPONSE_VALID);
-    //send_packet(p, MOVE_RESPONSE, response_valid);
+    sprintf(response_valid_buf, RESPONSE_FORMAT, move_id, RESPONSE_VALID);
+    send_packet(p, MOVE_RESPONSE_OUT, response_valid_buf);
     free_move(&m);
 
+    // the move is castles, send a special packet
+    if (ret & MOVE_CASTLES) {
+        sprintf(castles_buf, "%1d%1d", ret & MOVE_WHITE_CASTLES ? 1 : 0, ret & MOVE_LONG_CASTLES ? 1 : 0);
+        return !send_packet(p, MOVE_CASTLES_OUT, castles_buf) &&
+               !send_packet(OPPONENT(g, p), MOVE_CASTLES_OUT, castles_buf) ? PACKET_RESP_OK : PACKET_RESP_ERR_NOT_RECVD;
+    }
+
+    // the move is a regular move
     return !send_packet(p, MOVE_OUT, data + 3) &&
            !send_packet(OPPONENT(g, p), MOVE_OUT, data + 3) ? PACKET_RESP_OK : PACKET_RESP_ERR_NOT_RECVD;
 }

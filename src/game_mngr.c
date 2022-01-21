@@ -451,7 +451,7 @@ bool is_players_piece(bool white, char piece) {
 int move_piece(struct game* g, struct player* p, struct move* m) {
     char pce_from;
     bool white;
-    int ret;
+    int ret = 0;
     struct square* lm;
     unsigned int rank_from, file_from, rank_to, file_to;
     char buf[BUFSIZ] = {0};
@@ -462,7 +462,7 @@ int move_piece(struct game* g, struct player* p, struct move* m) {
     file_to = m->to->file;
 
     if (!g || !p || (rank_from | file_from | rank_to | file_to) >= 8) {
-        return 1;
+        return MOVE_INVALID;
     }
     white = g->white == p;
 
@@ -470,36 +470,32 @@ int move_piece(struct game* g, struct player* p, struct move* m) {
     // ignore the packet
     if (white != g->white_to_move) {
         printf("It is not %s's turn yet!\n", p->name);
-        return 1;
+        return MOVE_INVALID;
     }
 
     pce_from = PIECE_SQ(g->board, m->from);
 
     if (pce_from == ' ') {
         printf("No piece found on [%d, %d]\n", rank_from, file_from);
-        return 1;
+        return MOVE_INVALID;
     }
     if (!is_players_piece(white, pce_from)) {
         printf("Piece on [%d, %d] (%d) is the opponent's piece!\n", rank_from, file_from, pce_from);
-        return 1;
+        return MOVE_INVALID;
     }
 
     // TODO add chess piece move logic
     printf("[%d,%d] '%c' -> [%d,%d] '%c'\n", rank_from, file_from, pce_from, rank_to, file_to,
            PIECE_SQ(g->board, m->to));
 
-    // we are taking a piece or moving a pawn, reset the halfmove
-    if (!IS_EMPTY_SQUARE(PIECE_SQ(g->board, m->to)) || IS_PAWN(PIECE_SQ(g->board, m->from))) {
-        g->halfmove_clock = 0;
-    } else {
-        g->halfmove_clock++;
-    }
-
     // temporarily store the last move
     //lm = g->lm;
     // remove it before
     //g->lm = NULL;
     ret = move(pce_from, g, m);
+
+    // either it's an invalid move -> return 1
+    // or it's a valid move -> move the piece
     if (ret == MOVE_INVALID) {
         //g->lm = lm;
         printf("Invalid move (%c%c-%c%c) for piece %c\n",
@@ -508,10 +504,26 @@ int move_piece(struct game* g, struct player* p, struct move* m) {
                UINT_TO_FILE(m->to->file),
                UINT_TO_RANK(m->to->rank),
                pce_from);
-        return 1;
+        return ret;
+    } else if(ret == MOVE_VALID) {
+        PIECE_SQ(g->board, m->to) = pce_from;
+        PIECE_SQ(g->board, m->from) = EMPTY_SQUARE;
+    } else if (ret & MOVE_CASTLES){
+        PIECE_SQ(g->board, m->to) = pce_from;
+        PIECE_SQ(g->board, m->from) = EMPTY_SQUARE;
+
+        // move the rook to its place
+        PIECE(g->board, m->from->rank, ret & MOVE_LONG_CASTLES ? 3 : 5) = PIECE(g->board, m->from->rank, ret & MOVE_LONG_CASTLES ? 0 : 7);
+        PIECE(g->board, m->from->rank, ret & MOVE_LONG_CASTLES ? 0 : 7) = EMPTY_SQUARE;
     }
-    PIECE_SQ(g->board, m->to) = pce_from;
-    PIECE_SQ(g->board, m->from) = EMPTY_SQUARE;
+
+    // we are taking a piece or moving a pawn, reset the halfmove
+    if (!IS_EMPTY_SQUARE(PIECE_SQ(g->board, m->to)) || IS_PAWN(PIECE_SQ(g->board, m->from))) {
+        g->halfmove_clock = 0;
+    } else {
+        g->halfmove_clock++;
+    }
+
     // increment the fullmove count after black's move
     if (!g->white_to_move) {
         g->fullmove_count++;
@@ -525,7 +537,7 @@ int move_piece(struct game* g, struct player* p, struct move* m) {
 #else
     print_board(g);
 #endif
-    return 0;
+    return ret;
 }
 
 struct move* create_move(struct square* from, struct square* to) {
