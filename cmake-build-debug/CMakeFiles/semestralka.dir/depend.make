@@ -11,7 +11,6 @@ CMakeFiles/semestralka.dir/src/game_mngr.c.o: \
  ../include/game_mngr.h \
  ../include/packet_registry.h \
  ../include/player_mngr.h \
- ../include/server.h \
  ../src/game_mngr.c
 CMakeFiles/semestralka.dir/src/main.c.o: \
  ../include/player_mngr.h \

@@ -91,7 +91,7 @@ int p_movepc(struct player* p, char* data) {
     struct square* to;
     struct move* m;
     unsigned int move_id;
-    char buf[3];
+    char buf[BUFSIZ];
     char move_id_buf[4];
     char response_valid_buf[3 + strlen(RESPONSE_VALID) + 1];
     char response_invalid_buf[3 + strlen(RESPONSE_INVALID) + 1];
@@ -161,9 +161,21 @@ int p_movepc(struct player* p, char* data) {
         }
     }
 
+
     // the move is a regular move
-    return !send_packet(p, MOVE_OUT, data + 3) &&
-           !send_packet(OPPONENT(g, p), MOVE_OUT, data + 3) ? PACKET_RESP_OK : PACKET_RESP_ERR_NOT_RECVD;
+    if (send_packet(p, MOVE_OUT, data + 3) ||
+        send_packet(OPPONENT(g, p), MOVE_OUT, data + 3)) {
+        return PACKET_RESP_ERR_NOT_RECVD;
+    }
+
+
+    if (ret == MOVE_CHECKMATE) {
+        if (finish_game(g, (g->white == p ? WHITE : 0) | WIN_BY_MATE)) {
+            return PACKET_RESP_ERR_NOT_RECVD;
+        }
+    }
+
+    return PACKET_RESP_OK;
 }
 
 int p_offdraw(struct player* p, char* data) {

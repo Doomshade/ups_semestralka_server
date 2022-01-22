@@ -22,12 +22,14 @@
 #define IS_WHITE(piece) (TO_WHITE(piece) == piece)
 
 #define IS_PAWN(square) (TO_WHITE(square) == PAWN)
+#define IS_KING(square) (TO_WHITE(square) == KING)
 
 #define MOVE_VALID 0
 #define MOVE_CASTLES 1 << 1
 #define MOVE_WHITE_CASTLES 1 << 2
 #define MOVE_LONG_CASTLES 1 << 3
 #define MOVE_EN_PASSANT 1 << 4
+#define MOVE_CHECKMATE 1 << 5
 #define MOVE_INVALID -1
 
 #define PIECE(board, rank, file) board[rank][file]
@@ -39,7 +41,7 @@
 void init_cpce();
 
 /**
- * Attempts to move the piece on the board
+ * Checks whether the move m is valid in the game g for the given piece
  * @param piece the piece
  * @param g the game
  * @param m the move

@@ -10,6 +10,10 @@
 #define PLAYER_RECON_MESSAGE "Player %s has reconnected to the game"
 #define PLAYER_DISCON_MESSAGE "Player %s has disconnected"
 
+#define MOVE(board, m, piece) \
+PIECE_SQ((board), (m)->from) = EMPTY_SQUARE;\
+PIECE_SQ((board), (m)->to) = (piece);
+
 struct matches {
     struct game** games;
     int free_game_index;
@@ -17,6 +21,8 @@ struct matches {
 };
 
 static struct matches* matches = NULL;
+
+int get_king_sq(struct game* g, bool white, struct square* sq_ptr);
 
 void print_hline() {
     int i;
@@ -175,6 +181,9 @@ struct game* create_game(struct player* white, struct player* black, bool white_
     g->fullmove_count = 1;
     g->halfmove_clock = 0;
     g->white_to_move = white_to_move;
+    g->lm = malloc(sizeof(struct square));
+    g->lm->rank = -1;
+    g->lm->file = -1;
     return g;
 }
 
@@ -383,12 +392,19 @@ bool is_players_piece(bool white, char piece) {
     return piece == target_piece;
 }
 
+bool is_in_check(struct game* g, bool white, struct square king_sq);
+
+bool is_mate(struct game* g, bool white, struct square king_sq);
+
 int move_piece(struct game* g, struct player* p, struct move* m) {
     char pce_from;
     bool white;
     int ret = 0;
     struct square* lm;
     unsigned int rank_from, file_from, rank_to, file_to;
+    struct square pl_king;
+    struct square op_king;
+    struct square* sq;
 
     rank_from = m->from->rank;
     file_from = m->from->file;
@@ -436,10 +452,30 @@ int move_piece(struct game* g, struct player* p, struct move* m) {
     }
 
     // the move is valid, we can move it now
-    PIECE_SQ(g->board, m->to) = pce_from;
-    PIECE_SQ(g->board, m->from) = EMPTY_SQUARE;
+    MOVE(g->board, m, pce_from)
+
+    if (get_king_sq(g, white, &pl_king)) {
+        fprintf(stderr, "Could not find the king?!\n");
+        return true;
+    }
+
+    if (get_king_sq(g, !white, &op_king)) {
+        fprintf(stderr, "Could not find the king?!\n");
+        return true;
+    }
 
     // now we need to check if the king is in check
+    if (is_in_check(g, white, pl_king)) {
+        printf("The king is in check, cannot make that move!\n");
+
+        // flip
+        sq = m->to;
+        m->to = m->from;
+        m->from = sq;
+        // unmake the move
+        MOVE(g->board, m, pce_from);
+        return MOVE_INVALID;
+    }
 
     if (ret & MOVE_CASTLES) {
         // move the rook to its place
@@ -454,6 +490,14 @@ int move_piece(struct game* g, struct player* p, struct move* m) {
             lm->rank++;
         }
         PIECE_SQ(g->board, lm) = EMPTY_SQUARE;
+    }
+
+    if (is_in_check(g, !white, op_king)) {
+        printf("CHECK DETECTED\n");
+    }
+
+    if (is_mate(g, !white, op_king)) {
+        printf("MATE DETECTED!!\n");
     }
 
     // we are taking a piece or moving a pawn, reset the halfmove
@@ -477,6 +521,162 @@ int move_piece(struct game* g, struct player* p, struct move* m) {
     print_board(g);
 #endif
     return ret;
+}
+
+int get_king_sq(struct game* g, bool white, struct square* sq_ptr) {
+    unsigned rank;
+    unsigned file;
+    char piece;
+    // iterate through the board and find the king
+
+    for (rank = 0; rank < 8; ++rank) {
+        for (file = 0; file < 8; ++file) {
+            piece = PIECE(g->board, rank, file);
+
+            if (IS_KING(piece) && IS_WHITE(piece) == white) {
+                *sq_ptr = (struct square) {.rank = rank, .file = file};
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
+// TODO this is kind of a copy of is_in_check
+bool is_mate(struct game* g, bool white, struct square king_sq) {
+    int move_resp;
+    unsigned rank;
+    unsigned file;
+    unsigned rank_to;
+    unsigned file_to;
+    char piece;
+    char prev_piece;
+    struct move m;
+    struct move flip_m;
+    bool is_not_in_check;
+    struct square* lm = NULL;
+
+    if (!is_in_check(g, white, king_sq)) {
+        return false;
+    }
+
+    // iterate through every piece
+    for (rank = 0; rank < 8; ++rank) {
+        for (file = 0; file < 8; ++file) {
+            piece = PIECE(g->board, rank, file);
+
+            // the piece is empty or opponents
+            if (piece == EMPTY_SQUARE || white != IS_WHITE(piece)) {
+                continue;
+            }
+            // the piece's position
+            m.from = &((struct square) {.rank = rank, .file = file});
+
+            printf("Checking moves on square %c%c of piece %c for %s\n", UINT_TO_FILE(file),
+                   UINT_TO_RANK(rank), piece,
+                   white ? "White" : "Black");
+            // iterate through every square
+            for (rank_to = 0; rank_to < 8; ++rank_to) {
+                for (file_to = 0; file_to < 8; ++file_to) {
+                    if (rank_to == rank && file_to == file) {
+                        continue;
+                    }
+                    m.to = &((struct square) {.rank = rank_to, .file = file_to});
+                    printf("Checking move %c%c-%c%c...\n", UINT_TO_FILE(m.from->file),
+                           UINT_TO_RANK(m.from->rank),
+                           UINT_TO_FILE(m.to->file), UINT_TO_RANK(m.to->rank));
+                    // store the last move before moving the piece as it gets modified
+                    if (g->lm) {
+                        lm = g->lm;
+                    }
+                    move_resp = move(piece, g, &m);
+                    g->lm = lm;
+                    if (move_resp != MOVE_VALID && move_resp != MOVE_EN_PASSANT) {
+                        continue;
+                    }
+                    // save the piece
+                    /*printf("Found a possible move %c%c-%c%c\n",
+                           UINT_TO_FILE(file),
+                           UINT_TO_RANK(rank),
+                           UINT_TO_FILE(file_to),
+                           UINT_TO_RANK(rank_to));
+                    printf("Board before:\n");
+                    print_board(g);*/
+                    prev_piece = PIECE_SQ(g->board, m.to);
+                    // make the move
+                    MOVE(g->board, &m, piece);
+
+                    if (get_king_sq(g, white, &king_sq)) {
+                        fprintf(stderr, "wtf\n");
+                        return true;
+                    }
+
+                    //printf("Board middle:\n");
+                    //print_board(g);
+
+                    // save the state
+                    printf("Checking %s and king's square %c%c\n", white ? "White" : "Black",
+                           UINT_TO_FILE(king_sq.file),
+                           UINT_TO_RANK(king_sq.rank));
+                    is_not_in_check = !is_in_check(g, white, king_sq);
+
+                    // unmake the move
+                    flip_m.from = m.to;
+                    flip_m.to = m.from;
+                    MOVE(g->board, &flip_m, piece);
+
+                    // set the piece back
+                    PIECE_SQ(g->board, m.to) = prev_piece;
+
+                    //printf("Board after:\n");
+                    //print_board(g);
+                    // see if the king is not in check
+                    if (is_not_in_check) {
+                        printf("Piece %c can move to %c%c to avoid mate\n", piece, UINT_TO_FILE(file_to),
+                               UINT_TO_RANK(rank_to));
+                        return false;
+                    }
+
+                }
+            }
+        }
+    }
+    printf("No piece can avoid mate for %s, RIP!\n", white ? "White" : "Black");
+    return true;
+}
+
+bool is_in_check(struct game* g, bool white, struct square king_sq) {
+    struct move m;
+    unsigned rank;
+    unsigned file;
+    char piece;
+    // iterate through the board and find the king
+
+    //printf("%s's king square: %c%c\n", white ? "White" : "Black", UINT_TO_FILE(king_sq.file),
+    //      UINT_TO_RANK(king_sq.rank));
+    // now check if the enemy pieces are attacking this square
+    m.to = &king_sq;
+    for (rank = 0; rank < 8; ++rank) {
+        for (file = 0; file < 8; ++file) {
+            piece = PIECE(g->board, rank, file);
+
+            // there's no piece or the piece is a friendly one
+            if (piece == EMPTY_SQUARE || white == IS_WHITE(piece)) {
+                continue;
+            }
+            m.from = &((struct square) {.rank = rank, .file = file});
+
+            // an opponents piece found, check if its moves contain the king's square
+            if (move(piece, g, &m) != MOVE_INVALID) {
+                printf("Piece %c on %c%c is checking %s's king\n", piece, UINT_TO_FILE(file), UINT_TO_RANK(rank),
+                       white ? "White" : "Black");
+                // the move was not invalid, return true that the king is indeed in check after the given move
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 struct move* create_move(struct square* from, struct square* to) {

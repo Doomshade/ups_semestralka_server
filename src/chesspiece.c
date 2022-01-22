@@ -18,6 +18,9 @@ int move(char piece, struct game* g, struct move* m) {
     if (piece >= HANDLER_SIZE || piece < 0) {
         return MOVE_INVALID;
     }
+    if (m->from->rank == m->to->rank && m->from->file == m->to->file) {
+        return MOVE_INVALID;
+    }
     return move_handlers[piece](g, m);
 }
 
@@ -79,7 +82,7 @@ unsigned long long int gen_pos_moves(struct game* g, struct square* from, int di
         {
             // if the move is out of bounds or the amount is 0, stop checking
             if (!(IN_BOUNDS(rank) && IN_BOUNDS(file) && a > 0)) {
-                printf("%d %d %d\n", IN_BOUNDS(rank), IN_BOUNDS(file), a);
+                //printf("%d %d %d\n", IN_BOUNDS(rank), IN_BOUNDS(file), a);
                 break;
             }
 
@@ -287,10 +290,8 @@ int pawn_handle(struct game* g, struct move* m) {
                 return MOVE_INVALID;
             }
             // because the pawn moved by two squares, update the last move
-            if (g->lm) {
-                free(g->lm);
-            }
-            g->lm = create_square(m->from->file, m->from->rank + 1);
+            g->lm->file = m->from->file;
+            g->lm->rank = m->from->rank + 1;
             return MOVE_VALID;
         }
             // check if the pawn is on the 7th rank for black and the move is by two
@@ -300,10 +301,8 @@ int pawn_handle(struct game* g, struct move* m) {
                 return MOVE_INVALID;
             }
             // because the pawn moved by two squares, update the last move
-            if (g->lm) {
-                free(g->lm);
-            }
-            g->lm = create_square(m->from->file, m->from->rank - 1);
+            g->lm->file = m->from->file;
+            g->lm->rank = m->from->rank - 1;
             return MOVE_VALID;
         }
     }
@@ -318,19 +317,18 @@ int pawn_handle(struct game* g, struct move* m) {
     // check if the move was captures and there was an ENEMY piece
     if (handle_simple_piece(g, m, capturing_direction, 1) == MOVE_VALID && piece != EMPTY_SQUARE &&
         IS_WHITE(piece) != white) {
-        if (g->lm) {
-            free(g->lm);
-            g->lm = NULL;
-        }
+        printf("Found a captures move for pawn %c%c-%c%c (%c)\n", UINT_TO_FILE(m->from->file),
+               UINT_TO_RANK(m->from->rank),
+               UINT_TO_FILE(m->to->file), UINT_TO_RANK(m->to->rank), piece);
+        g->lm->rank = -1;
+        g->lm->file = -1;
         return MOVE_VALID;
     }
 
     // check if the move was by one square and the square was empty
     if (handle_simple_piece(g, m, moving_direction, 1) == MOVE_VALID && piece == EMPTY_SQUARE) {
-        if (g->lm) {
-            free(g->lm);
-            g->lm = NULL;
-        }
+        g->lm->rank = -1;
+        g->lm->file = -1;
         return MOVE_VALID;
     }
     return MOVE_INVALID;
