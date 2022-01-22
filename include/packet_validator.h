@@ -22,7 +22,7 @@
 /**
  * Initializes the packet validator
  */
-void init_pval();
+void init_pval(unsigned max_players);
 
 /**
  * Attempts to parse the packet sent by the player. Note that the

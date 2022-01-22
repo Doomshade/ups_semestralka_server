@@ -12,8 +12,13 @@
 #define PLAYER_RECON_MESSAGE "Player %s has reconnected to the game"
 #define PLAYER_DISCON_MESSAGE "Player %s has disconnected"
 
-struct game** games = NULL;
-int free_game_index = 0;
+struct matches {
+    struct game** games;
+    int free_game_index;
+    unsigned max_game_count;
+};
+
+static struct matches* matches = NULL;
 
 void print_hline() {
     int i;
@@ -61,31 +66,33 @@ void free_game(struct game** g) {
     *g = NULL;
 }
 
-void init_gman() {
+void init_gman(unsigned player_count) {
     // the manager has already been set up
-    if (games) {
+    if (matches) {
         return;
     }
 
     printf("Initializing game manager...\n");
-    games = calloc(MAX_GAME_COUNT, sizeof(struct game*));
-    free_game_index = 0;
+    matches = malloc(sizeof(struct matches));
+    matches->free_game_index = 0;
+    matches->max_game_count = player_count / 2;
+    matches->games = calloc(matches->max_game_count, sizeof(struct game*));
 }
 
 int add_game(struct game* g) {
     int i;
-    if (!g || !games) {
+    if (!g || !matches) {
         return 1;
     }
-    if (free_game_index < 0) {
+    if (matches->free_game_index < 0) {
         return 2;
     }
 
-    games[free_game_index] = g;
-    free_game_index = -1;
-    for (i = 0; i < MAX_GAME_COUNT; ++i) {
-        if (!games[i]) {
-            free_game_index = i;
+    matches->games[matches->free_game_index] = g;
+    matches->free_game_index = -1;
+    for (i = 0; i < matches->max_game_count; ++i) {
+        if (!matches->games[i]) {
+            matches->free_game_index = i;
             break;
         }
     }
@@ -93,13 +100,13 @@ int add_game(struct game* g) {
 }
 
 void remove_game_by_idx(int idx) {
-    if (!games || idx >= MAX_GAME_COUNT) {
+    if (!matches || idx >= matches->max_game_count) {
         return;
     }
 
-    if (games[idx]) {
-        free_game(&games[idx]);
-        games[idx] = NULL;
+    if (matches->games[idx]) {
+        free_game(&(matches->games[idx]));
+        matches->games[idx] = NULL;
     }
 }
 
@@ -109,20 +116,25 @@ int finish_game(struct game* g, int winner) {
     char msg[3 + 1] = {0};
     int ret;
 
-    if (!g || !games) {
+    if (!g || !matches) {
         return 1;
     }
     sprintf(msg, "%03d", winner);
 
-    for (i = 0; i < MAX_GAME_COUNT; ++i) {
-        if (!games[i] || g != games[i]) {
+    // look for the game
+    for (i = 0; i < matches->max_game_count; ++i) {
+        // that's not the game we are looking for, continue
+        if (!matches->games[i] || g != matches->games[i]) {
             continue;
         }
 
+        // game found, send the packet
         if ((ret = send_packet(g->white, GAME_FINISH_OUT, msg)) ||
             (ret = send_packet(g->black, GAME_FINISH_OUT, msg))) {
             return ret;
         }
+
+        // change the player state and remove it from memory
         change_state(g->white, LOGGED_IN);
         change_state(g->black, LOGGED_IN);
         remove_game_by_idx(i);
@@ -132,11 +144,11 @@ int finish_game(struct game* g, int winner) {
 }
 
 struct game* lookup_game(struct player* p) {
-    if (!p || !games) {
+    if (!p || !matches) {
         return NULL;
     }
-    for (int i = 0; i < MAX_GAME_COUNT; ++i) {
-        struct game* g = games[i];
+    for (int i = 0; i < matches->max_game_count; ++i) {
+        struct game* g = matches->games[i];
         if (g == NULL) {
             continue;
         }
@@ -149,7 +161,7 @@ struct game* lookup_game(struct player* p) {
 
 struct game* create_game(struct player* white, struct player* black, bool white_to_move) {
     struct game* g;
-    if (!white || !black || !games) {
+    if (!white || !black || !matches) {
         return NULL;
     }
     g = malloc(sizeof(struct game));
@@ -171,7 +183,7 @@ struct game* create_game(struct player* white, struct player* black, bool white_
 
 int game_create(struct player* white, struct player* black) {
     struct game* g;
-    if (!white || !black || !games) {
+    if (!white || !black || !matches->games) {
         return 1;
     }
 
@@ -192,7 +204,7 @@ int game_create(struct player* white, struct player* black) {
 int setup_game(struct game* g) {
     int i, j;
 
-    if (!g || !games) {
+    if (!g || !matches->games) {
         return 1;
     }
 
@@ -354,7 +366,7 @@ int gman_handle_dc(struct player* p) {
     if (!p) {
         return 1;
     }
-    VALIDATE_FD(p->fd, 1)
+    VALIDATE_FD(p->fd, 1, matches->max_game_count)
     g = lookup_game(p);
     if (!g) {
         return 0;

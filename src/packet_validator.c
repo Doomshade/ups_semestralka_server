@@ -6,16 +6,24 @@
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
 // for each fd make a buffer where the packets are sent
-char** buffered_pheaders = NULL;
-char** buffered_pdata = NULL;
 
-void init_pval() {
-    if (buffered_pheaders || buffered_pdata) {
+struct buffers {
+    char** buffered_pheaders;
+    char** buffered_pdata;
+    unsigned buff_len;
+};
+
+static struct buffers* bufs = NULL;
+
+void init_pval(unsigned max_players) {
+    if (bufs) {
         return;
     }
+    bufs = malloc(sizeof(struct buffers));
+    bufs->buff_len = max_players;
     printf("Initializing packet validator...\n");
-    buffered_pheaders = calloc(MAX_PLAYER_COUNT, sizeof(char) * (PACKET_HEADER_SIZE + 1));
-    buffered_pdata = calloc(MAX_PLAYER_COUNT, sizeof(char*));
+    bufs->buffered_pheaders = calloc(max_players, sizeof(char) * (PACKET_HEADER_SIZE + 1));
+    bufs->buffered_pdata = calloc(max_players, sizeof(char*));
 }
 
 int validate_header(char* header, unsigned int* p_id, unsigned int* p_siz) {
@@ -94,7 +102,7 @@ struct packet* parse_packet(char** packet, int* erc, struct player* pl) {
     }
 
     // the buffered packet data not yet instantiated
-    if (!buffered_pdata) {
+    if (!bufs->buffered_pdata) {
         *erc = -2;
         return NULL;
     }
@@ -106,11 +114,11 @@ struct packet* parse_packet(char** packet, int* erc, struct player* pl) {
     // "header - curr_header_size" or the whole packet
     p_len = strlen(*packet);
 
-    pheader = buffered_pheaders[fd];
+    pheader = bufs->buffered_pheaders[fd];
     if (!pheader) {
         pheader = malloc(sizeof(char) * (PACKET_HEADER_SIZE + 1));
         memset(pheader, 0, sizeof(char) * (PACKET_HEADER_SIZE + 1));
-        buffered_pheaders[fd] = pheader;
+        bufs->buffered_pheaders[fd] = pheader;
         // memset(p_header, 0, sizeof(char) * (PACKET_HEADER_SIZE + 1));
     }
     buf_hamnt = MIN(PACKET_HEADER_SIZE - strlen(pheader), p_len);
@@ -137,11 +145,11 @@ struct packet* parse_packet(char** packet, int* erc, struct player* pl) {
 
     // the p_header buffer is full and valid, concatenate to the data buffer now
     // the packet data is empty, initialize it to the packet length
-    pdata = buffered_pdata[fd];
+    pdata = bufs->buffered_pdata[fd];
     if (!pdata) {
         pdata = malloc(sizeof(char) * (p_data_len + 1));
         memset(pdata, 0, sizeof(char) * (p_data_len + 1));
-        buffered_pdata[fd] = pdata;
+        bufs->buffered_pdata[fd] = pdata;
     }
 
     // the data amount should either be the
@@ -171,12 +179,15 @@ struct packet* parse_packet(char** packet, int* erc, struct player* pl) {
 }
 
 void free_buffers(int fd) {
-    if (buffered_pheaders[fd]) {
-        free(buffered_pheaders[fd]);
-        buffered_pheaders[fd] = NULL;
+    if (!bufs) {
+        return;
     }
-    if (buffered_pdata[fd]) {
-        free(buffered_pdata[fd]);
-        buffered_pdata[fd] = NULL;
+    if (bufs->buffered_pheaders[fd]) {
+        free(bufs->buffered_pheaders[fd]);
+        bufs->buffered_pheaders[fd] = NULL;
+    }
+    if (bufs->buffered_pdata[fd]) {
+        free(bufs->buffered_pdata[fd]);
+        bufs->buffered_pdata[fd] = NULL;
     }
 }

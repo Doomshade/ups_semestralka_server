@@ -166,7 +166,7 @@ int finish_game(struct game* g, int winner);
 /**
  * Sets up the game manager
  */
-void init_gman();
+void init_gman(unsigned player_count);
 
 /**
  * A move invoked by the player

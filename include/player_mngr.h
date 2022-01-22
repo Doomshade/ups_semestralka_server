@@ -2,7 +2,7 @@
 #define SEMESTRALKA_PLAYER_MNGR_H
 #define MAX_PLAYER_NAME_LENGTH 64
 #include <sys/time.h>
-#define VALIDATE_FD(fd, ret) if (fd < 0 || fd >= MAX_PLAYER_COUNT) return ret;
+#define VALIDATE_FD(fd, ret, max_count) if ((fd) < 0 || (fd) >= (max_count)) return ret;
 
 
 /**
@@ -113,4 +113,6 @@ int pman_handle_dc(struct player* p);
  * @param p the player
  */
 void start_keepalive(int fd, unsigned keepalive_retry);
+
+void init_pman(unsigned player_count);
 #endif //SEMESTRALKA_PLAYER_MNGR_H

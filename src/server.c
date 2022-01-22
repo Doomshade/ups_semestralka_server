@@ -29,40 +29,17 @@ static int start_listening(int server_socket, struct arguments* args);
 /**
  * Initializes the server
  */
-static void init_server();
+static void init_server(unsigned player_count);
 
 /**
  * Handles a new client
  * @param server_socket the server socket fd
  * @param peer_addr the peer address
  * @param len_addr the ptr to the length of the address
- * @param client_socks the fd set of clients
  */
 static void handle_new_client(int server_socket,
                               struct sockaddr_in* peer_addr,
-                              unsigned int* len_addr,
-                              fd_set* client_socks);
-
-static int handle_dc(struct player* p);
-
-
-void enable_keepalive(int sock) {
-    int yes = 1;
-    check(setsockopt(
-            sock, SOL_SOCKET, SO_KEEPALIVE, &yes, sizeof(int)) != -1);
-
-    int idle = 1;
-    check(setsockopt(
-            sock, IPPROTO_TCP, TCP_KEEPIDLE, &idle, sizeof(int)) != -1);
-
-    int interval = 1;
-    check(setsockopt(
-            sock, IPPROTO_TCP, TCP_KEEPINTVL, &interval, sizeof(int)) != -1);
-
-    int maxpkt = 10;
-    check(setsockopt(
-            sock, IPPROTO_TCP, TCP_KEEPCNT, &maxpkt, sizeof(int)) != -1);
-}
+                              unsigned int* len_addr);
 
 int start_server(struct arguments* args) {
     int server_socket, rval;
@@ -100,22 +77,22 @@ int start_server(struct arguments* args) {
     return start_listening(server_socket, args);
 }
 
+static fd_set client_socks;
+
 int start_listening(int server_socket, struct arguments* args) {
     struct sockaddr_in peer_addr;
     int fd, rval, a2read;
     char* p_ptr = NULL;
     char* p_ptr_copy = NULL; // to later free the p_ptr
     unsigned int len_addr;
-    fd_set client_socks, tests; // fd sets (for socks too)
+    fd_set tests; // fd sets (for socks too)
     int erc = 0;
     struct packet* pckt;
     struct player* player = NULL;
 
-    char buf[BUFSIZ];
-
     memset(&peer_addr, 0, sizeof(struct sockaddr_in));
     // initialize things
-    init_server();
+    init_server(args->player_limit);
 
     // clear the descriptors and add the server socket
     FD_ZERO(&client_socks);
@@ -139,7 +116,7 @@ int start_listening(int server_socket, struct arguments* args) {
 
             // is it a new connection?
             if (fd == server_socket) {
-                handle_new_client(server_socket, &peer_addr, &len_addr, &client_socks);
+                handle_new_client(server_socket, &peer_addr, &len_addr);
                 //tst(server_socket, &peer_addr, &len_addr, &client_socks);
                 continue;
             }
@@ -247,13 +224,12 @@ int start_listening(int server_socket, struct arguments* args) {
 
 void handle_new_client(int server_socket,
                        struct sockaddr_in* peer_addr,
-                       unsigned int* len_addr,
-                       fd_set* client_socks) {
+                       unsigned int* len_addr) {
     int client_socket;
     int rval;
 
     client_socket = accept(server_socket, (struct sockaddr*) peer_addr, len_addr);
-    FD_SET(client_socket, client_socks);
+    FD_SET(client_socket, &client_socks);
     printf("A client has connected and was assigned FD #%d\n", client_socket);
     // this adds the client to the player array
     rval = handle_new_player(client_socket);
@@ -263,16 +239,13 @@ void handle_new_client(int server_socket,
     }
 }
 
-void init_server() {
-    init_pval(); // packet validator
+void init_server(unsigned player_count) {
+    init_pman(player_count); // player manager
+    init_pval(player_count); // packet validator
+    init_qman(player_count); // queue manager
+    init_gman(player_count); // game manager
     init_preg(); // packet registry
-    init_qman(); // queue manager
-    init_gman(); // game manager
     init_cpce(); // chess pieces
-}
-
-static int handle_dc(struct player* p) {
-    return 0;
 }
 
 void disconnect(struct player* p, const char* reason) {
@@ -282,22 +255,22 @@ void disconnect(struct player* p, const char* reason) {
     if (!p) {
         return;
     }
+
     fd = p->fd;
-    if (reason) {
-        send_packet(p, DISCONNECT_OUT, reason);
-        g = lookup_game(p);
-        if (g) {
-            sprintf(buf, "%d", (g->white == p ? BLACK : WHITE) | WIN_BY_RESIGNATION);
-            send_packet(OPPONENT(g, p), GAME_FINISH_OUT, buf);
-        }
-    }
-    if (!p) {
-        return;
-    }
+
 
     if (fd < 0) {
         return;
     }
+
+    if (reason) {
+        send_packet(p, DISCONNECT_OUT, reason);
+        g = lookup_game(p);
+        if (g) {
+            finish_game(g, (g->white == p ? BLACK : WHITE) | WIN_BY_RESIGNATION);
+        }
+    }
+    FD_CLR(fd, &client_socks);
     free_buffers(fd); // cleanup in the packet validator (due to potential buffered header/data)
     qman_handle_dc(p); // removing from queue changes the state of the player ONLY if the packet is successfully sent
     // in our case the packet cannot be sent as the player has disconnected -> the player's state will remain the same

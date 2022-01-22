@@ -2,25 +2,30 @@
 #include <string.h>
 #include "stdlib.h"
 #include "../include/queue_mngr.h"
-#include "../include/server.h"
 #include "../include/packet_registry.h"
 
 #define NOT_IN_QUEUE 0
 #define IS_IN_QUEUE 1
-#define VALIDATE_QUEUE(p) if(!p || !queueKey || p->fd >= MAX_PLAYER_COUNT) return 1;
+#define VALIDATE_QUEUE(p) if(!p || !q || p->fd >= q->queue_len) return 1;
 
-// TODO make this an actual queue someday maybe?
-char** queueKey = NULL;
-int* queue = NULL;
+struct queue {
+    int* queue;
+    char** queue_key;
+    unsigned queue_len;
+};
 
-void init_qman() {
-    if (queueKey || queue) {
+static struct queue* q = NULL;
+
+void init_qman(unsigned queue_len) {
+    if (q) {
         return;
     }
 
     printf("Initializing queue manager...\n");
-    queueKey = calloc(MAX_PLAYER_COUNT, sizeof(char*));
-    queue = calloc(MAX_PLAYER_COUNT, sizeof(int));
+    q = malloc(sizeof(struct queue));
+    q->queue_key = calloc(queue_len, sizeof(char*));
+    q->queue = calloc(queue_len, sizeof(int));
+    q->queue_len = queue_len;
 }
 
 int send_queue_out_pc(struct player* p, bool white, char* op) {
@@ -59,9 +64,9 @@ static int find_player_in_queue(struct player* p) {
     int i;
     int firstFree = -1;
 
-    for (i = 0; i < MAX_PLAYER_COUNT; ++i) {
+    for (i = 0; i < q->queue_len; ++i) {
         // no player on this key
-        if (!queueKey[i]) {
+        if (!q->queue_key[i]) {
             // store the first free index in case the player is not found
             if (firstFree == -1) {
                 firstFree = i;
@@ -70,13 +75,13 @@ static int find_player_in_queue(struct player* p) {
         }
 
         // found a player under this ID
-        if (strcmp(p->name, queueKey[i]) == 0) {
+        if (strcmp(p->name, q->queue_key[i]) == 0) {
             return i;
         }
     }
     // the player was not in the queue, add its name
-    queueKey[firstFree] = malloc(strlen(p->name) + 1);
-    strcpy(queueKey[firstFree], p->name);
+    q->queue_key[firstFree] = malloc(strlen(p->name) + 1);
+    strcpy(q->queue_key[firstFree], p->name);
 
     return firstFree;
 }
@@ -91,13 +96,13 @@ int add_to_queue(struct player* p) {
     VALIDATE_QUEUE(p)
 
     // first we find the player in the queueKey
-    for (i = 0; i < MAX_PLAYER_COUNT; ++i) {
-        if (!queueKey[i]) {
+    for (i = 0; i < q->queue_len; ++i) {
+        if (!q->queue_key[i]) {
             continue;
         }
     }
     id = find_player_in_queue(p);
-    q_state = queue[id];
+    q_state = q->queue[id];
 
     if (send_packet(p, QUEUE_OUT, RESPONSE_VALID)) {
         return 1;
@@ -106,18 +111,18 @@ int add_to_queue(struct player* p) {
         case NOT_IN_QUEUE:
             printf("Adding %s to the queue...\n", p->name);
 
-            queue[id] = IS_IN_QUEUE;
+            q->queue[id] = IS_IN_QUEUE;
             change_state(p, QUEUE);
 
             // look for an opponent now
-            for (i = 0; i < MAX_PLAYER_COUNT; ++i) {
+            for (i = 0; i < q->queue_len; ++i) {
                 // skip the player
                 if (i == id) {
                     continue;
                 }
 
                 // TODO perhaps do a better matchmaking, but for UPS this is enough ig
-                if (queue[i] != IS_IN_QUEUE) {
+                if (q->queue[i] != IS_IN_QUEUE) {
                     continue;
                 }
                 // found a match!! get the opponent, remove them from the queue, and create a game
@@ -125,17 +130,17 @@ int add_to_queue(struct player* p) {
                 // lookup the opponent
 
                 // the player has disconnected, set the state to NOT_IN_QUEUE, so he doesn't get checked again
-                if (lookup_player_by_name(queueKey[i], &op) || !op) {
-                    free(queueKey[i]);
-                    queueKey[i] = NULL;
-                    queue[i] = NOT_IN_QUEUE;
+                if (lookup_player_by_name(q->queue_key[i], &op) || !op) {
+                    free(q->queue_key[i]);
+                    q->queue_key[i] = NULL;
+                    q->queue[i] = NOT_IN_QUEUE;
                     continue;
                 }
 
 
                 // remove both players from the queue
-                queue[id] = NOT_IN_QUEUE;
-                queue[i] = NOT_IN_QUEUE;
+                q->queue[id] = NOT_IN_QUEUE;
+                q->queue[i] = NOT_IN_QUEUE;
 
                 // yes this is perhaps utterly retarded, but basically
                 // if the first packet fails, we don't even send the
@@ -170,7 +175,7 @@ int qman_handle_dc(struct player* p) {
     if (!p) {
         return 1;
     }
-    VALIDATE_FD(p->fd, 1)
+    VALIDATE_FD(p->fd, 1, q->queue_len)
     return remove_from_queue(p);
 }
 
@@ -183,14 +188,14 @@ int remove_from_queue(struct player* p) {
     VALIDATE_QUEUE(p)
 
     id = find_player_in_queue(p);
-    q_state = queue[id];
+    q_state = q->queue[id];
 
     switch (q_state) {
         case NOT_IN_QUEUE:
             return 0;
         case IS_IN_QUEUE:
             printf("Removing %s from the queue\n", p->name);
-            queue[id] = NOT_IN_QUEUE;
+            q->queue[id] = NOT_IN_QUEUE;
             if ((ret = send_packet(p, LEAVE_QUEUE_OUT, RESPONSE_VALID))) {
                 return ret;
             }

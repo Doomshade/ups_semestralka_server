@@ -6,7 +6,7 @@
 /**
  * Initializes the queue manager
  */
-void init_qman();
+void init_qman(unsigned queue_len);
 
 /**
  * Adds the player to the queue

@@ -3,23 +3,35 @@
 #include "../include/player_mngr.h"
 #include "../include/server.h"
 #include "../include/game_mngr.h"
-#include "../include/packet_handler.h"
 #include <time.h>
 #include <pthread.h>
 #include <unistd.h>
 
-#define MAX_DISCONNECTED_COUNT MAX_PLAYER_COUNT * 5
+struct players {
+    struct player** players;
+    struct player** dc_players;
+    unsigned max_player_count;
+};
 
-#define KEEPALIVE_INTERVAL_RETRY 30
+static struct players* plrs = NULL;
 
-static struct player* players[MAX_PLAYER_COUNT] = {0};
-static struct player* dc_players[MAX_DISCONNECTED_COUNT] = {0};
+void init_pman(unsigned player_count) {
+    if (plrs) {
+        return;
+    }
+
+    plrs = malloc(sizeof(struct players));
+    plrs->max_player_count = player_count;
+    plrs->players = calloc(plrs->max_player_count, sizeof(struct player*));
+    plrs->dc_players = calloc(plrs->max_player_count, sizeof(struct player*));
+}
+
 
 int lookup_player_by_fd(int fd, struct player** p) {
     struct player* _p;
 
-    VALIDATE_FD(fd, 2)
-    _p = players[fd];
+    VALIDATE_FD(fd, 2, plrs->max_player_count)
+    _p = plrs->players[fd];
     if (_p) {
         if (p) {
             *p = _p;
@@ -36,11 +48,11 @@ int lookup_player_by_name(char* name, struct player** p) {
         return 1;
     }
 
-    for (i = 0; i < MAX_PLAYER_COUNT; ++i) {
-        if (!players[i]) {
+    for (i = 0; i < plrs->max_player_count; ++i) {
+        if (!plrs->players[i]) {
             continue;
         }
-        _p = players[i];
+        _p = plrs->players[i];
         if (strcmp(_p->name, name) == 0) {
             *p = _p;
             return 0;
@@ -56,18 +68,18 @@ int lookup_dc_player(char* name, struct player** p) {
         return 1;
     }
 
-    for (i = 0; i < MAX_DISCONNECTED_COUNT; ++i) {
-        if (!dc_players[i]) {
+    for (i = 0; i < plrs->max_player_count; ++i) {
+        if (!plrs->dc_players[i]) {
             continue;
         }
-        _p = dc_players[i];
+        _p = plrs->dc_players[i];
         if (strcmp(_p->name, name) == 0) { // the player was previously disconnected
             printf("Found a disconnected player under index %d with name %s, FD %d, and state %d\n", i, _p->name,
                    _p->fd, _p->ps);
             _p->fd = (*p)->fd; // change the FD to the new one
             *p = _p; // return the previous state with the current FD
-            players[_p->fd] = _p; // update the player in the array
-            dc_players[i] = NULL; // remove the player from the dc_players
+            plrs->players[_p->fd] = _p; // update the player in the array
+            plrs->dc_players[i] = NULL; // remove the player from the dc_players
             return 0;
         }
     }
@@ -77,7 +89,7 @@ int lookup_dc_player(char* name, struct player** p) {
 struct player* create_player(int fd) {
     struct player* p;
 
-    VALIDATE_FD(fd, NULL)
+    VALIDATE_FD(fd, NULL, plrs->max_player_count)
 
     p = malloc(sizeof(struct player));
     if (!p) {
@@ -105,6 +117,7 @@ void* keepalive(void* _p) {
     struct player* p = NULL;
     unsigned interval = p_args->keepalive_retry;
     double diff;
+    time_t last_ka;
 
     printf("Keepalive started!\n");
     if (lookup_player_by_fd(fd, &p)) {
@@ -116,13 +129,17 @@ void* keepalive(void* _p) {
 
     time(&t);
     p->last_keepalive = t;
+    last_ka = t;
 
-    while (!lookup_player_by_fd(fd, &p) && p->started_keepalive) {
+    while (1) {
         // update the current time
         time(&t);
 
+        if (!lookup_player_by_fd(fd, &p) && p->started_keepalive) {
+            last_ka = p->last_keepalive;
+        }
         // get the difference in seconds between the last keep alive packets
-        diff = difftime(t, p->last_keepalive);
+        diff = difftime(t, last_ka);
 
         // the difference is too large, we disconnect the player
         if (diff >= interval) {
@@ -134,8 +151,9 @@ void* keepalive(void* _p) {
         sleep(1);
     }
     end:
+    // after 30 seconds of timeout we disconnect the player indefinitely
     if (p != NULL) {
-        disconnect(p, NULL);
+        disconnect(p, "Timed out");
     }
     return NULL;
 }
@@ -166,25 +184,32 @@ int change_player_name(struct player* p, char* name) {
 }
 
 int handle_new_player(int fd) {
-    VALIDATE_FD(fd, 1)
+    if (!plrs) {
+        return 1;
+    }
+    VALIDATE_FD(fd, 1, plrs->max_player_count)
 
     // the player under this FD is already connected
     // this should not happen, if this
     // happens some logic inside the
     // server failed
-    if (players[fd]) {
+    if (plrs->players[fd]) {
         return 2;
     }
 
     // add the client to the connected players
-    players[fd] = create_player(fd);
-    return players[fd] != NULL;
+    plrs->players[fd] = create_player(fd);
+    return plrs->players[fd] != NULL;
 }
 
 void change_state(struct player* p, enum player_state ps) {
     char* ps_str;
-    p->ps = ps;
-    switch (p->ps) {
+
+    if (!p) {
+        fprintf(stderr, "Failed to change state, player is null!\n");
+        return;
+    }
+    switch (ps) {
         case JUST_CONNECTED:
             ps_str = "connected";
             break;
@@ -198,9 +223,10 @@ void change_state(struct player* p, enum player_state ps) {
             ps_str = "play";
             break;
         default:
-            ps_str = "unknown";
-            break;
+            fprintf(stderr, "Attempted to set an invalid player state! (%d)\n", ps);
+            return;
     }
+    p->ps = ps;
     printf("Changed %s's state to: %s\n", p->name, ps_str);
 }
 
@@ -210,9 +236,9 @@ int pman_handle_dc(struct player* p) {
     if (!p) {
         return 1;
     }
-    VALIDATE_FD(p->fd, 2)
+    VALIDATE_FD(p->fd, 2, plrs->max_player_count)
 
-    players[p->fd] = NULL;
+    plrs->players[p->fd] = NULL;
 
 #ifdef SERVER_DEBUG_MODE
     if (!lookup_player_by_fd(p->fd, NULL)) {
@@ -227,13 +253,14 @@ int pman_handle_dc(struct player* p) {
     // joins a game, disconnects,
     // a different client joins and is given
     // the FD 4 and that client would be reconnected!|
-    for (i = 0; i < MAX_DISCONNECTED_COUNT; ++i) {
-        if (dc_players[i] == NULL) {
+    for (i = 0; i < plrs->max_player_count; ++i) {
+        // find first empty spot for the disconnected player
+        if (plrs->dc_players[i] == NULL) {
             printf("Storing %s under %d in the disconnected list\n", p->name, i);
-            p->fd = -1;
-            p->started_keepalive = 0;
-            p->invalid_sends = 0;
-            dc_players[i] = p;
+            p->fd = -1; // set the FD to a negative value to indicate the player is disconnected
+            p->started_keepalive = 0; // we stop the keepalive
+            p->invalid_sends = 0; // reset the invalid sends
+            plrs->dc_players[i] = p; // and store the player
             return 0;
         }
     }
