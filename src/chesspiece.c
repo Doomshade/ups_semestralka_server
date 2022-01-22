@@ -25,11 +25,11 @@ int move(char piece, struct game* g, struct move* m) {
 // 111
 // 101
 // 111
-// a pawn should look like: 11100000 or 000000111 - white or black respectively
+// a pawn should look like: 11100000 or 000000111 - white or black, respectively
 // 111
 // 000
 // 000
-// the middle bit is out of convenience
+// the middle bit is useless, but remains there out of convenience
 unsigned long long int gen_pos_moves(struct game* g, struct square* from, int direction, unsigned int amount) {
     unsigned long long offset;
     unsigned int rank, file;
@@ -57,33 +57,39 @@ unsigned long long int gen_pos_moves(struct game* g, struct square* from, int di
     // 0b010000000 = [ 0,  1] direction = 7
     // 0b100000000 = [-1,  1] direction = 8
 
-    //
     for (i = 0; direction != 0; direction >>= 1, ++i) {
         // the piece does not move in this direction
         if (!(direction & 1)) {
             continue;
         }
+
+        // the piece moves in that direction, calculate the x and y on the board
         vx = -1 + (i / 3);
         vy = 1 - (i % 3);
 
-        // it's possible that sb accidentally set the middle bit to 1, skip it
+        // it's possible that we accidentally set the middle bit to 1, skip it
         if (vx == 0 && vy == 0) {
             continue;
         }
 
 
         for (rank = from->rank + vx, file = from->file + vy, a = amount; // start at the offset, and reset the amount
-                ; // check for the amount, and whether we are in bounds
+                ;
              rank += vx, file += vy, --a) // iterate in the direction, and reduce the amount by 1
         {
+            // if the move is out of bounds or the amount is 0, stop checking
             if (!(IN_BOUNDS(rank) && IN_BOUNDS(file) && a > 0)) {
                 printf("%d %d %d\n", IN_BOUNDS(rank), IN_BOUNDS(file), a);
                 break;
             }
+
+            // we can continue, get the piece on the square
             piece = PIECE(g->board, rank, file);
 
-            // empty square is ok
+            // calculate the offset in the bitmap
             offset = SQUARE_TO_INT(rank, file);
+
+            // empty square is ok, store it
             if (IS_EMPTY_SQUARE(piece)) {
                 bitmap |= (1ULL << offset);
                 continue;
@@ -93,23 +99,33 @@ unsigned long long int gen_pos_moves(struct game* g, struct square* from, int di
             if (IS_WHITE(piece) != curr_white) {
                 bitmap |= (1ULL << offset);
             }
-            // there is a piece, stop right there (you criminal scum!!!)
+            // but there is a piece, stop right there (you criminal scum!!!)
             break;
         }
     }
+    // we return a 64-bit bitmap representing every square on the board
+    // all 0's mean there's no valid move, all 1's mean all moves are valid
     return bitmap;
 }
 
+/**
+ * Checks whether the given square is a valid move with the bitmap
+ * @param pos_moves the bitmap of possible moves on the board
+ * @param sq the target square
+ * @return MOVE_VALID if the move is valid, MOVE_INVALID otherwise
+ */
 int is_pos_move(unsigned long long int pos_moves, struct square* sq) {
     int i;
     unsigned int rank, file;
+
     if (!sq) {
         return MOVE_INVALID;
     }
 
     // iterate over the bits in the pos_moves
+    // shift the bit after each iteration
     for (i = 0; i < 64 && pos_moves != 0; ++i, pos_moves >>= 1) {
-        // the move in the bitmap
+        // the move is not in the bitmap, skip over it
         if (!(pos_moves & 1)) {
             continue;
         }
@@ -195,6 +211,7 @@ int king_handle(struct game* g, struct move* m) {
         ret = MOVE_CASTLES;
         // long castles
         if (m->to->file == 2) {
+            // check if all the squares are empty
             if (!IS_EMPTY_SQUARE(g->board[m->from->rank][m->from->file - 1]) ||
                 !IS_EMPTY_SQUARE(g->board[m->from->rank][m->from->file - 2]) ||
                 !IS_EMPTY_SQUARE(g->board[m->from->rank][m->from->file - 3])) {
@@ -212,6 +229,7 @@ int king_handle(struct game* g, struct move* m) {
 
             // short castles
         else if (m->to->file == 6) {
+            // check if all the squares are empty
             if (!IS_EMPTY_SQUARE(g->board[m->from->rank][m->from->file + 1]) ||
                 !IS_EMPTY_SQUARE(g->board[m->from->rank][m->from->file + 2])) {
                 return MOVE_INVALID;
@@ -235,9 +253,13 @@ int king_handle(struct game* g, struct move* m) {
     g->castles &= ~(white ?
                     CASTLES_WHITE_KINGSIDE | CASTLES_WHITE_QUEENSIDE :
                     CASTLES_BLACK_KINGSIDE | CASTLES_BLACK_QUEENSIDE);
+
+    // ret isn't 0 -> that means the move is castles
     if (ret != 0) {
         return ret;
     }
+
+    // the move isn't castles, handle a simple movement
     return handle_simple_piece(g, m, 0b111101111, 1);
 }
 

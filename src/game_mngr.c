@@ -1,12 +1,10 @@
 #include "../include/game_mngr.h"
-#include "../include/server.h"
 #include <string.h>
 #include "../include/packet_registry.h"
 #include "../include/chesspiece.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <math.h>
 
 #define FEN_PATTERN "((([rnbqkpRNBQKP1-8]+)\\/){7}([rnbqkpRNBQKP1-8]+)) ([wb]) (K?Q?k?q?|\\-) (([a-h][0-7])|\\-) (\\d+) (\\d+)"
 #define PLAYER_RECON_MESSAGE "Player %s has reconnected to the game"
@@ -128,17 +126,16 @@ int finish_game(struct game* g, int winner) {
             continue;
         }
 
-        // game found, send the packet
-        if ((ret = send_packet(g->white, GAME_FINISH_OUT, msg)) ||
-            (ret = send_packet(g->black, GAME_FINISH_OUT, msg))) {
-            return ret;
-        }
-
         // change the player state and remove it from memory
         change_state(g->white, LOGGED_IN);
         change_state(g->black, LOGGED_IN);
         remove_game_by_idx(i);
-        return 0;
+
+        // game found, send the packet
+        if ((ret = send_packet(g->white, GAME_FINISH_OUT, msg)) ||
+            (ret = send_packet(g->black, GAME_FINISH_OUT, msg)));
+
+        return ret;
     }
     return 1;
 }
@@ -392,7 +389,6 @@ int move_piece(struct game* g, struct player* p, struct move* m) {
     int ret = 0;
     struct square* lm;
     unsigned int rank_from, file_from, rank_to, file_to;
-    char buf[BUFSIZ] = {0};
 
     rank_from = m->from->rank;
     file_from = m->from->file;
@@ -422,20 +418,14 @@ int move_piece(struct game* g, struct player* p, struct move* m) {
         return MOVE_INVALID;
     }
 
-    // TODO add chess piece move logic
     printf("[%d,%d] '%c' -> [%d,%d] '%c'\n", rank_from, file_from, pce_from, rank_to, file_to,
            PIECE_SQ(g->board, m->to));
 
-    // temporarily store the last move
-    //lm = g->lm;
-    // remove it before
-    //g->lm = NULL;
     ret = move(pce_from, g, m);
 
     // either it's an invalid move -> return 1
     // or it's a valid move -> move the piece
     if (ret == MOVE_INVALID) {
-        //g->lm = lm;
         printf("Invalid move (%c%c-%c%c) for piece %c\n",
                UINT_TO_FILE(m->from->file),
                UINT_TO_RANK(m->from->rank),
@@ -448,6 +438,8 @@ int move_piece(struct game* g, struct player* p, struct move* m) {
     // the move is valid, we can move it now
     PIECE_SQ(g->board, m->to) = pce_from;
     PIECE_SQ(g->board, m->from) = EMPTY_SQUARE;
+
+    // now we need to check if the king is in check
 
     if (ret & MOVE_CASTLES) {
         // move the rook to its place

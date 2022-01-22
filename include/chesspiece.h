@@ -22,11 +22,6 @@
 #define IS_WHITE(piece) (TO_WHITE(piece) == piece)
 
 #define IS_PAWN(square) (TO_WHITE(square) == PAWN)
-#define IS_ROOK(square) (TO_WHITE(square) == ROOK)
-#define IS_KNIGHT(square) (TO_WHITE(square) == KNIGHT)
-#define IS_BISHOP(square) (TO_WHITE(square) == BISHOP)
-#define IS_KING(square) (TO_WHITE(square) == KING)
-#define IS_QUEEN(square) (TO_WHITE(square) == QUEEN)
 
 #define MOVE_VALID 0
 #define MOVE_CASTLES 1 << 1
