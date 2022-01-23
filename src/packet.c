@@ -170,7 +170,7 @@ int p_movepc(struct player* p, char* data) {
 
 
     if (ret == MOVE_CHECKMATE) {
-        if (finish_game(g, (g->white == p ? WHITE : 0) | WIN_BY_MATE)) {
+        if (finish_game(g, (g->white == p ? WHITE : BLACK) | WIN_BY_MATE)) {
             return PACKET_RESP_ERR_NOT_RECVD;
         }
     }
