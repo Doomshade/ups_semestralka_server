@@ -2,6 +2,7 @@
 #define SEMESTRALKA_SERVER_H
 
 #include <netinet/in.h>
+#include <stdbool.h>
 #include "player_mngr.h"
 
 // used by main to communicate with parse_opt.
@@ -39,7 +40,7 @@ int start_server(struct arguments* args);
  * @param p the player
  * @param client_socks the fd set of clients
  */
-void disconnect(struct player* p, const char* reason);
+void disconnect(struct player* p, const char* reason, bool server_side);
 
 
 #endif //SEMESTRALKA_SERVER_H

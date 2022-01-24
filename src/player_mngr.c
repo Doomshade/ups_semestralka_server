@@ -97,7 +97,7 @@ struct player* create_player(int fd) {
     }
     memset(p, 0, sizeof(struct player));
     p->fd = fd;
-    p->started_keepalive = 0;
+    p->started_keepalive = false;
     p->last_keepalive = 0;
     p->invalid_sends = 0;
     change_player_name(p, "New Player");
@@ -115,9 +115,11 @@ void* keepalive(void* _p) {
     struct thr_args* p_args = (struct thr_args*) _p;
     int fd = p_args->fd;
     struct player* p = NULL;
-    unsigned interval = p_args->keepalive_retry;
+    const unsigned long_term_dc = p_args->keepalive_retry;
+    const unsigned short_term_dc = 5; // perhaps add it as a var later on
     double diff;
     time_t last_ka;
+    bool short_term_disconnected = false;
 
     printf("Keepalive started!\n");
     if (lookup_player_by_fd(fd, &p)) {
@@ -125,7 +127,7 @@ void* keepalive(void* _p) {
         goto end;
     }
 
-    p->started_keepalive = 1;
+    p->started_keepalive = true;
 
     time(&t);
     p->last_keepalive = t;
@@ -135,33 +137,58 @@ void* keepalive(void* _p) {
         // update the current time
         time(&t);
 
-        if (!lookup_player_by_fd(fd, &p) && p->started_keepalive) {
+        if (p && !lookup_player_by_fd(p->fd, &p) && p->started_keepalive) {
             last_ka = p->last_keepalive;
         }
         // get the difference in seconds between the last keep alive packets
         diff = difftime(t, last_ka);
 
-        // the difference is too large, we disconnect the player
-        if (diff >= interval) {
+        // long term disconnect stops the thread and disconnects the player completely (even from game)
+        if (diff >= long_term_dc) {
+            printf("The player has not sent a keepalive packet for %us, disconnecting him from game...\n",
+                   long_term_dc);
             break;
+        }
+
+        // short term disconnect doesn't stop the thread, only proclaims the player as disconnected
+        if (diff >= short_term_dc) {
+            if (!short_term_disconnected) {
+                printf("Could not reach a player %s with FD %d for %us...\n", p->name,
+                       p->fd, short_term_dc);
+                short_term_disconnected = true;
+                disconnect(p, NULL, false);
+            }
+        } else {
+            short_term_disconnected = false;
         }
 
         // sleep for one second before checking again
         // reduces overhead
-        sleep(1);
+        usleep(500000);
     }
     end:
     // after 30 seconds of timeout we disconnect the player indefinitely
     if (p != NULL) {
-        disconnect(p, "Timed out");
+        disconnect(p, "Timed out", true);
+        p->started_keepalive = false;
     }
+    free(_p);
     return NULL;
 }
 
 void start_keepalive(int fd, unsigned keepalive_retry) {
     pthread_t thread;
+    struct player* p;
     struct thr_args* args;
 
+    if (lookup_player_by_fd(fd, &p)) {
+        return;
+    }
+
+    p->last_keepalive = time(NULL);
+    if (p->started_keepalive) {
+        return;
+    }
     args = malloc(sizeof(struct thr_args));
     args->fd = fd;
     args->keepalive_retry = keepalive_retry;
@@ -255,10 +282,9 @@ int pman_handle_dc(struct player* p) {
     // the FD 4 and that client would be reconnected!|
     for (i = 0; i < plrs->max_player_count; ++i) {
         // find first empty spot for the disconnected player
-        if (plrs->dc_players[i] == NULL) {
+        if (!plrs->dc_players[i]) {
             printf("Storing %s under %d in the disconnected list\n", p->name, i);
             p->fd = -1; // set the FD to a negative value to indicate the player is disconnected
-            p->started_keepalive = 0; // we stop the keepalive
             p->invalid_sends = 0; // reset the invalid sends
             plrs->dc_players[i] = p; // and store the player
             return 0;

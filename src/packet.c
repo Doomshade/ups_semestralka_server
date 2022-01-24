@@ -14,7 +14,7 @@ int p_hello(struct player* pl, char* data) {
     struct game* g;
     int ret;
     struct player* e_pl = NULL; // existing player
-    const int keepalive_retry = 30; // TODO make this a var
+    const int keepalive_retry = 20; // TODO make this a var
 
     VALIDATE_PARAMS(pl, data)
 
@@ -43,9 +43,7 @@ int p_hello(struct player* pl, char* data) {
     }
 
     ret = lookup_dc_player(pl->name, &pl);
-    if (!pl->started_keepalive) {
-        start_keepalive(pl->fd, keepalive_retry);
-    }
+    start_keepalive(pl->fd, keepalive_retry);
     // the player previously disconnected
     if (!ret) {
         switch (pl->ps) {

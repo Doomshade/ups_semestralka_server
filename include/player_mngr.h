@@ -2,6 +2,8 @@
 #define SEMESTRALKA_PLAYER_MNGR_H
 #define MAX_PLAYER_NAME_LENGTH 64
 #include <sys/time.h>
+#include <stdbool.h>
+
 #define VALIDATE_FD(fd, ret, max_count) if ((fd) < 0 || (fd) >= (max_count)) return ret;
 
 
@@ -49,7 +51,7 @@ struct player {
     time_t last_keepalive;
 
     // whether the keepalive has started
-    int started_keepalive;
+    bool started_keepalive;
 
     // the amount of invalid packets sent
     unsigned invalid_sends;
@@ -110,9 +112,15 @@ int pman_handle_dc(struct player* p);
 
 /**
  * Starts checking for keepalive packets.
- * @param p the player
+ * @param fd the file descriptor of the player
+ * @param keepalive_retry the amount of seconds until we disconnect the player indefinitely
+ *
  */
 void start_keepalive(int fd, unsigned keepalive_retry);
 
+/**
+ * Initializes the player manager
+ * @param player_count the player count
+ */
 void init_pman(unsigned player_count);
 #endif //SEMESTRALKA_PLAYER_MNGR_H

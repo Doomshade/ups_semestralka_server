@@ -134,8 +134,8 @@ int finish_game(struct game* g, int winner) {
 
 
         // game found, send the packet
-        if ((ret = send_packet(g->white, GAME_FINISH_OUT, msg)) ||
-            (ret = send_packet(g->black, GAME_FINISH_OUT, msg)));
+        ret = send_packet(g->white, GAME_FINISH_OUT, msg);
+        ret = send_packet(g->black, GAME_FINISH_OUT, msg);
 
         // change the player state and remove it from memory
         change_state(g->white, LOGGED_IN);
@@ -381,7 +381,6 @@ int gman_handle_dc(struct player* p) {
     op = OPPONENT(g, p);
     sprintf(buf, PLAYER_DISCON_MESSAGE, p->name);
 
-    // TODO make a unique packet for this
     if (send_packet(op, OPPONENT_DISCONNECT_OUT, "") || send_packet(op, MESSAGE_OUT, buf)) {
         printf("Failed to send a disconnect packet...\n");
     }

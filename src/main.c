@@ -3,6 +3,7 @@
 #include <netinet/in.h>
 #include <string.h>
 #include "../include/server.h"
+#include <locale.h>
 
 const char* argp_program_version = "Chess server 1.0";
 const char* argp_program_bug_address = "<jsmahy@students.zcu.cz>";
@@ -16,7 +17,7 @@ static char args_doc[] = "ARG1";
 static struct argp_option options[] = {
         {"port",         'p', "10000",   0, "The port"},
         {"ip",           'i', "0.0.0.0", 0, "The IP"},
-        {"keep-alive",   'K', "30",      0, "The keepalive retry in seconds"},
+        {"keep-alive",   'K', "30",      0, "The keepalive retry in seconds (NOT YET IMPLEMENTED)"},
         {"debug-mode",   'D', NULL,      0, "Whether to set the server in a debug mode"},
         {"max-inval-pc", 'I', "3",       0, "The maximum invalid packets sent by a player until he's disconnected"},
         {"player-limit", 'L', "50",      0, "The limit of players connected to the server"},
@@ -67,11 +68,11 @@ int main(int argc, char** argv) {
 
     // default values
     arguments.port = 10000;
-    strcpy(arguments.ip, "0.0.0.0");
+    strncpy(arguments.ip, "0.0.0.0", sizeof(arguments.ip));
     arguments.keepalive_retry = 30;
     arguments.max_inval_pc = 3;
     arguments.debug_mode = 0;
-    arguments.player_limit = 512;
+    arguments.player_limit = 50;
 
     // parse our arguments; every option seen by parse_opt will
     // be reflected in arguments
