@@ -172,6 +172,7 @@ struct game* create_game(struct player* white, struct player* black, bool white_
     if (!g) {
         return NULL;
     }
+    memset(g, 0, sizeof(struct game));
 
     g->white = white;
     g->black = black;
