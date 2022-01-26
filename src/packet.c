@@ -14,7 +14,7 @@ int p_hello(struct player* pl, char* data) {
     struct game* g;
     int ret;
     struct player* e_pl = NULL; // existing player
-    const int keepalive_retry = 20; // TODO make this a var
+    const int keepalive_retry = 60; // TODO make this a var
 
     VALIDATE_PARAMS(pl, data)
 
@@ -140,15 +140,15 @@ int p_movepc(struct player* p, char* data) {
         return PACKET_RESP_OK_INVALID_DATA; // perhaps the client miscalculated, don't dc the player
     }
 
-    sprintf(response_valid_buf, RESPONSE_FORMAT, move_id, RESPONSE_VALID);
-    send_packet(p, MOVE_RESPONSE_OUT, response_valid_buf);
     free_move(&m);
 
     // the move is castles, send a special packet
     if (ret & MOVE_CASTLES) {
         sprintf(buf, "%1d%1d", ret & MOVE_WHITE_CASTLES ? 1 : 0, ret & MOVE_LONG_CASTLES ? 1 : 0);
-        return !send_packet(p, MOVE_CASTLES_OUT, buf) &&
-               !send_packet(OPPONENT(g, p), MOVE_CASTLES_OUT, buf) ? PACKET_RESP_OK : PACKET_RESP_ERR_NOT_RECVD;
+        if (send_packet(p, MOVE_CASTLES_OUT, buf) ||
+            send_packet(OPPONENT(g, p), MOVE_CASTLES_OUT, buf)) {
+            return PACKET_RESP_ERR_NOT_RECVD;
+        }
     }
 
     if (ret == MOVE_EN_PASSANT) {
@@ -166,12 +166,17 @@ int p_movepc(struct player* p, char* data) {
         return PACKET_RESP_ERR_NOT_RECVD;
     }
 
+    sprintf(response_valid_buf, RESPONSE_FORMAT, move_id, RESPONSE_VALID);
+    if (send_packet(p, MOVE_RESPONSE_OUT, response_valid_buf)) {
+        return PACKET_RESP_ERR_NOT_RECVD;
+    }
 
     if (ret == MOVE_CHECKMATE) {
         if (finish_game(g, (g->white == p ? WHITE : BLACK) | WIN_BY_MATE)) {
             return PACKET_RESP_ERR_NOT_RECVD;
         }
     }
+
 
     return PACKET_RESP_OK;
 }

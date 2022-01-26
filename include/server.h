@@ -40,7 +40,7 @@ int start_server(struct arguments* args);
  * @param p the player
  * @param client_socks the fd set of clients
  */
-void disconnect(struct player* p, const char* reason, bool server_side);
+void disconnect(struct player* p, const char* reason);
 
 
 #endif //SEMESTRALKA_SERVER_H

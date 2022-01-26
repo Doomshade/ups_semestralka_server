@@ -308,7 +308,7 @@ char* generate_fen(struct game* g) {
     strcat(buf, " ");
 
     // the last move is not set
-    if (!g->lm) {
+    if (!g->lm || (g->lm->file | 7) > 8 || (g->lm->rank | 7) > 8) {
         strcat(buf, "-");
     } else {
         lm[0] = UINT_TO_FILE(g->lm->file);

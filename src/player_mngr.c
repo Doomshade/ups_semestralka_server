@@ -115,8 +115,8 @@ void* keepalive(void* _p) {
     struct thr_args* p_args = (struct thr_args*) _p;
     int fd = p_args->fd;
     struct player* p = NULL;
-    const unsigned long_term_dc = p_args->keepalive_retry;
-    const unsigned short_term_dc = 5; // perhaps add it as a var later on
+    const unsigned long_term_dc = 60;
+    const unsigned short_term_dc = 25; // perhaps add it as a var later on
     double diff;
     time_t last_ka;
     bool short_term_disconnected = false;
@@ -156,7 +156,7 @@ void* keepalive(void* _p) {
                 printf("Could not reach a player %s with FD %d for %us...\n", p->name,
                        p->fd, short_term_dc);
                 short_term_disconnected = true;
-                disconnect(p, NULL, false);
+                disconnect(p, NULL);
             }
         } else {
             short_term_disconnected = false;
@@ -169,7 +169,7 @@ void* keepalive(void* _p) {
     end:
     // after 30 seconds of timeout we disconnect the player indefinitely
     if (p != NULL) {
-        disconnect(p, "Timed out", true);
+        disconnect(p, "Timed out");
         p->started_keepalive = false;
     }
     free(_p);

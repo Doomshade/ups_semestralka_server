@@ -136,7 +136,7 @@ int start_listening(int server_socket, struct arguments* args) {
             // something happened on the client side
             if (a2read <= 0) {
                 FD_CLR(fd, &client_socks);
-                disconnect(player, NULL, true);
+                disconnect(player, NULL);
                 continue;
             }
 
@@ -193,7 +193,7 @@ int start_listening(int server_socket, struct arguments* args) {
                         printf("The player %s sent too many invalid packets!\n", player->name);
                         goto _DC;
                     }
-                    send_packet(player, INVALID_DATA_OUT, p_ptr_copy);
+                    //send_packet(player, INVALID_DATA_OUT, p_ptr_copy);
 #endif
                     break;
                 default:
@@ -201,7 +201,7 @@ int start_listening(int server_socket, struct arguments* args) {
                     goto _DC;
             }
 
-            // there could still be some leftover data in the buffer,
+            // there could still be some leftover data in the buff  er,
             // handle the rest of the data
             if (strlen(p_ptr) != 0) {
                 goto HANDLE_PACKET;
@@ -210,7 +210,7 @@ int start_listening(int server_socket, struct arguments* args) {
             if (0) {
                 _DC:
                 printf("Disconnecting...\n");
-                disconnect(player, "Invalid packet data!", true);
+                disconnect(player, "Invalid packet data!");
             }
 
             // no more data, free the malloced packet data
@@ -249,7 +249,7 @@ void init_server(unsigned player_count) {
     init_cpce(); // chess pieces
 }
 
-void disconnect(struct player* p, const char* reason, bool server_side) {
+void disconnect(struct player* p, const char* reason) {
     struct game* g;
     int fd;
 
@@ -257,16 +257,9 @@ void disconnect(struct player* p, const char* reason, bool server_side) {
         return;
     }
 
-    gman_handle_dc(p); // inform the opponent that the player has likely DC'd
-
-    // check if we disconnect the player on the server side as well
-    if (!server_side) {
-        return;
-    }
-
-    // if there's a reason for a disconnect the server WILL disconnect him, finishing his game
-    // the disconnect packet may not be sent if the player is disconnected, but that's fine
-    // lookup the game and inform both players that the game has ended
+    // if there's a reason for a disconnect the server will finish the game
+    // the disconnect packet may not be sent if the player is disconnected, but
+    // that's fine, lookup the game and inform both players that the game has ended
     if (reason) {
         send_packet(p, DISCONNECT_OUT, reason);
         g = lookup_game(p);
@@ -284,9 +277,9 @@ void disconnect(struct player* p, const char* reason, bool server_side) {
     printf("Clearing FD %d...\n", fd);
     FD_CLR(fd, &client_socks);
     free_buffers(fd); // cleanup in the packet validator (due to potential buffered header/data)
+    gman_handle_dc(p); // inform the opponent that the player has likely DC'd
     qman_handle_dc(p); // removing from queue changes the state of the player ONLY if the packet is successfully sent
     // in our case the packet cannot be sent as the player has disconnected -> the player's state will remain the same
-    gman_handle_dc(p); // inform the opponent that the player has DC'd
     pman_handle_dc(p); // cleanup in player manager and store the state
 
     // finally, close the connection
