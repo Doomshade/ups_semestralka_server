@@ -141,14 +141,17 @@ int p_movepc(struct player* p, char* data) {
     }
 
     free_move(&m);
+    sprintf(response_valid_buf, RESPONSE_FORMAT, move_id, RESPONSE_VALID);
 
-    // the move is castles, send a special packet
+    // the move is castles, send a special packet and that the move is valid
     if (ret & MOVE_CASTLES) {
         sprintf(buf, "%1d%1d", ret & MOVE_WHITE_CASTLES ? 1 : 0, ret & MOVE_LONG_CASTLES ? 1 : 0);
-        if (send_packet(p, MOVE_CASTLES_OUT, buf) ||
+        if (send_packet(p, MOVE_RESPONSE_OUT, response_valid_buf) ||
+            send_packet(p, MOVE_CASTLES_OUT, buf) ||
             send_packet(OPPONENT(g, p), MOVE_CASTLES_OUT, buf)) {
             return PACKET_RESP_ERR_NOT_RECVD;
         }
+        return PACKET_RESP_OK;
     }
 
     if (ret == MOVE_EN_PASSANT) {
@@ -166,7 +169,6 @@ int p_movepc(struct player* p, char* data) {
         return PACKET_RESP_ERR_NOT_RECVD;
     }
 
-    sprintf(response_valid_buf, RESPONSE_FORMAT, move_id, RESPONSE_VALID);
     if (send_packet(p, MOVE_RESPONSE_OUT, response_valid_buf)) {
         return PACKET_RESP_ERR_NOT_RECVD;
     }

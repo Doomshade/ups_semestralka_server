@@ -335,7 +335,31 @@ int pawn_handle(struct game* g, struct move* m) {
 }
 
 int rook_handle(struct game* g, struct move* m) {
-    return handle_simple_piece(g, m, 0b010101010, 8);
+    int ret = handle_simple_piece(g, m, 0b010101010, 8);
+    int white;
+    if (ret == MOVE_INVALID) {
+        return ret;
+    }
+    white = IS_WHITE(PIECE_SQ(g->board, m->from));
+
+    // remove castles privileges
+    // TODO this doesn't seem to work fsr
+    /*
+    if (white && m->from->rank == 0) {
+        if (m->from->file == 0) {
+            g->castles &= ~(CASTLES_WHITE_QUEENSIDE);
+        } else if (m->from->file == 7) {
+            g->castles &= ~(CASTLES_WHITE_KINGSIDE);
+        }
+    } else if (!white && m->from->rank == 7) {
+        if (m->from->file == 0) {
+            g->castles &= ~(CASTLES_BLACK_QUEENSIDE);
+        } else if (m->from->file == 7) {
+            g->castles &= ~(CASTLES_BLACK_KINGSIDE);
+        }
+    }*/
+
+    return ret;
 }
 
 int bishop_handle(struct game* g, struct move* m) {

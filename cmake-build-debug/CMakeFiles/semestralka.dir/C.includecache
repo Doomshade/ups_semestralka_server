@@ -28,31 +28,15 @@ sys/socket.h
 player_mngr.h
 /home/doomshade/CLionProjects/semestralka/include/player_mngr.h
 
-/home/doomshade/CLionProjects/semestralka/include/packet_registry.h
-game_mngr.h
-/home/doomshade/CLionProjects/semestralka/include/game_mngr.h
-player_mngr.h
-/home/doomshade/CLionProjects/semestralka/include/player_mngr.h
-
 /home/doomshade/CLionProjects/semestralka/include/player_mngr.h
 sys/time.h
 -
 stdbool.h
 -
 
-/home/doomshade/CLionProjects/semestralka/src/game_mngr.c
-../include/game_mngr.h
-/home/doomshade/CLionProjects/semestralka/include/game_mngr.h
-string.h
--
-../include/packet_registry.h
-/home/doomshade/CLionProjects/semestralka/include/packet_registry.h
+/home/doomshade/CLionProjects/semestralka/src/chesspiece.c
 ../include/chesspiece.h
 /home/doomshade/CLionProjects/semestralka/include/chesspiece.h
 stdio.h
--
-stdlib.h
--
-ctype.h
 -
 

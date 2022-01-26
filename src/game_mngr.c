@@ -407,15 +407,20 @@ int move_piece(struct game* g, struct player* p, struct move* m) {
     struct square pl_king;
     struct square op_king;
     struct square* sq;
+    int prev_castles;
 
+    if (!g || !p || !m) {
+        return MOVE_INVALID;
+    }
     rank_from = m->from->rank;
     file_from = m->from->file;
     rank_to = m->to->rank;
     file_to = m->to->file;
 
-    if (!g || !p || (rank_from | file_from | rank_to | file_to) >= 8) {
+    if ((rank_from | file_from | rank_to | file_to) >= 8) {
         return MOVE_INVALID;
     }
+    prev_castles = g->castles;
     white = g->white == p;
 
     // the player is not on the move
@@ -459,12 +464,12 @@ int move_piece(struct game* g, struct player* p, struct move* m) {
 
     if (get_king_sq(g, white, &pl_king)) {
         fprintf(stderr, "Could not find the king?!\n");
-        return true;
+        return MOVE_INVALID;
     }
 
     if (get_king_sq(g, !white, &op_king)) {
         fprintf(stderr, "Could not find the king?!\n");
-        return true;
+        return MOVE_INVALID;
     }
 
     // now we need to check if the king is in check
@@ -556,10 +561,12 @@ bool is_mate(struct game* g, bool white, struct square king_sq) {
     struct move flip_m;
     bool is_not_in_check;
     struct square* lm;
+    int prev_castles;
 
     if (!is_in_check(g, white, king_sq)) {
         return false;
     }
+    prev_castles = g->castles;
 
     // iterate through every piece
     for (rank = 0; rank < 8; ++rank) {
@@ -611,6 +618,7 @@ bool is_mate(struct game* g, bool white, struct square king_sq) {
 
                     // see if the king is not in check
                     if (is_not_in_check) {
+                        g->castles = prev_castles;
                         printf("Piece %c can move to %c%c to avoid mate\n", piece, UINT_TO_FILE(file_to),
                                UINT_TO_RANK(rank_to));
                         return false;
@@ -620,6 +628,7 @@ bool is_mate(struct game* g, bool white, struct square king_sq) {
             }
         }
     }
+    g->castles = prev_castles;
     printf("No piece can avoid mate for %s, RIP!\n", white ? "White" : "Black");
     return true;
 }
@@ -629,11 +638,14 @@ bool is_in_check(struct game* g, bool white, struct square king_sq) {
     unsigned rank;
     unsigned file;
     char piece;
+    int prev_castles;
+
     // iterate through the board and find the king
 
     //printf("%s's king square: %c%c\n", white ? "White" : "Black", UINT_TO_FILE(king_sq.file),
     //      UINT_TO_RANK(king_sq.rank));
     // now check if the enemy pieces are attacking this square
+    prev_castles = g->castles;
     m.to = &king_sq;
     for (rank = 0; rank < 8; ++rank) {
         for (file = 0; file < 8; ++file) {
@@ -647,11 +659,13 @@ bool is_in_check(struct game* g, bool white, struct square king_sq) {
 
             // an opponents piece found, check if its moves contain the king's square
             if (move(piece, g, &m) != MOVE_INVALID) {
+                g->castles = prev_castles;
                 // the move was not invalid, return true that the king is indeed in check after the given move
                 return true;
             }
         }
     }
+    g->castles = prev_castles;
 
     return false;
 }
