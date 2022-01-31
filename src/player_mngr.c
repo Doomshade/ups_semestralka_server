@@ -116,7 +116,7 @@ void* keepalive(void* _p) {
     int fd = p_args->fd;
     struct player* p = NULL;
     const unsigned long_term_dc = 60;
-    const unsigned short_term_dc = 25; // perhaps add it as a var later on
+    const unsigned short_term_dc = 20; // perhaps add it as a var later on
     double diff;
     time_t last_ka;
     bool short_term_disconnected = false;
